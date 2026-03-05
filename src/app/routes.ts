@@ -5,6 +5,7 @@ import BillboardDetailPage from "./pages/BillboardDetailPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AdvertiserDashboard from "./pages/AdvertiserDashboard";
+import AdvertiserBookingsPage from "./pages/AdvertiserBookingsPage";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
   { path: "/login", Component: LoginPage },
   { path: "/register", Component: RegisterPage },
   { path: "/advertiser", Component: AdvertiserDashboard },
+  { path: "/advertiser/bookings", Component: AdvertiserBookingsPage },
   { path: "/advertiser/*", Component: AdvertiserDashboard },
   { path: "/owner", Component: OwnerDashboard },
   { path: "/owner/*", Component: OwnerDashboard },
