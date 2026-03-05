@@ -10,6 +10,7 @@ import AdvertiserSaved from "./pages/AdvertiserSaved";
 import AdvertiserCampaigns from "./pages/AdvertiserCampaigns";
 import AdvertiserInvoices from "./pages/AdvertiserInvoices";
 import AdvertiserMessages from "./pages/AdvertiserMessages";
+import AdvertiserSettings from "./pages/AdvertiserSettings";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
   { path: "/advertiser/campaigns", Component: AdvertiserCampaigns },
   { path: "/advertiser/invoices", Component: AdvertiserInvoices },
   { path: "/advertiser/messages", Component: AdvertiserMessages },
+  { path: "/advertiser/settings", Component: AdvertiserSettings },
   { path: "/advertiser/saved", Component: AdvertiserSaved },
   { path: "/advertiser/*", Component: AdvertiserDashboard },
   { path: "/owner", Component: OwnerDashboard },
