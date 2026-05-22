@@ -6,13 +6,108 @@ import { TopNav } from "../components/TopNav";
 import { Footer } from "../components/Footer";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
-const billboards = [
-  { image: "https://images.unsplash.com/photo-1585504303098-9785dc784742?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMRUQlMjBiaWxsYm9hcmQlMjBkaWdpdGFsJTIwY2l0eSUyMG5pZ2h0fGVufDF8fHx8MTc3MjU0NjU5M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", name: "Cầu Rồng LED", location: "Đà Nẵng, Hải Châu", size: "14m x 6m", trafficIndex: "High", price: "85.000.000₫", availability: "available" as const },
-  { image: "https://images.unsplash.com/photo-1745725427643-8994370391e6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwYmlsbGJvYXJkJTIwaGlnaHdheSUyMGFkdmVydGlzaW5nfGVufDF8fHx8MTc3MjU0NjU5NHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", name: "Bạch Đằng Digital", location: "Đà Nẵng, Sơn Trà", size: "10m x 4m", trafficIndex: "Medium", price: "55.000.000₫", availability: "available" as const },
-  { image: "https://images.unsplash.com/photo-1765908310161-1005cf85586d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0aW1lcyUyMHNxdWFyZSUyMGRpZ2l0YWwlMjBkaXNwbGF5fGVufDF8fHx8MTc3MjU0NjU5NHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", name: "Nguyễn Văn Linh Screen", location: "Đà Nẵng, Thanh Khê", size: "12m x 5m", trafficIndex: "High", price: "68.000.000₫", availability: "booked" as const },
-  { image: "https://images.unsplash.com/photo-1766324488354-a189b706d3e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMRUQlMjBzY3JlZW4lMjBidWlsZGluZyUyMGZhY2FkZXxlbnwxfHx8fDE3NzI1NDY1OTR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", name: "Mỹ Khê Beach LED", location: "Đà Nẵng, Ngũ Hành Sơn", size: "8m x 3m", trafficIndex: "Medium", price: "42.000.000₫", availability: "available" as const },
-  { image: "https://images.unsplash.com/photo-1676491405940-9cd5d8cbf954?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiaWxsYm9hcmQlMjBhZHZlcnRpc2luZyUyMHVyYmFufGVufDF8fHx8MTc3MjU0NjU5NXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", name: "Vincom Đà Nẵng", location: "Đà Nẵng, Hải Châu", size: "16m x 8m", trafficIndex: "High", price: "120.000.000₫", availability: "available" as const },
-  { image: "https://images.unsplash.com/photo-1768812785179-ab5add1e2e1c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwc2lnbmFnZSUyMGNvbW1lcmNpYWwlMjBidWlsZGluZ3xlbnwxfHx8fDE3NzI1NDY1OTV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", name: "Trần Phú LED", location: "Đà Nẵng, Hải Châu", size: "10m x 4m", trafficIndex: "Medium", price: "52.000.000₫", availability: "unavailable" as const },
+import billboardApi from "../../api/billboardApi";
+import { BillboardDto } from "../../types/billboard";
+
+const mapBillboardDtoToCardProps = (b: BillboardDto) => {
+  const thumbnail = b.images?.find(img => img.isThumbnail)?.imageUrl || b.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1585504303098-9785dc784742?w=500";
+  
+  let trafficIndex = "Medium";
+  if (b.dailyViews > 100000) trafficIndex = "High";
+  else if (b.dailyViews < 20000) trafficIndex = "Low";
+
+  let availability: "available" | "booked" | "unavailable" = "available";
+  if (b.availabilities && b.availabilities.length > 0) {
+    const isBooked = b.availabilities.some(av => av.status === "BOOKED");
+    const isBlocked = b.availabilities.some(av => av.status === "BLOCKED");
+    if (isBooked) availability = "booked";
+    else if (isBlocked) availability = "unavailable";
+  }
+
+  return {
+    image: thumbnail,
+    name: b.title,
+    location: `${b.district}, ${b.city}`,
+    size: `${b.width}m x ${b.height}m`,
+    trafficIndex,
+    price: `${b.pricePerMonth.toLocaleString("vi-VN")}₫`,
+    availability,
+  };
+};
+
+const fallbackBillboards: BillboardDto[] = [
+  {
+    id: 1,
+    title: "Cầu Rồng LED",
+    description: "Bảng quảng cáo vị trí đắc địa tại Cầu Rồng Đà Nẵng",
+    address: "Đường 2/9",
+    city: "Đà Nẵng",
+    district: "Hải Châu",
+    width: 14,
+    height: 6,
+    resolution: "P10",
+    brightness: 6500,
+    refreshRate: 3840,
+    screenType: "Outdoor LED",
+    operatingHours: "16h/ngày",
+    pricePerDay: 3000000,
+    pricePerMonth: 85000000,
+    locationSurcharge: 1.1,
+    status: "APPROVED",
+    dailyViews: 120000,
+    isFeatured: true,
+    images: [{ id: 1, imageUrl: "https://images.unsplash.com/photo-1585504303098-9785dc784742?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMRUQlMjBiaWxsYm9hcmQlMjBkaWdpdGFsJTIwY2l0eSUyMG5pZ2h0fGVufDF8fHx8MTc3MjU0NjU5M3ww&ixlib=rb-4.1.0&q=80&w=1080", isThumbnail: true }],
+    features: [{ id: 1, name: "Độ sáng cao" }],
+    availabilities: []
+  },
+  {
+    id: 2,
+    title: "Bạch Đằng Digital",
+    description: "Bảng quảng cáo ven sông Bạch Đằng",
+    address: "Đường Bạch Đằng",
+    city: "Đà Nẵng",
+    district: "Sơn Trà",
+    width: 10,
+    height: 4,
+    resolution: "P8",
+    brightness: 6000,
+    refreshRate: 3840,
+    screenType: "Outdoor LED",
+    operatingHours: "16h/ngày",
+    pricePerDay: 2000000,
+    pricePerMonth: 55000000,
+    locationSurcharge: 1.05,
+    status: "APPROVED",
+    dailyViews: 80000,
+    isFeatured: true,
+    images: [{ id: 2, imageUrl: "https://images.unsplash.com/photo-1745725427643-8994370391e6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwYmlsbGJvYXJkJTIwaGlnaHWheSUyMGFkdmVydGlzaW5nfGVufDF8fHx8MTc3MjU0NjU5NHww&ixlib=rb-4.1.0&q=80&w=1080", isThumbnail: true }],
+    features: [{ id: 1, name: "Góc nhìn rộng" }],
+    availabilities: []
+  },
+  {
+    id: 3,
+    title: "Nguyễn Văn Linh Screen",
+    description: "Ngã ba Nguyễn Văn Linh và Nguyễn Tri Phương",
+    address: "Nguyễn Văn Linh",
+    city: "Đà Nẵng",
+    district: "Thanh Khê",
+    width: 12,
+    height: 5,
+    resolution: "P10",
+    brightness: 6500,
+    refreshRate: 3840,
+    screenType: "Outdoor LED",
+    operatingHours: "16h/ngày",
+    pricePerDay: 2500000,
+    pricePerMonth: 68000000,
+    locationSurcharge: 1.0,
+    status: "APPROVED",
+    dailyViews: 110000,
+    isFeatured: true,
+    images: [{ id: 3, imageUrl: "https://images.unsplash.com/photo-1765908310161-1005cf85586d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0aW1lcyUyMHNxdWFyZSUyMGRpZ2l0YWwlMjBkaXNwbGF5fGVufDF8fHx8MTc3MjU0NjU5NHww&ixlib=rb-4.1.0&q=80&w=1080", isThumbnail: true }],
+    features: [{ id: 1, name: "Camera đo traffic" }],
+    availabilities: [{ id: 1, availableDate: "2026-03-10", status: "BOOKED" }]
+  }
 ];
 
 const steps = [
@@ -30,6 +125,36 @@ const stats = [
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [billboards, setBillboards] = React.useState<BillboardDto[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let active = true;
+    const fetchFeatured = async () => {
+      try {
+        const response = await billboardApi.getFeatured();
+        if (active) {
+          if (response.success && response.data) {
+            setBillboards(response.data);
+          } else {
+            throw new Error(response.message || "Failed to load featured billboards");
+          }
+        }
+      } catch (err) {
+        console.warn("Backend API not running, using fallback mock data:", err);
+        if (active) {
+          setBillboards(fallbackBillboards);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchFeatured();
+    return () => {
+      active = false;
+    };
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -181,9 +306,25 @@ export default function HomePage() {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {billboards.map((b, i) => (
-              <BillboardCard key={i} {...b} onViewDetails={() => navigate("/billboard/1")} />
-            ))}
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse bg-[#EFF6FF] rounded-xl h-80 border border-[#E3E8EF] flex items-center justify-center text-[#6B7A8D] font-semibold text-sm">
+                  Đang tải bảng quảng cáo nổi bật...
+                </div>
+              ))
+            ) : billboards.length === 0 ? (
+              <div className="col-span-full text-center py-10 text-[#6B7A8D] font-medium">
+                Không tìm thấy bảng quảng cáo nổi bật nào.
+              </div>
+            ) : (
+              billboards.map((b) => (
+                <BillboardCard
+                  key={b.id}
+                  {...mapBillboardDtoToCardProps(b)}
+                  onViewDetails={() => navigate(`/billboard/${b.id}`)}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>

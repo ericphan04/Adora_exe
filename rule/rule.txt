@@ -1,0 +1,60 @@
+You are working on ADORA, a LED Billboard Rental Marketplace.
+
+Project context:
+ADORA is a full-stack marketplace that connects Advertisers/Renters who want to rent LED billboards with Owners who own LED billboards, under Admin management.
+
+Current status:
+- The React TypeScript frontend is already mostly completed.
+- Frontend currently uses mock data.
+- Backend and PostgreSQL database are not implemented yet.
+- The next goal is to build the Spring Boot backend and replace mock data with real REST API calls.
+
+Frontend stack:
+- React 18
+- TypeScript
+- Vite
+- React Router v7
+- Tailwind CSS v4
+- lucide-react
+- recharts
+
+Backend stack:
+- Java Spring Boot
+- Spring Security
+- JWT Authentication
+- Spring Data JPA
+- PostgreSQL
+- RESTful API
+
+Main roles:
+- ADMIN: manages users, billboard approvals, transactions, reports, platform commission.
+- RENTER / ADVERTISER: searches LED billboards, creates bookings, pays, reviews campaigns.
+- OWNER: posts billboard listings, manages booking requests, tracks revenue.
+
+General coding rules:
+1. Keep the existing frontend structure and UI design. Do not rewrite completed pages unless necessary.
+2. Replace mock data gradually with API calls.
+3. Keep naming consistent with ADORA business domain.
+4. Use clean, readable, production-style code.
+5. Backend must follow layered architecture:
+   - controller
+   - service
+   - repository
+   - entity
+   - dto
+   - config
+   - security
+   - exception
+6. Frontend must use strict TypeScript interfaces.
+7. All API responses must use consistent JSON format.
+8. Use JWT for authentication and role-based authorization.
+9. Do not hardcode secrets, database passwords, or tokens.
+10. Prioritize MVP features first.
+11. Preserve role names:
+   - ADMIN
+   - RENTER
+   - OWNER
+12. Approved billboards are public. Pending billboards are visible only to owner and admin.
+13. Admin earns 5% commission fee from successful bookings.
+14. PostgreSQL schema must support users, billboards, bookings, payments, reviews, reports, dashboard statistics.
+15. Make backend APIs match the existing frontend pages as much as possible.
