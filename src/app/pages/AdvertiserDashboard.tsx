@@ -11,6 +11,8 @@ import bookingApi from "../../api/bookingApi";
 import paymentApi from "../../api/paymentApi";
 import reviewApi from "../../api/reviewApi";
 import { RenterDashboardDto } from "../../types/dashboard";
+import { useConfirm } from "../context/ConfirmContext";
+import { notify, apiErrorMessage } from "../utils/notify";
 
 type BadgeVariant = "active" | "pending" | "booked" | "expired" | "available" | "unavailable";
 
@@ -307,6 +309,7 @@ const formatDate = (dateStr: string) => {
 
 export default function AdvertiserDashboard() {
   const { user } = useAuth();
+  const confirm = useConfirm();
   const [data, setData] = useState<RenterDashboardDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
@@ -342,7 +345,13 @@ export default function AdvertiserDashboard() {
   }, []);
 
   const handleCancelBooking = async (bookingId: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn hủy đặt chỗ này?")) return;
+    const ok = await confirm({
+      title: "Hủy đặt chỗ",
+      description: "Bạn có chắc chắn muốn hủy đặt chỗ này?",
+      variant: "destructive",
+      confirmLabel: "Hủy đặt chỗ",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setData((prev) => {
         if (!prev) return null;
@@ -356,21 +365,21 @@ export default function AdvertiserDashboard() {
           upcomingBookings: updatedUpcoming,
         };
       });
-      alert("Hủy đặt chỗ thành công! (Mô phỏng)");
+      notify.success("Hủy đặt chỗ thành công", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const response = await bookingApi.cancel(bookingId);
       if (response.success) {
-        alert("Hủy đặt chỗ thành công!");
+        notify.success("Hủy đặt chỗ thành công");
         fetchDashboardData();
       } else {
-        alert(response.message || "Không thể hủy đặt chỗ.");
+        notify.error(response.message || "Không thể hủy đặt chỗ.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Cancel booking error:", error);
-      alert(error?.response?.data?.message || "Lỗi khi hủy đặt chỗ.");
+      notify.error(apiErrorMessage(error, "Lỗi khi hủy đặt chỗ."));
     }
   };
 
@@ -390,20 +399,28 @@ export default function AdvertiserDashboard() {
           upcomingBookings: updatedUpcoming,
         };
       });
-      alert("Thanh toán thành công! (Mô phỏng)");
+      notify.success("Thanh toán thành công", "Chế độ mô phỏng");
       return;
     }
+
+    const ok = await confirm({
+      title: "Thanh toán VNPay",
+      description: "Bạn sẽ được chuyển đến cổng VNPay để hoàn tất thanh toán. Tiếp tục?",
+      confirmLabel: "Thanh toán",
+    });
+    if (!ok) return;
 
     try {
       const response = await paymentApi.create({ bookingId, paymentMethod: "VNPAY" });
       if (response.success && response.data) {
+        notify.info("Đang chuyển đến VNPay...");
         window.location.href = response.data;
       } else {
-        alert(response.message || "Không thể khởi tạo thanh toán.");
+        notify.error(response.message || "Không thể khởi tạo thanh toán.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Payment error:", error);
-      alert(error?.response?.data?.message || "Lỗi khi khởi tạo thanh toán.");
+      notify.error(apiErrorMessage(error, "Lỗi khi khởi tạo thanh toán."));
     }
   };
 
@@ -420,7 +437,7 @@ export default function AdvertiserDashboard() {
     setSubmittingReview(true);
 
     if (isUsingFallback) {
-      alert("Gửi đánh giá thành công! (Mô phỏng)");
+      notify.success("Gửi đánh giá thành công", "Chế độ mô phỏng");
       setIsReviewModalOpen(false);
       setSubmittingReview(false);
       return;
@@ -433,15 +450,15 @@ export default function AdvertiserDashboard() {
         comment,
       });
       if (response.success) {
-        alert("Gửi đánh giá thành công!");
+        notify.success("Gửi đánh giá thành công");
         setIsReviewModalOpen(false);
         fetchDashboardData();
       } else {
-        alert(response.message || "Không thể gửi đánh giá.");
+        notify.error(response.message || "Không thể gửi đánh giá.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Submit review error:", error);
-      alert(error?.response?.data?.message || "Lỗi khi gửi đánh giá.");
+      notify.error(apiErrorMessage(error, "Lỗi khi gửi đánh giá."));
     } finally {
       setSubmittingReview(false);
     }

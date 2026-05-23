@@ -11,6 +11,10 @@ import ownerApi, { CreateBillboardRequest } from "../../api/ownerApi";
 import { OwnerDashboardDto } from "../../types/dashboard";
 import { BillboardDto } from "../../types/billboard";
 import { BookingDto } from "../../types/booking";
+import { OwnerRevenueView } from "../components/dashboard/OwnerRevenueView";
+import { OwnerSettingsView } from "../components/dashboard/OwnerSettingsView";
+import { useConfirm } from "../context/ConfirmContext";
+import { notify, apiErrorMessage } from "../utils/notify";
 
 type BadgeVariant = "active" | "pending" | "booked" | "expired" | "available" | "unavailable";
 
@@ -125,6 +129,7 @@ export default function OwnerDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const confirm = useConfirm();
 
   const [dashboardData, setDashboardData] = useState<OwnerDashboardDto | null>(null);
   const [billboards, setBillboards] = useState<BillboardDto[]>([]);
@@ -160,6 +165,7 @@ export default function OwnerDashboard() {
     if (path.startsWith("/owner/bookings")) return "bookings";
     if (path.startsWith("/owner/availability")) return "availability";
     if (path.startsWith("/owner/revenue")) return "revenue";
+    if (path.startsWith("/owner/settings")) return "settings";
     return "dashboard";
   }, [location.pathname]);
 
@@ -210,7 +216,13 @@ export default function OwnerDashboard() {
 
   // Accept Booking Request Handler
   const handleAcceptBooking = async (id: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn chấp nhận yêu cầu đặt chỗ này?")) return;
+    const ok = await confirm({
+      title: "Chấp nhận đặt chỗ",
+      description: "Bạn có chắc chắn muốn chấp nhận yêu cầu đặt chỗ này?",
+      variant: "success",
+      confirmLabel: "Chấp nhận",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "ACCEPTED" as const } : b));
       setDashboardData(prev => {
@@ -221,26 +233,32 @@ export default function OwnerDashboard() {
           pendingRequests: Math.max(0, prev.pendingRequests - 1)
         };
       });
-      alert("Đã chấp nhận yêu cầu đặt chỗ! (Mô phỏng)");
+      notify.success("Đã chấp nhận yêu cầu đặt chỗ", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await ownerApi.acceptBooking(id);
       if (res.success) {
-        alert("Đã chấp nhận yêu cầu đặt chỗ thành công!");
+        notify.success("Đã chấp nhận yêu cầu đặt chỗ thành công");
         loadAllData();
       } else {
-        alert(res.message || "Không thể chấp nhận yêu cầu.");
+        notify.error(res.message || "Không thể chấp nhận yêu cầu.");
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || err?.message || "Lỗi hệ thống.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi hệ thống."));
     }
   };
 
   // Reject Booking Request Handler
   const handleRejectBooking = async (id: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn từ chối yêu cầu đặt chỗ này?")) return;
+    const ok = await confirm({
+      title: "Từ chối đặt chỗ",
+      description: "Bạn có chắc chắn muốn từ chối yêu cầu đặt chỗ này?",
+      variant: "destructive",
+      confirmLabel: "Từ chối",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "REJECTED" as const } : b));
       setDashboardData(prev => {
@@ -251,42 +269,48 @@ export default function OwnerDashboard() {
           pendingRequests: Math.max(0, prev.pendingRequests - 1)
         };
       });
-      alert("Đã từ chối yêu cầu đặt chỗ! (Mô phỏng)");
+      notify.success("Đã từ chối yêu cầu đặt chỗ", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await ownerApi.rejectBooking(id);
       if (res.success) {
-        alert("Đã từ chối yêu cầu đặt chỗ thành công!");
+        notify.success("Đã từ chối yêu cầu đặt chỗ thành công");
         loadAllData();
       } else {
-        alert(res.message || "Không thể từ chối yêu cầu.");
+        notify.error(res.message || "Không thể từ chối yêu cầu.");
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || err?.message || "Lỗi hệ thống.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi hệ thống."));
     }
   };
 
   // Delete Billboard Handler
   const handleDeleteBillboard = async (id: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bảng quảng cáo này?")) return;
+    const ok = await confirm({
+      title: "Xóa bảng quảng cáo",
+      description: "Bạn có chắc chắn muốn xóa bảng quảng cáo này? Hành động không thể hoàn tác.",
+      variant: "destructive",
+      confirmLabel: "Xóa",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setBillboards(prev => prev.filter(b => b.id !== id));
-      alert("Đã xóa bảng quảng cáo thành công! (Mô phỏng)");
+      notify.success("Đã xóa bảng quảng cáo", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await ownerApi.deleteBillboard(id);
       if (res.success) {
-        alert("Xóa bảng quảng cáo thành công!");
+        notify.success("Xóa bảng quảng cáo thành công");
         loadAllData();
       } else {
-        alert(res.message || "Không thể xóa bảng quảng cáo.");
+        notify.error(res.message || "Không thể xóa bảng quảng cáo.");
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || err?.message || "Lỗi khi xóa bảng quảng cáo.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi khi xóa bảng quảng cáo."));
     }
   };
 
@@ -383,7 +407,7 @@ export default function OwnerDashboard() {
               : bb
           )
         );
-        alert("Cập nhật bảng quảng cáo thành công! (Mô phỏng)");
+        notify.success("Cập nhật bảng quảng cáo thành công", "Chế độ mô phỏng");
       } else {
         // Create Mode Sim
         const newBb: BillboardDto = {
@@ -399,7 +423,7 @@ export default function OwnerDashboard() {
           availabilities: []
         };
         setBillboards(prev => [newBb, ...prev]);
-        alert("Đăng ký bảng quảng cáo mới thành công và đang chờ duyệt! (Mô phỏng)");
+        notify.success("Đăng ký bảng quảng cáo mới thành công", "Đang chờ ADMIN duyệt · Chế độ mô phỏng");
       }
       setIsModalOpen(false);
       setSubmitting(false);
@@ -413,11 +437,11 @@ export default function OwnerDashboard() {
           if (formImageUrl) {
             await ownerApi.addBillboardImage(res.data.id, { imageUrl: formImageUrl, isThumbnail: true });
           }
-          alert("Cập nhật bảng quảng cáo thành công!");
+          notify.success("Cập nhật bảng quảng cáo thành công");
           loadAllData();
           setIsModalOpen(false);
         } else {
-          alert(res.message || "Cập nhật thất bại.");
+          notify.error(res.message || "Cập nhật thất bại.");
         }
       } else {
         const res = await ownerApi.createBillboard(payload);
@@ -425,15 +449,15 @@ export default function OwnerDashboard() {
           if (formImageUrl) {
             await ownerApi.addBillboardImage(res.data.id, { imageUrl: formImageUrl, isThumbnail: true });
           }
-          alert("Đăng ký bảng quảng cáo mới thành công! Tin đăng đang chờ ADMIN duyệt.");
+          notify.success("Đăng ký bảng quảng cáo mới thành công", "Tin đăng đang chờ ADMIN duyệt");
           loadAllData();
           setIsModalOpen(false);
         } else {
-          alert(res.message || "Đăng ký thất bại.");
+          notify.error(res.message || "Đăng ký thất bại.");
         }
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || err?.message || "Lỗi kết nối máy chủ.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi kết nối máy chủ."));
     } finally {
       setSubmitting(false);
     }
@@ -564,10 +588,18 @@ export default function OwnerDashboard() {
                   ? "Quản Lý Đặt Chỗ"
                   : view === "availability"
                   ? "Xem Lịch Trống"
+                  : view === "revenue"
+                  ? "Doanh Thu & Chi Trả"
+                  : view === "settings"
+                  ? "Cài Đặt Tài Khoản"
                   : "Tổng Quan Chủ Sở Hữu"}
               </h1>
               <p className="text-sm text-[#6B7A8D] mt-0.5">
-                Chào mừng trở lại, {user?.fullName || "Chủ sở hữu"}. Đây là danh mục quảng cáo của bạn.
+                {view === "revenue"
+                  ? "Theo dõi thu nhập ròng và lịch sử chi trả từ các chiến dịch."
+                  : view === "settings"
+                  ? "Hồ sơ, tài khoản ngân hàng và tùy chọn tin đăng mặc định."
+                  : `Chào mừng trở lại, ${user?.fullName || "Chủ sở hữu"}. Đây là danh mục quảng cáo của bạn.`}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -806,14 +838,26 @@ export default function OwnerDashboard() {
           </div>
         )}
 
-        {/* 4. OTHER SUB-VIEWS PLACEHOLDERS */}
-        {(view === "availability" || view === "revenue") && (
+        {/* 4. REVENUE VIEW */}
+        {view === "revenue" && dashboardData && (
+          <OwnerRevenueView
+            dashboardData={dashboardData}
+            billboards={billboards}
+            bookings={bookings}
+          />
+        )}
+
+        {/* 5. SETTINGS VIEW */}
+        {view === "settings" && <OwnerSettingsView />}
+
+        {/* 6. AVAILABILITY PLACEHOLDER */}
+        {view === "availability" && (
           <div className="p-8">
             <div className="bg-white rounded-xl border border-[#E3E8EF] p-12 text-center space-y-4">
               <div className="w-12 h-12 rounded-full bg-[#F0F9FF] text-[#1D4ED8] flex items-center justify-center mx-auto text-xl font-bold">i</div>
-              <h3 className="text-lg font-bold text-[#1E293B]">Tính năng nâng cao</h3>
+              <h3 className="text-lg font-bold text-[#1E293B]">Lịch trống bảng QC</h3>
               <p className="text-[#6B7A8D] text-sm max-w-sm mx-auto">
-                Mô-đun lịch trình và thống kê doanh thu chi tiết được tổng hợp tự động trên Trang Tổng Quan.
+                Xem lịch đặt chỗ trên trang Tổng quan hoặc quản lý từng bảng trong mục Bảng QC của tôi.
               </p>
               <button
                 onClick={() => navigate("/owner")}

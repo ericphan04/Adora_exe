@@ -75,7 +75,10 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
 
       <nav className="flex-1 py-4 overflow-y-auto">
         {items.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive =
+            item.path === "/admin" || item.path === "/owner" || item.path === "/advertiser"
+              ? location.pathname === item.path
+              : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
           return (
             <button
               key={item.path}
