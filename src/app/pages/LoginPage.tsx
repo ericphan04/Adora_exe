@@ -1,16 +1,78 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Mail, Lock, Eye, EyeOff, Monitor } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import authApi from "../../api/authApi";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (document.getElementById("google-jssdk")) return;
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.id = "google-jssdk";
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+  }, []);
+
+  const handleGoogleLogin = () => {
+    setError(null);
+    const google = (window as any).google;
+    if (!google) {
+      setError("Không thể kết nối tới thư viện Google. Vui lòng tải lại trang.");
+      return;
+    }
+
+    try {
+      const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "786481635338-7j5trj2o3p6aoc310v359i88h544lhb5.apps.googleusercontent.com";
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: googleClientId,
+        scope: "email profile openid",
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            setLoading(true);
+            try {
+              const response = await authApi.googleLogin(tokenResponse.access_token);
+              if (response.success && response.data) {
+                const { token: jwtToken, user: authUser } = response.data;
+                localStorage.setItem("token", jwtToken);
+                localStorage.setItem("user", JSON.stringify(authUser));
+                
+                await refreshUser();
+                
+                if (authUser.role === "ADMIN") {
+                  navigate("/admin");
+                } else if (authUser.role === "OWNER") {
+                  navigate("/owner");
+                } else {
+                  navigate("/advertiser");
+                }
+              } else {
+                throw new Error(response.message || "Đăng nhập Google thất bại");
+              }
+            } catch (err: any) {
+              console.error(err);
+              setError(err?.message || "Đăng nhập Google thất bại. Vui lòng thử lại.");
+            } finally {
+              setLoading(false);
+            }
+          }
+        },
+      });
+      client.requestAccessToken();
+    } catch (err: any) {
+      console.error(err);
+      setError("Đăng nhập Google thất bại. Vui lòng thử lại.");
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,7 +209,11 @@ export default function LoginPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 py-2.5 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-[#F0F9FF] transition-colors cursor-pointer">
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="flex items-center justify-center gap-2 py-2.5 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+            >
               Google
             </button>
             <button className="flex items-center justify-center gap-2 py-2.5 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-[#F0F9FF] transition-colors cursor-pointer">

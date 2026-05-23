@@ -19,6 +19,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.adora.dto.GoogleLoginRequest;
+import com.adora.entity.Role;
+import org.springframework.web.client.RestTemplate;
+import java.util.Map;
+
 @Service
 public class AuthService {
 
@@ -86,6 +91,61 @@ public class AuthService {
                 .user(userSummary)
                 .build();
     }
+
+    @Transactional
+    public LoginResponse googleLogin(GoogleLoginRequest request) {
+        String googleUserInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + request.getToken();
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object> googleResponse;
+
+        try {
+            googleResponse = restTemplate.getForObject(googleUserInfoUrl, Map.class);
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid Google access token");
+        }
+
+        if (googleResponse == null || !googleResponse.containsKey("email")) {
+            throw new BadRequestException("Failed to retrieve user info from Google");
+        }
+
+        String email = (String) googleResponse.get("email");
+        String name = (String) googleResponse.get("name");
+        String picture = (String) googleResponse.get("picture");
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            user = User.builder()
+                    .fullName(name != null ? name : "Google User")
+                    .email(email)
+                    .phone("")
+                    .passwordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                    .role(Role.RENTER)
+                    .status(UserStatus.ACTIVE)
+                    .avatarUrl(picture)
+                    .build();
+            user = userRepository.save(user);
+        }
+
+        UserPrincipal userPrincipal = new UserPrincipal(user);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                userPrincipal, null, userPrincipal.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = tokenProvider.generateToken(authentication);
+
+        LoginResponse.UserSummary userSummary = LoginResponse.UserSummary.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
+
+        return LoginResponse.builder()
+                .token(jwt)
+                .user(userSummary)
+                .build();
+    }
+
 
     private UserDto convertToUserDto(User user) {
         return UserDto.builder()
