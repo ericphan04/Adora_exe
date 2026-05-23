@@ -15,6 +15,11 @@ import { BillboardDto } from "../../types/billboard";
 import { BookingDto } from "../../types/booking";
 import { PaymentDto } from "../../types/payment";
 import { ReportDto, ReportStatus } from "../../types/report";
+import { AdminRevenueView } from "../components/dashboard/AdminRevenueView";
+import { AdminDisputesView } from "../components/dashboard/AdminDisputesView";
+import { AdminSettingsView } from "../components/dashboard/AdminSettingsView";
+import { useConfirm } from "../context/ConfirmContext";
+import { notify, apiErrorMessage } from "../utils/notify";
 
 type BadgeVariant = "active" | "pending" | "booked" | "expired" | "available" | "unavailable";
 
@@ -159,6 +164,7 @@ export default function AdminDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const confirm = useConfirm();
 
   const [dashboardData, setDashboardData] = useState<AdminDashboardDto | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -185,7 +191,10 @@ export default function AdminDashboard() {
     if (path.startsWith("/admin/users")) return "users";
     if (path.startsWith("/admin/listings")) return "listings";
     if (path.startsWith("/admin/transactions")) return "transactions";
+    if (path.startsWith("/admin/revenue")) return "revenue";
+    if (path.startsWith("/admin/disputes")) return "disputes";
     if (path.startsWith("/admin/reports")) return "reports";
+    if (path.startsWith("/admin/settings")) return "settings";
     return "dashboard";
   }, [location.pathname]);
 
@@ -276,148 +285,189 @@ export default function AdminDashboard() {
       ? `Bạn có chắc chắn muốn khóa tài khoản của ${userToUpdate.fullName}?`
       : `Bạn có chắc chắn muốn mở khóa tài khoản của ${userToUpdate.fullName}?`;
 
-    if (!window.confirm(confirmMsg)) return;
+    const ok = await confirm({
+      title: targetStatus === "BLOCKED" ? "Khóa tài khoản" : "Mở khóa tài khoản",
+      description: confirmMsg,
+      variant: targetStatus === "BLOCKED" ? "destructive" : "default",
+      confirmLabel: "Xác nhận",
+    });
+    if (!ok) return;
 
     if (isUsingFallback) {
       setUsers(prev => prev.map(u => u.id === userToUpdate.id ? { ...u, status: targetStatus } : u));
-      alert(`Đã cập nhật trạng thái người dùng thành công! (Mô phỏng)`);
+      notify.success("Đã cập nhật trạng thái người dùng", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await adminApi.updateUserStatus(userToUpdate.id, targetStatus);
       if (res.success) {
-        alert("Cập nhật trạng thái người dùng thành công!");
+        notify.success("Cập nhật trạng thái người dùng thành công");
         loadAllData();
       } else {
-        alert(res.message || "Không thể cập nhật.");
+        notify.error(res.message || "Không thể cập nhật.");
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || err?.message || "Lỗi cập nhật.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi cập nhật."));
     }
   };
 
   // Billboard Approvals
   const handleApproveBillboard = async (id: number) => {
-    if (!window.confirm("Xác nhận DUYỆT bảng quảng cáo này?")) return;
+    const ok = await confirm({
+      title: "Duyệt tin đăng",
+      description: "Xác nhận duyệt bảng quảng cáo này và hiển thị trên sàn?",
+      variant: "success",
+      confirmLabel: "Duyệt",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setBillboards(prev => prev.map(bb => bb.id === id ? { ...bb, status: "APPROVED" } : bb));
-      alert("Đã duyệt bảng quảng cáo! (Mô phỏng)");
+      notify.success("Đã duyệt bảng quảng cáo", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await adminApi.approveBillboard(id);
       if (res.success) {
-        alert("Duyệt tin đăng bảng quảng cáo thành công!");
+        notify.success("Duyệt tin đăng bảng quảng cáo thành công");
         loadAllData();
       } else {
-        alert(res.message || "Không thể duyệt bảng.");
+        notify.error(res.message || "Không thể duyệt bảng.");
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Lỗi phê duyệt.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi phê duyệt."));
     }
   };
 
   const handleRejectBillboard = async (id: number) => {
-    if (!window.confirm("Xác nhận TỪ CHỐI bảng quảng cáo này?")) return;
+    const ok = await confirm({
+      title: "Từ chối tin đăng",
+      description: "Xác nhận từ chối bảng quảng cáo này?",
+      variant: "destructive",
+      confirmLabel: "Từ chối",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setBillboards(prev => prev.map(bb => bb.id === id ? { ...bb, status: "REJECTED" } : bb));
-      alert("Đã từ chối bảng quảng cáo! (Mô phỏng)");
+      notify.success("Đã từ chối bảng quảng cáo", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await adminApi.rejectBillboard(id);
       if (res.success) {
-        alert("Từ chối tin đăng bảng quảng cáo thành công!");
+        notify.success("Từ chối tin đăng bảng quảng cáo thành công");
         loadAllData();
       } else {
-        alert(res.message || "Thao tác thất bại.");
+        notify.error(res.message || "Thao tác thất bại.");
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Lỗi thao tác.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi thao tác."));
     }
   };
 
   const handleHideBillboard = async (id: number) => {
-    if (!window.confirm("Xác nhận ẨN bảng quảng cáo này trên sàn?")) return;
+    const ok = await confirm({
+      title: "Ẩn tin đăng",
+      description: "Xác nhận ẩn bảng quảng cáo này trên sàn?",
+      confirmLabel: "Ẩn tin",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setBillboards(prev => prev.map(bb => bb.id === id ? { ...bb, status: "HIDDEN" } : bb));
-      alert("Đã ẩn bảng quảng cáo! (Mô phỏng)");
+      notify.success("Đã ẩn bảng quảng cáo", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await adminApi.hideBillboard(id);
       if (res.success) {
-        alert("Ẩn bảng quảng cáo thành công!");
+        notify.success("Ẩn bảng quảng cáo thành công");
         loadAllData();
       } else {
-        alert(res.message || "Thao tác ẩn thất bại.");
+        notify.error(res.message || "Thao tác ẩn thất bại.");
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Lỗi thao tác.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi thao tác."));
     }
   };
 
   const handleDeleteBillboard = async (id: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn XÓA VĨNH VIỄN bảng quảng cáo này khỏi hệ thống?")) return;
+    const ok = await confirm({
+      title: "Xóa vĩnh viễn",
+      description: "Bạn có chắc chắn muốn xóa vĩnh viễn bảng quảng cáo này khỏi hệ thống? Hành động không thể hoàn tác.",
+      variant: "destructive",
+      confirmLabel: "Xóa",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setBillboards(prev => prev.filter(bb => bb.id !== id));
-      alert("Đã xóa bảng quảng cáo khỏi hệ thống! (Mô phỏng)");
+      notify.success("Đã xóa bảng quảng cáo khỏi hệ thống", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await adminApi.deleteBillboard(id);
       if (res.success) {
-        alert("Xóa bảng quảng cáo thành công!");
+        notify.success("Xóa bảng quảng cáo thành công");
         loadAllData();
       } else {
-        alert(res.message || "Xóa thất bại.");
+        notify.error(res.message || "Xóa thất bại.");
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Lỗi hệ thống.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi hệ thống."));
     }
   };
 
   // Report Resolutions
   const handleResolveReport = async (id: number) => {
-    if (!window.confirm("Xác nhận đánh dấu khiếu nại này đã GIẢI QUYẾT?")) return;
+    const ok = await confirm({
+      title: "Giải quyết khiếu nại",
+      description: "Xác nhận đánh dấu khiếu nại này đã được giải quyết?",
+      variant: "success",
+      confirmLabel: "Giải quyết",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setReports(prev => prev.map(r => r.id === id ? { ...r, status: "RESOLVED" } : r));
-      alert("Đã đánh dấu đã giải quyết! (Mô phỏng)");
+      notify.success("Đã đánh dấu đã giải quyết", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await reportApi.resolveReport(id);
       if (res.success) {
-        alert("Đã giải quyết khiếu nại.");
+        notify.success("Đã giải quyết khiếu nại");
         loadAllData();
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Lỗi thao tác.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi thao tác."));
     }
   };
 
   const handleRejectReport = async (id: number) => {
-    if (!window.confirm("Xác nhận BÁC BỎ khiếu nại này?")) return;
+    const ok = await confirm({
+      title: "Bác bỏ khiếu nại",
+      description: "Xác nhận bác bỏ khiếu nại này?",
+      variant: "destructive",
+      confirmLabel: "Bác bỏ",
+    });
+    if (!ok) return;
     if (isUsingFallback) {
       setReports(prev => prev.map(r => r.id === id ? { ...r, status: "REJECTED" } : r));
-      alert("Đã bác bỏ khiếu nại! (Mô phỏng)");
+      notify.success("Đã bác bỏ khiếu nại", "Chế độ mô phỏng");
       return;
     }
 
     try {
       const res = await reportApi.rejectReport(id);
       if (res.success) {
-        alert("Bác bỏ khiếu nại thành công.");
+        notify.success("Bác bỏ khiếu nại thành công");
         loadAllData();
       }
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Lỗi thao tác.");
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi thao tác."));
     }
   };
 
@@ -649,12 +699,24 @@ export default function AdminDashboard() {
                   ? "Duyệt Tin Đăng Bảng QC"
                   : view === "transactions"
                   ? "Giám Sát Doanh Thu & Giao Dịch"
+                  : view === "revenue"
+                  ? "Doanh Thu & Hoa Hồng"
+                  : view === "disputes"
+                  ? "Trung Tâm Khiếu Nại"
                   : view === "reports"
-                  ? "Xử Lý Khiếu Nại"
+                  ? "Báo Cáo & Tố Cáo"
+                  : view === "settings"
+                  ? "Cài Đặt Hệ Thống"
                   : "Bảng Điều Khiển Quản Trị"}
               </h1>
               <p className="text-sm text-[#6B7A8D] mt-0.5">
-                Chào mừng trở lại, {currentUser?.fullName || "Admin"}. Quản lý hệ thống LED Billboard.
+                {view === "revenue"
+                  ? "Phân tích GMV, hoa hồng 5% và dòng tiền nền tảng."
+                  : view === "disputes"
+                  ? "Xử lý tranh chấp giữa nhà quảng cáo và chủ bảng QC."
+                  : view === "settings"
+                  ? "Cấu hình ADORA, thanh toán và chính sách vận hành."
+                  : `Chào mừng trở lại, ${currentUser?.fullName || "Admin"}. Quản lý hệ thống LED Billboard.`}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -928,7 +990,28 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* 5. REPORTS MANAGEMENT VIEW */}
+        {/* 5. REVENUE ANALYTICS VIEW */}
+        {view === "revenue" && dashboardData && (
+          <AdminRevenueView
+            dashboardData={dashboardData}
+            payments={payments}
+            bookings={bookings}
+          />
+        )}
+
+        {/* 6. DISPUTES CENTER VIEW */}
+        {view === "disputes" && (
+          <AdminDisputesView
+            reports={reports}
+            onResolve={handleResolveReport}
+            onReject={handleRejectReport}
+          />
+        )}
+
+        {/* 7. SYSTEM SETTINGS VIEW */}
+        {view === "settings" && <AdminSettingsView />}
+
+        {/* 8. REPORTS MANAGEMENT VIEW */}
         {view === "reports" && (
           <div className="p-8 space-y-4">
             <div className="bg-white border border-[#E3E8EF] rounded-xl p-5 flex items-center gap-4 text-xs">
