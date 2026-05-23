@@ -44,6 +44,7 @@ const navItems: Record<string, NavItem[]> = {
     { icon: <BarChart3 className="w-5 h-5" />, label: "Doanh Thu", path: "/admin/revenue" },
     { icon: <AlertTriangle className="w-5 h-5" />, label: "Khiếu Nại", path: "/admin/disputes" },
     { icon: <Eye className="w-5 h-5" />, label: "Báo Cáo", path: "/admin/reports" },
+    { icon: <MessageSquare className="w-5 h-5" />, label: "Tin Nhắn", path: "/admin/messages" },
     { icon: <Cog className="w-5 h-5" />, label: "Cài Đặt Hệ Thống", path: "/admin/settings" },
   ],
 };

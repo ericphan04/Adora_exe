@@ -54,6 +54,19 @@ const ownerApi = {
   rejectBooking: (id: number): Promise<ApiResponse<BookingDto>> => {
     return axiosClient.patch(`/api/owner/bookings/${id}/reject`);
   },
+  setAvailability: (
+    billboardId: number,
+    data: {
+      startDate: string;
+      endDate: string;
+      status: "AVAILABLE" | "BOOKED" | "BLOCKED";
+    },
+  ): Promise<ApiResponse<BillboardDto>> => {
+    return axiosClient.post(
+      `/api/owner/billboards/${billboardId}/availability`,
+      data,
+    );
+  },
 };
 
 export default ownerApi;

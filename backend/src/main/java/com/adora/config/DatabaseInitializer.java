@@ -23,6 +23,8 @@ public class DatabaseInitializer implements ApplicationRunner {
     private final PaymentRepository paymentRepository;
     private final ReviewRepository reviewRepository;
     private final ReportRepository reportRepository;
+    private final ConversationRepository conversationRepository;
+    private final MessageRepository messageRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DatabaseInitializer(
@@ -33,6 +35,8 @@ public class DatabaseInitializer implements ApplicationRunner {
             PaymentRepository paymentRepository,
             ReviewRepository reviewRepository,
             ReportRepository reportRepository,
+            ConversationRepository conversationRepository,
+            MessageRepository messageRepository,
             PasswordEncoder passwordEncoder) {
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
@@ -41,6 +45,8 @@ public class DatabaseInitializer implements ApplicationRunner {
         this.paymentRepository = paymentRepository;
         this.reviewRepository = reviewRepository;
         this.reportRepository = reportRepository;
+        this.conversationRepository = conversationRepository;
+        this.messageRepository = messageRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -348,6 +354,39 @@ public class DatabaseInitializer implements ApplicationRunner {
                         .status(ReportStatus.PENDING)
                         .build();
                 reportRepository.save(report1);
+            }
+        }
+
+        // 8. Seed sample conversations (renter ↔ owner)
+        if (conversationRepository.count() == 0) {
+            List<Booking> bookings = bookingRepository.findAll();
+            if (!bookings.isEmpty()) {
+                Booking bk = bookings.get(0);
+                LocalDateTime now = LocalDateTime.now();
+                Conversation conv = conversationRepository.save(Conversation.builder()
+                        .renter(renter)
+                        .owner(owner)
+                        .booking(bk)
+                        .billboard(bk.getBillboard())
+                        .renterLastReadAt(now.minusHours(1))
+                        .ownerLastReadAt(now)
+                        .adminLastReadAt(now)
+                        .build());
+
+                Message m1 = messageRepository.save(Message.builder()
+                        .conversation(conv)
+                        .sender(renter)
+                        .content("Chào anh, em muốn hỏi thêm về lịch hiển thị bảng " + bk.getBillboard().getTitle() + ".")
+                        .build());
+                Message m2 = messageRepository.save(Message.builder()
+                        .conversation(conv)
+                        .sender(owner)
+                        .content("Chào bạn, bên mình còn khung giờ tối 18h–22h. Bạn cần thêm thông tin gì không?")
+                        .build());
+
+                conv.setLastMessagePreview(m2.getContent());
+                conv.setLastMessageAt(m2.getCreatedAt());
+                conversationRepository.save(conv);
             }
         }
     }

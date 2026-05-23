@@ -9,6 +9,9 @@ const paymentApi = {
   getById: (id: number): Promise<ApiResponse<PaymentDto>> => {
     return axiosClient.get(`/api/renter/payments/${id}`);
   },
+  getAll: (): Promise<ApiResponse<PaymentDto[]>> => {
+    return axiosClient.get("/api/renter/payments");
+  },
 };
 
 export default paymentApi;

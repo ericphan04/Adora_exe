@@ -18,6 +18,7 @@ import { ReportDto, ReportStatus } from "../../types/report";
 import { AdminRevenueView } from "../components/dashboard/AdminRevenueView";
 import { AdminDisputesView } from "../components/dashboard/AdminDisputesView";
 import { AdminSettingsView } from "../components/dashboard/AdminSettingsView";
+import { MessagesView } from "../components/messages/MessagesView";
 import { useConfirm } from "../context/ConfirmContext";
 import { notify, apiErrorMessage } from "../utils/notify";
 
@@ -195,46 +196,41 @@ export default function AdminDashboard() {
     if (path.startsWith("/admin/disputes")) return "disputes";
     if (path.startsWith("/admin/reports")) return "reports";
     if (path.startsWith("/admin/settings")) return "settings";
+    if (path.startsWith("/admin/messages")) return "messages";
     return "dashboard";
   }, [location.pathname]);
 
   const loadAllData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Dashboard Stats
-      const dbRes = await adminApi.getDashboardData();
-      const dbData = dbRes.success ? dbRes.data : mockAdminDashboard;
+      const [dbRes, userRes, bbRes, payRes, bkRes, rpRes] = await Promise.all([
+        adminApi.getDashboardData(),
+        adminApi.getUsers(),
+        adminApi.getAllBillboards(),
+        adminApi.getPayments(),
+        adminApi.getBookings(),
+        reportApi.getReports(),
+      ]);
 
-      // 2. Fetch Users
-      const userRes = await adminApi.getUsers();
-      const userData = userRes.success ? userRes.data : mockUsers;
-
-      // 3. Fetch Billboards
-      const bbRes = await adminApi.getAllBillboards();
-      const bbData = bbRes.success ? bbRes.data : mockBillboards;
-
-      // 4. Fetch Payments
-      const payRes = await adminApi.getPayments();
-      const payData = payRes.success ? payRes.data : mockPayments;
-
-      // 5. Fetch Bookings
-      const bkRes = await adminApi.getBookings();
-      const bkData = bkRes.success ? bkRes.data : mockBookings;
-
-      // 6. Fetch Dispute Reports
-      const rpRes = await reportApi.getReports();
-      const rpData = rpRes.success ? rpRes.data : mockReports;
-
-      if (!dbRes.success || !userRes.success || !bbRes.success || !payRes.success || !bkRes.success || !rpRes.success) {
-        throw new Error("API response error");
+      if (
+        !dbRes.success &&
+        !userRes.success &&
+        !bbRes.success &&
+        !payRes.success &&
+        !bkRes.success &&
+        !rpRes.success
+      ) {
+        throw new Error("All admin APIs failed");
       }
 
-      setDashboardData(dbData);
-      setUsers(userData);
-      setBillboards(bbData);
-      setPayments(payData);
-      setBookings(bkData);
-      setReports(rpData);
+      setDashboardData(
+        dbRes.success && dbRes.data ? dbRes.data : mockAdminDashboard,
+      );
+      setUsers(userRes.success && userRes.data ? userRes.data : []);
+      setBillboards(bbRes.success && bbRes.data ? bbRes.data : []);
+      setPayments(payRes.success && payRes.data ? payRes.data : []);
+      setBookings(bkRes.success && bkRes.data ? bkRes.data : []);
+      setReports(rpRes.success && rpRes.data ? rpRes.data : []);
       setIsUsingFallback(false);
     } catch (error) {
       console.warn("Admin APIs failed, fallback loading:", error);
@@ -707,6 +703,8 @@ export default function AdminDashboard() {
                   ? "Báo Cáo & Tố Cáo"
                   : view === "settings"
                   ? "Cài Đặt Hệ Thống"
+                  : view === "messages"
+                  ? "Tin Nhắn Nền Tảng"
                   : "Bảng Điều Khiển Quản Trị"}
               </h1>
               <p className="text-sm text-[#6B7A8D] mt-0.5">
@@ -716,6 +714,8 @@ export default function AdminDashboard() {
                   ? "Xử lý tranh chấp giữa nhà quảng cáo và chủ bảng QC."
                   : view === "settings"
                   ? "Cấu hình ADORA, thanh toán và chính sách vận hành."
+                  : view === "messages"
+                  ? "Giám sát và hỗ trợ hội thoại Renter ↔ Owner."
                   : `Chào mừng trở lại, ${currentUser?.fullName || "Admin"}. Quản lý hệ thống LED Billboard.`}
               </p>
             </div>
@@ -1009,6 +1009,8 @@ export default function AdminDashboard() {
         )}
 
         {/* 7. SYSTEM SETTINGS VIEW */}
+        {view === "messages" && <MessagesView role="ADMIN" />}
+
         {view === "settings" && <AdminSettingsView />}
 
         {/* 8. REPORTS MANAGEMENT VIEW */}

@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye } from "lucide-react";
 import { TopNav } from "../components/TopNav";
 import { Footer } from "../components/Footer";
 import { StatusBadge } from "../components/StatusBadge";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { BookingCalendar } from "../components/BookingCalendar";
 import billboardApi from "../../api/billboardApi";
 import bookingApi from "../../api/bookingApi";
 import { BillboardDto } from "../../types/billboard";
 import { ReviewDto } from "../../types/review";
 import { useAuth } from "../context/AuthContext";
+import {
+  getTodayParts,
+  toIsoDate,
+  formatDisplayDate,
+  isPastDay,
+} from "../utils/calendar";
+import { getBookedDaysForMonth } from "../utils/availability";
+import { notify, apiErrorMessage } from "../utils/notify";
 
 const fallbackImages = [
   "https://images.unsplash.com/photo-1585504303098-9785dc784742?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMRUQlMjBiaWxsYm9hcmQlMjBkaWdpdGFsJTIwY2l0eSUyMG5pZ2h0fGVufDF8fHx8MTc3MjU0NjU5M3ww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -24,7 +33,17 @@ const fallbackReviewsList: ReviewDto[] = [
   { id: 3, bookingId: 103, rating: 5, comment: "Vị trí cao cấp, kết quả ấn tượng. Chắc chắn sẽ đặt lại cho chiến dịch tiếp theo.", createdAt: "2025-12-10" },
 ];
 
-const startDayOffset = 0; // March 2026 starts on Sunday (CN is offset 0)
+function calcBookingPrice(
+  pricePerDay: number,
+  daysCount: number,
+  locationSurcharge: number,
+) {
+  const subtotal = pricePerDay * daysCount;
+  const surcharge = locationSurcharge || 0;
+  const beforeFee = subtotal + surcharge;
+  const serviceFee = Math.round(beforeFee * 0.05);
+  return { subtotal, surcharge, serviceFee, total: beforeFee + serviceFee, daysCount };
+}
 
 export default function BillboardDetailPage() {
   const navigate = useNavigate();
@@ -40,13 +59,28 @@ export default function BillboardDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Booking states
+  const today = getTodayParts();
+  const [calendarYear, setCalendarYear] = useState(today.year);
+  const [calendarMonth, setCalendarMonth] = useState(today.month);
+
   const [selectedStartDay, setSelectedStartDay] = useState<number | null>(null);
   const [selectedEndDay, setSelectedEndDay] = useState<number | null>(null);
   const [note, setNote] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
+
+  const handleMonthChange = useCallback((year: number, month: number) => {
+    setCalendarYear(year);
+    setCalendarMonth(month);
+    setSelectedStartDay(null);
+    setSelectedEndDay(null);
+    setBookingError(null);
+  }, []);
+
+  const bookedDaysSet = useMemo(
+    () => getBookedDaysForMonth(billboard?.availabilities, calendarYear, calendarMonth),
+    [billboard?.availabilities, calendarYear, calendarMonth],
+  );
 
   useEffect(() => {
     let active = true;
@@ -99,14 +133,14 @@ export default function BillboardDetailPage() {
               { id: 3, name: "Chống thời tiết IP65" },
               { id: 4, name: "Mật độ điểm ảnh 6mm" }
             ],
-            availabilities: [
-              { id: 1, availableDate: "2026-03-03", status: "BOOKED" },
-              { id: 2, availableDate: "2026-03-04", status: "BOOKED" },
-              { id: 3, availableDate: "2026-03-05", status: "BOOKED" },
-              { id: 4, availableDate: "2026-03-08", status: "BOOKED" },
-              { id: 5, availableDate: "2026-03-09", status: "BOOKED" },
-              { id: 6, availableDate: "2026-03-10", status: "BOOKED" }
-            ]
+            availabilities: (() => {
+              const { year, month } = getTodayParts();
+              return [3, 4, 5, 8, 9, 10].map((day, i) => ({
+                id: i + 1,
+                availableDate: toIsoDate(year, month, day),
+                status: "BOOKED" as const,
+              }));
+            })()
           };
           setBillboard(dummyBillboard);
           setReviews(fallbackReviewsList);
@@ -119,43 +153,34 @@ export default function BillboardDetailPage() {
     return () => { active = false; };
   }, [billboardId]);
 
-  // Parse booked days for March 2026 calendar
-  const bookedDaysSet = new Set<number>();
-  if (billboard?.availabilities) {
-    billboard.availabilities.forEach(av => {
-      if (av.availableDate.startsWith("2026-03-")) {
-        const day = parseInt(av.availableDate.split("-")[2], 10);
-        if (av.status === "BOOKED" || av.status === "BLOCKED") {
-          bookedDaysSet.add(day);
-        }
-      }
-    });
-  }
-
   const handleDayClick = (day: number) => {
+    if (isPastDay(calendarYear, calendarMonth, day)) return;
+
     if (selectedStartDay === null || (selectedStartDay !== null && selectedEndDay !== null)) {
       setSelectedStartDay(day);
       setSelectedEndDay(null);
       setBookingError(null);
-    } else {
-      if (day < selectedStartDay) {
-        setSelectedStartDay(day);
-        setSelectedEndDay(null);
-      } else {
-        let hasConflict = false;
-        for (let d = selectedStartDay; d <= day; d++) {
-          if (bookedDaysSet.has(d)) {
-            hasConflict = true;
-            break;
-          }
-        }
-        if (hasConflict) {
-          setBookingError("Khoảng thời gian chọn chứa ngày đã được đặt. Vui lòng chọn khoảng khác.");
-        } else {
-          setSelectedEndDay(day);
-          setBookingError(null);
-        }
+      return;
+    }
+
+    if (day < selectedStartDay) {
+      setSelectedStartDay(day);
+      setSelectedEndDay(null);
+      return;
+    }
+
+    let hasConflict = false;
+    for (let d = selectedStartDay; d <= day; d++) {
+      if (bookedDaysSet.has(d) || isPastDay(calendarYear, calendarMonth, d)) {
+        hasConflict = true;
+        break;
       }
+    }
+    if (hasConflict) {
+      setBookingError("Khoảng thời gian chọn chứa ngày đã đặt hoặc đã qua. Vui lòng chọn khoảng khác.");
+    } else {
+      setSelectedEndDay(day);
+      setBookingError(null);
     }
   };
 
@@ -176,32 +201,29 @@ export default function BillboardDetailPage() {
     setBookingLoading(true);
     setBookingError(null);
     try {
-      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-      const startDate = `2026-03-${pad(selectedStartDay)}`;
-      const endDate = `2026-03-${pad(selectedEndDay)}`;
+      const startDate = toIsoDate(calendarYear, calendarMonth, selectedStartDay);
+      const endDate = toIsoDate(calendarYear, calendarMonth, selectedEndDay);
 
-      const requestPayload = {
+      const response = await bookingApi.create({
         billboardId,
         startDate,
         endDate,
-        note: note || "Campaign for new product launch"
-      };
+        note: note.trim() || undefined,
+      });
 
-      const response = await bookingApi.create(requestPayload);
       if (response.success) {
-        setBookingSuccess(true);
+        notify.success("Đặt chỗ thành công", "Chuyển đến trang đặt chỗ của bạn...");
         setSelectedStartDay(null);
         setSelectedEndDay(null);
         setNote("");
-        setTimeout(() => {
-          navigate("/advertiser");
-        }, 2000);
+        setTimeout(() => navigate("/advertiser/bookings"), 1500);
       } else {
         throw new Error(response.message || "Đặt chỗ thất bại");
       }
-    } catch (err: any) {
-      console.error(err);
-      setBookingError(err?.message || "Đặt chỗ thất bại. Vui lòng kiểm tra lại thông tin.");
+    } catch (err: unknown) {
+      const msg = apiErrorMessage(err, "Đặt chỗ thất bại. Vui lòng kiểm tra lại thông tin.");
+      setBookingError(msg);
+      notify.error(msg);
     } finally {
       setBookingLoading(false);
     }
@@ -235,12 +257,20 @@ export default function BillboardDetailPage() {
   }
 
   const imagesList = billboard.images?.map(img => img.imageUrl) || fallbackImages;
-  
-  // Calculate price dynamically
-  const pricePerMonth = billboard.pricePerMonth;
-  const surcharge = billboard.locationSurcharge || 0;
-  const serviceFee = Math.round((pricePerMonth + surcharge) * 0.05);
-  const totalAmount = pricePerMonth + surcharge + serviceFee;
+
+  const selectedDaysCount =
+    selectedStartDay != null && selectedEndDay != null
+      ? selectedEndDay - selectedStartDay + 1
+      : 0;
+
+  const priceBreakdown =
+    selectedDaysCount > 0
+      ? calcBookingPrice(
+          billboard.pricePerDay,
+          selectedDaysCount,
+          billboard.locationSurcharge || 0,
+        )
+      : null;
 
   const tabs = [
     { key: "overview", label: "Tổng Quan" },
@@ -248,18 +278,6 @@ export default function BillboardDetailPage() {
     { key: "reviews", label: `Đánh Giá (${reviews.length})` },
     { key: "map", label: "Bản Đồ" },
   ];
-
-  const totalDays = 31;
-  const calendarCells: { day: number | null; isBooked: boolean }[] = [];
-  for (let i = 0; i < startDayOffset; i++) {
-    calendarCells.push({ day: null, isBooked: false });
-  }
-  for (let d = 1; d <= totalDays; d++) {
-    calendarCells.push({ day: d, isBooked: bookedDaysSet.has(d) });
-  }
-  while (calendarCells.length % 7 !== 0) {
-    calendarCells.push({ day: null, isBooked: false });
-  }
 
   return (
     <div className="min-h-screen bg-[#F0F9FF]">
@@ -463,91 +481,71 @@ export default function BillboardDetailPage() {
 
               {/* Pricing */}
               <div className="border border-[#E3E8EF] rounded-lg p-4 mb-5">
-                <p className="text-xs text-[#6B7A8D] mb-2">Chi Tiết Giá</p>
+                <p className="text-xs text-[#6B7A8D] mb-2">Chi tiết giá</p>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-[#6B7A8D]">Giá Gốc</span><span className="text-[#1D4ED8]">{pricePerMonth.toLocaleString("vi-VN")}₫/tháng</span></div>
-                  <div className="flex justify-between"><span className="text-[#6B7A8D]">Phụ phí Vị Trí Cao Cấp</span><span className="text-[#1D4ED8]">+{surcharge.toLocaleString("vi-VN")}₫</span></div>
-                  <div className="flex justify-between"><span className="text-[#6B7A8D]">Phí Nền Tảng (5%)</span><span className="text-[#1D4ED8]">{serviceFee.toLocaleString("vi-VN")}₫</span></div>
-                  <div className="border-t border-[#E3E8EF] pt-2 flex justify-between">
-                    <span className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>Tổng Cộng</span>
-                    <span className="text-xl text-[#1D4ED8]" style={{ fontWeight: 700 }}>{totalAmount.toLocaleString("vi-VN")}₫<span className="text-xs text-[#6B7A8D]" style={{ fontWeight: 400 }}>/tháng</span></span>
-                  </div>
+                  {priceBreakdown ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-[#6B7A8D]">
+                          {billboard.pricePerDay.toLocaleString("vi-VN")}₫ × {priceBreakdown.daysCount} ngày
+                        </span>
+                        <span className="text-[#1D4ED8]">
+                          {priceBreakdown.subtotal.toLocaleString("vi-VN")}₫
+                        </span>
+                      </div>
+                      {priceBreakdown.surcharge > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-[#6B7A8D]">Phụ phí vị trí</span>
+                          <span className="text-[#1D4ED8]">
+                            +{priceBreakdown.surcharge.toLocaleString("vi-VN")}₫
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-[#6B7A8D]">Phí nền tảng (5%)</span>
+                        <span className="text-[#1D4ED8]">
+                          {priceBreakdown.serviceFee.toLocaleString("vi-VN")}₫
+                        </span>
+                      </div>
+                      <div className="border-t border-[#E3E8EF] pt-2 flex justify-between">
+                        <span className="text-[#1D4ED8] font-semibold">Tổng ước tính</span>
+                        <span className="text-xl text-[#1D4ED8] font-bold">
+                          {priceBreakdown.total.toLocaleString("vi-VN")}₫
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-[#6B7A8D]">Giá theo ngày</span>
+                        <span className="text-[#1D4ED8] font-semibold">
+                          {billboard.pricePerDay.toLocaleString("vi-VN")}₫/ngày
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#6B7A8D] pt-1">
+                        Chọn khoảng ngày trên lịch để xem tổng chi phí.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* BOOKING CALENDAR */}
               <div className="mb-5">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm text-[#1D4ED8]" style={{ fontWeight: 600 }}>Lịch Đặt Chỗ — Tháng 3, 2026</p>
-                </div>
-                
                 {bookingError && (
                   <div className="mb-3 p-2 bg-red-50 border border-red-200 text-red-600 rounded text-xs">
                     {bookingError}
                   </div>
                 )}
-                {bookingSuccess && (
-                  <div className="mb-3 p-2 bg-green-50 border border-green-200 text-green-600 rounded text-xs">
-                    Đặt chỗ thành công! Đang chuyển hướng về dashboard...
-                  </div>
-                )}
 
-                <div className="grid grid-cols-7 gap-1 text-center text-xs mb-1">
-                  {["CN","T2","T3","T4","T5","T6","T7"].map((d) => (
-                    <div key={d} className="py-1 text-[#6B7A8D]" style={{ fontWeight: 500 }}>{d}</div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {calendarCells.map((cell, i) => {
-                    if (!cell.day) return <div key={i} className="h-14" />;
-                    const isBooked = cell.isBooked;
-                    
-                    const isSelected = selectedStartDay !== null &&
-                      (selectedEndDay !== null
-                        ? cell.day >= selectedStartDay && cell.day <= selectedEndDay
-                        : cell.day === selectedStartDay);
-
-                    return (
-                      <div
-                        key={i}
-                        onClick={() => !isBooked && handleDayClick(cell.day!)}
-                        className={`h-14 rounded-lg flex flex-col items-center justify-center gap-0.5 border transition-all ${
-                          isBooked
-                            ? "bg-red-50 border-red-200 cursor-not-allowed"
-                            : isSelected
-                              ? "bg-blue-50 border-blue-400 ring-2 ring-blue-400/20 cursor-pointer"
-                              : "bg-emerald-50 border-emerald-200 cursor-pointer hover:bg-emerald-100 hover:border-emerald-300"
-                        }`}
-                      >
-                        <span className={`text-xs ${isBooked ? "text-red-700" : isSelected ? "text-blue-700" : "text-emerald-800"}`} style={{ fontWeight: 600 }}>
-                          {cell.day}
-                        </span>
-                        <span
-                          className={`text-[9px] px-1 py-px rounded ${
-                            isBooked ? "bg-red-100 text-red-600" : isSelected ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
-                          }`}
-                          style={{ fontWeight: 600, letterSpacing: "0.02em" }}
-                        >
-                          {isBooked ? "BẬN" : isSelected ? "CHỌN" : "TRỐNG"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center gap-5 mt-3 text-xs text-[#6B7A8D]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-300" />
-                    <span>Trống</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded bg-blue-100 border border-blue-300" />
-                    <span>Đang chọn</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded bg-red-100 border border-red-300" />
-                    <span>Đã đặt</span>
-                  </div>
-                </div>
+                <BookingCalendar
+                  year={calendarYear}
+                  month={calendarMonth}
+                  onMonthChange={handleMonthChange}
+                  bookedDays={bookedDaysSet}
+                  selectedStartDay={selectedStartDay}
+                  selectedEndDay={selectedEndDay}
+                  onDayClick={handleDayClick}
+                />
               </div>
 
               {selectedStartDay && selectedEndDay && (
@@ -568,10 +566,28 @@ export default function BillboardDetailPage() {
                 disabled={bookingLoading}
                 className="w-full bg-[#06B6D4] text-white py-3 rounded-lg hover:bg-[#0891B2] transition-colors cursor-pointer mb-3 disabled:opacity-50"
               >
-                {bookingLoading ? "Đang xử lý..." : selectedStartDay && selectedEndDay ? `Đặt Lịch (${selectedStartDay}/03 - ${selectedEndDay}/03)` : "Đặt Ngay (Chọn ngày trên lịch)"}
+                {bookingLoading
+                  ? "Đang xử lý..."
+                  : selectedStartDay && selectedEndDay
+                    ? `Đặt lịch (${formatDisplayDate(toIsoDate(calendarYear, calendarMonth, selectedStartDay))} – ${formatDisplayDate(toIsoDate(calendarYear, calendarMonth, selectedEndDay))})`
+                    : "Đặt ngay (chọn ngày trên lịch)"}
               </button>
               
-              <button className="w-full border border-[#E3E8EF] text-[#1D4ED8] py-3 rounded-lg hover:bg-[#F0F9FF] transition-colors cursor-pointer flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!user) {
+                    navigate("/login");
+                    return;
+                  }
+                  if (user.role !== "RENTER") {
+                    notify.error("Chỉ tài khoản nhà quảng cáo mới có thể nhắn tin với chủ bảng.");
+                    return;
+                  }
+                  navigate(`/advertiser/messages?billboardId=${billboardId}`);
+                }}
+                className="w-full border border-[#E3E8EF] text-[#1D4ED8] py-3 rounded-lg hover:bg-[#F0F9FF] transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
                 <Phone className="w-4 h-4" />
                 Liên Hệ Chủ Sở Hữu
               </button>
