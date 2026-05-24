@@ -8,6 +8,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
 import billboardApi from "../../api/billboardApi";
 import { BillboardDto } from "../../types/billboard";
+import { getTodayParts, toIsoDate } from "../utils/calendar";
 
 const mapBillboardDtoToCardProps = (b: BillboardDto) => {
   const thumbnail = b.images?.find(img => img.isThumbnail)?.imageUrl || b.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1585504303098-9785dc784742?w=500";
@@ -106,7 +107,10 @@ const fallbackBillboards: BillboardDto[] = [
     isFeatured: true,
     images: [{ id: 3, imageUrl: "https://images.unsplash.com/photo-1765908310161-1005cf85586d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0aW1lcyUyMHNxdWFyZSUyMGRpZ2l0YWwlMjBkaXNwbGF5fGVufDF8fHx8MTc3MjU0NjU5NHww&ixlib=rb-4.1.0&q=80&w=1080", isThumbnail: true }],
     features: [{ id: 1, name: "Camera đo traffic" }],
-    availabilities: [{ id: 1, availableDate: "2026-03-10", status: "BOOKED" }]
+    availabilities: (() => {
+      const { year, month } = getTodayParts();
+      return [{ id: 1, availableDate: toIsoDate(year, month, 10), status: "BOOKED" as const }];
+    })()
   }
 ];
 

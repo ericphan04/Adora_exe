@@ -6,6 +6,7 @@ import { Footer } from "../components/Footer";
 import { BillboardCard } from "../components/BillboardCard";
 import billboardApi from "../../api/billboardApi";
 import { BillboardDto } from "../../types/billboard";
+import { getTodayParts, toIsoDate } from "../utils/calendar";
 
 const allBillboardsMock = [
   { id: 1, image: "https://images.unsplash.com/photo-1585504303098-9785dc784742?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMRUQlMjBiaWxsYm9hcmQlMjBkaWdpdGFsJTIwY2l0eSUyMG5pZ2h0fGVufDF8fHx8MTc3MjU0NjU5M3ww&ixlib=rb-4.1.0&q=80&w=1080", name: "Cầu Rồng LED", location: "Đà Nẵng, Hải Châu", size: "14m x 6m", trafficIndex: "High", price: "85.000.000₫", availability: "available" as const },
@@ -151,7 +152,19 @@ export default function BillboardListingPage() {
             { id: 3, name: "Chống thời tiết" },
             { id: 4, name: "Có âm thanh" }
           ],
-          availabilities: b.availability === "booked" ? [{ id: 1, availableDate: "2026-03-10", status: "BOOKED" }] : []
+          availabilities:
+            b.availability === "booked"
+              ? (() => {
+                  const { year, month } = getTodayParts();
+                  return [
+                    {
+                      id: 1,
+                      availableDate: toIsoDate(year, month, 10),
+                      status: "BOOKED" as const,
+                    },
+                  ];
+                })()
+              : []
         };
       });
 

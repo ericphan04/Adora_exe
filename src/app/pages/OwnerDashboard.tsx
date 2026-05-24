@@ -13,8 +13,13 @@ import { BillboardDto } from "../../types/billboard";
 import { BookingDto } from "../../types/booking";
 import { OwnerRevenueView } from "../components/dashboard/OwnerRevenueView";
 import { OwnerSettingsView } from "../components/dashboard/OwnerSettingsView";
+import { OwnerAvailabilityView } from "../components/dashboard/OwnerAvailabilityView";
+import { MiniMonthCalendar } from "../components/dashboard/MiniMonthCalendar";
 import { useConfirm } from "../context/ConfirmContext";
 import { notify, apiErrorMessage } from "../utils/notify";
+import { getBookingMonthEvents } from "../utils/bookingEvents";
+import { getTodayParts } from "../utils/calendar";
+import { MessagesView } from "../components/messages/MessagesView";
 
 type BadgeVariant = "active" | "pending" | "booked" | "expired" | "available" | "unavailable";
 
@@ -166,32 +171,31 @@ export default function OwnerDashboard() {
     if (path.startsWith("/owner/availability")) return "availability";
     if (path.startsWith("/owner/revenue")) return "revenue";
     if (path.startsWith("/owner/settings")) return "settings";
+    if (path.startsWith("/owner/messages")) return "messages";
     return "dashboard";
   }, [location.pathname]);
 
   const loadAllData = async () => {
     setLoading(true);
     try {
-      // 1. Dashboard Overview Data
-      const dbRes = await ownerApi.getDashboardData();
-      let dbData = dbRes.success ? dbRes.data : mockOwnerDashboard;
+      const [dbRes, bbRes, bkRes] = await Promise.all([
+        ownerApi.getDashboardData(),
+        ownerApi.getMyBillboards(),
+        ownerApi.getBookings(),
+      ]);
 
-      // 2. Billboards Data
-      const bbRes = await ownerApi.getMyBillboards();
-      const bbData = bbRes.success ? bbRes.data : mockBillboards;
+      const bkData = bkRes.success && bkRes.data ? bkRes.data : [];
+      const bbData = bbRes.success && bbRes.data ? bbRes.data : [];
+      const dbData = dbRes.success && dbRes.data ? dbRes.data : null;
 
-      // 3. Bookings Data
-      const bkRes = await ownerApi.getBookings();
-      const bkData = bkRes.success ? bkRes.data : mockBookings;
-
-      // If backend returns mock values or fails, fallback is triggered
-      if (!dbRes.success || !bbRes.success || !bkRes.success) {
-        throw new Error("One or more requests returned failure status.");
+      if (!dbRes.success && !bbRes.success && !bkRes.success) {
+        throw new Error("All owner APIs failed");
       }
 
       setDashboardData({
-        ...dbData,
-        recentBookingRequests: bkData.filter(b => b.status === "PENDING").slice(0, 5)
+        ...(dbData ?? mockOwnerDashboard),
+        recentBookingRequests: bkData.filter((b) => b.status === "PENDING").slice(0, 5),
+        pendingRequests: bkData.filter((b) => b.status === "PENDING").length,
       });
       setBillboards(bbData);
       setBookings(bkData);
@@ -201,7 +205,7 @@ export default function OwnerDashboard() {
       setIsUsingFallback(true);
       setDashboardData({
         ...mockOwnerDashboard,
-        recentBookingRequests: mockBookings.filter(b => b.status === "PENDING")
+        recentBookingRequests: mockBookings.filter((b) => b.status === "PENDING"),
       });
       setBillboards(mockBillboards);
       setBookings(mockBookings);
@@ -463,30 +467,11 @@ export default function OwnerDashboard() {
     }
   };
 
-  // Filter March 2026 calendar events
-  const parsedCalEvents = useMemo(() => {
-    const events: Array<{ day: number; title: string; color: string }> = [];
-    const seenIds = new Set<number>();
-
-    bookings.forEach(b => {
-      if (seenIds.has(b.id)) return;
-      seenIds.add(b.id);
-
-      if (b.startDate && b.startDate.includes("-03-")) {
-        const day = parseInt(b.startDate.split("-")[2], 10);
-        if (!isNaN(day)) {
-          events.push({ day, title: `${b.renter?.fullName || "Khách"} - Bắt đầu`, color: "bg-[#3B82F6]" });
-        }
-      }
-      if (b.endDate && b.endDate.includes("-03-")) {
-        const day = parseInt(b.endDate.split("-")[2], 10);
-        if (!isNaN(day)) {
-          events.push({ day, title: `${b.renter?.fullName || "Khách"} - Kết thúc`, color: "bg-emerald-500" });
-        }
-      }
-    });
-    return events.sort((a, b) => a.day - b.day);
-  }, [bookings]);
+  const { year: calYear, month: calMonth } = getTodayParts();
+  const parsedCalEvents = useMemo(
+    () => getBookingMonthEvents(bookings, calYear, calMonth),
+    [bookings, calYear, calMonth],
+  );
 
   // Table columns for booking requests
   const bookingColumns = [
@@ -592,6 +577,8 @@ export default function OwnerDashboard() {
                   ? "Doanh Thu & Chi Trả"
                   : view === "settings"
                   ? "Cài Đặt Tài Khoản"
+                  : view === "messages"
+                  ? "Tin Nhắn"
                   : "Tổng Quan Chủ Sở Hữu"}
               </h1>
               <p className="text-sm text-[#6B7A8D] mt-0.5">
@@ -599,6 +586,8 @@ export default function OwnerDashboard() {
                   ? "Theo dõi thu nhập ròng và lịch sử chi trả từ các chiến dịch."
                   : view === "settings"
                   ? "Hồ sơ, tài khoản ngân hàng và tùy chọn tin đăng mặc định."
+                  : view === "messages"
+                  ? "Trao đổi với nhà quảng cáo về yêu cầu đặt chỗ."
                   : `Chào mừng trở lại, ${user?.fullName || "Chủ sở hữu"}. Đây là danh mục quảng cáo của bạn.`}
               </p>
             </div>
@@ -673,50 +662,7 @@ export default function OwnerDashboard() {
               </div>
 
               <div className="bg-white rounded-xl border border-[#E3E8EF] p-6">
-                <h3 className="text-[#1D4ED8] mb-4" style={{ fontWeight: 600 }}>
-                  Tháng 3, 2026
-                </h3>
-                <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2">
-                  {["CN", "T2", "T3", "T4", "T5", "T6", "T7"].map(d => (
-                    <div key={d} className="py-1 text-[#6B7A8D]">
-                      {d}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                  {Array.from({ length: 35 }, (_, i) => {
-                    const day = i + 1;
-                    const event = parsedCalEvents.find(e => e.day === day);
-                    return (
-                      <div
-                        key={i}
-                        className={`py-1.5 rounded relative ${
-                          day <= 31 ? "text-[#1A2332]" : "text-transparent"
-                        } ${event ? "bg-[#F0F9FF]" : ""}`}
-                      >
-                        {day <= 31 ? day : "0"}
-                        {event && (
-                          <span className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${event.color}`} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="mt-4 space-y-2 max-h-[140px] overflow-y-auto">
-                  {parsedCalEvents.length === 0 ? (
-                    <div className="text-xs text-[#6B7A8D] italic text-center py-1">Không có sự kiện đặt chỗ.</div>
-                  ) : (
-                    parsedCalEvents.map((e, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs">
-                        <span className={`w-2 h-2 rounded-full ${e.color}`} />
-                        <span className="text-[#6B7A8D]">{e.day}/03</span>
-                        <span className="text-[#1A2332] truncate max-w-[170px]" style={{ fontWeight: 500 }}>
-                          {e.title}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
+                <MiniMonthCalendar events={parsedCalEvents} year={calYear} month={calMonth} />
               </div>
             </div>
 
@@ -850,23 +796,15 @@ export default function OwnerDashboard() {
         {/* 5. SETTINGS VIEW */}
         {view === "settings" && <OwnerSettingsView />}
 
-        {/* 6. AVAILABILITY PLACEHOLDER */}
+        {view === "messages" && <MessagesView role="OWNER" />}
+
         {view === "availability" && (
-          <div className="p-8">
-            <div className="bg-white rounded-xl border border-[#E3E8EF] p-12 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-[#F0F9FF] text-[#1D4ED8] flex items-center justify-center mx-auto text-xl font-bold">i</div>
-              <h3 className="text-lg font-bold text-[#1E293B]">Lịch trống bảng QC</h3>
-              <p className="text-[#6B7A8D] text-sm max-w-sm mx-auto">
-                Xem lịch đặt chỗ trên trang Tổng quan hoặc quản lý từng bảng trong mục Bảng QC của tôi.
-              </p>
-              <button
-                onClick={() => navigate("/owner")}
-                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#3B82F6] font-semibold cursor-pointer"
-              >
-                Quay Lại Tổng Quan
-              </button>
-            </div>
-          </div>
+          <OwnerAvailabilityView
+            billboards={billboards}
+            bookings={bookings}
+            isUsingFallback={isUsingFallback}
+            onUpdated={loadAllData}
+          />
         )}
       </main>
 

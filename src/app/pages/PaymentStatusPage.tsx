@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router";
 import { CheckCircle, XCircle, ArrowLeft, Calendar, CreditCard, FileText, Loader2, Home } from "lucide-react";
 import bookingApi from "../../api/bookingApi";
 import { BookingDto } from "../../types/booking";
+import { apiErrorMessage } from "../utils/notify";
 
 export default function PaymentStatusPage() {
   const [searchParams] = useSearchParams();
@@ -29,9 +30,8 @@ export default function PaymentStatusPage() {
               setFetchError(res.message || "Không thể tải thông tin đặt bảng quảng cáo");
             }
           })
-          .catch((err) => {
-            console.error("Error fetching booking details:", err);
-            setFetchError("Có lỗi xảy ra khi kết nối với hệ thống.");
+          .catch((err: unknown) => {
+            setFetchError(apiErrorMessage(err, "Có lỗi xảy ra khi kết nối với hệ thống."));
           })
           .finally(() => {
             setLoading(false);
@@ -161,7 +161,7 @@ export default function PaymentStatusPage() {
           {/* Action buttons */}
           <div className="space-y-3 relative z-10">
             <button
-              onClick={() => navigate("/advertiser")}
+              onClick={() => navigate("/advertiser/bookings")}
               className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
             >
               Về Trang Quản Lý
