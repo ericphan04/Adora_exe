@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { SlidersHorizontal, ChevronDown, Grid3X3, List } from "lucide-react";
+import { SlidersHorizontal, ChevronDown, Grid3X3, List, Map } from "lucide-react";
 import { TopNav } from "../components/TopNav";
 import { Footer } from "../components/Footer";
 import { BillboardCard } from "../components/BillboardCard";
@@ -272,6 +272,13 @@ export default function BillboardListingPage() {
                 <option>Lưu Lượng: Cao → Thấp</option>
               </select>
             </div>
+            <button
+              onClick={() => navigate("/billboards/map")}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-[#1D4ED8] to-[#06B6D4] text-white text-sm font-medium hover:opacity-95 cursor-pointer shadow-sm"
+            >
+              <Map className="w-4 h-4" />
+              Bản đồ
+            </button>
             <div className="flex items-center border border-[#E3E8EF] rounded-lg overflow-hidden">
               <button className="w-9 h-9 flex items-center justify-center bg-[#1D4ED8] text-white cursor-pointer">
                 <Grid3X3 className="w-4 h-4" />

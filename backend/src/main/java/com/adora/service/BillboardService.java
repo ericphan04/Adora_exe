@@ -102,6 +102,7 @@ public class BillboardService {
                 .district(request.getDistrict())
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
+                .demoVideoUrl(request.getDemoVideoUrl())
                 .width(request.getWidth())
                 .height(request.getHeight())
                 .resolution(request.getResolution())
@@ -155,6 +156,7 @@ public class BillboardService {
         billboard.setDistrict(request.getDistrict());
         billboard.setLatitude(request.getLatitude());
         billboard.setLongitude(request.getLongitude());
+        billboard.setDemoVideoUrl(request.getDemoVideoUrl());
         billboard.setWidth(request.getWidth());
         billboard.setHeight(request.getHeight());
         billboard.setResolution(request.getResolution());
@@ -335,6 +337,7 @@ public class BillboardService {
                 .district(entity.getDistrict())
                 .latitude(entity.getLatitude())
                 .longitude(entity.getLongitude())
+                .demoVideoUrl(entity.getDemoVideoUrl())
                 .width(entity.getWidth())
                 .height(entity.getHeight())
                 .resolution(entity.getResolution())
