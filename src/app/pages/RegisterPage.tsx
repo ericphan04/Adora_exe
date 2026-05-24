@@ -1,11 +1,66 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { Megaphone, Monitor, ArrowRight, Mail, Lock, Building2, User, Phone } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [selectedRole, setSelectedRole] = useState<"advertiser" | "owner" | null>(null);
   const [step, setStep] = useState(1);
+
+  // Form states
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [agree, setAgree] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRole) {
+      setError("Vui lòng chọn vai trò");
+      return;
+    }
+    if (!firstName || !lastName || !email || !phone || !password) {
+      setError("Vui lòng nhập đầy đủ các thông tin bắt buộc");
+      return;
+    }
+    if (!agree) {
+      setError("Bạn phải đồng ý với Điều Khoản Dịch Vụ và Chính Sách Bảo Mật");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const mappedRole = selectedRole === "advertiser" ? "RENTER" : "OWNER";
+      const fullName = `${lastName} ${firstName}`.trim();
+      await register({
+        fullName,
+        email,
+        phone,
+        password,
+        role: mappedRole,
+        companyName: companyName || undefined,
+      });
+      setSuccess(true);
+      setError(null);
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -42,6 +97,18 @@ export default function RegisterPage() {
           <button onClick={() => navigate("/")} className="text-xl text-[#1D4ED8] mb-8 block lg:hidden cursor-pointer" style={{ fontWeight: 800 }}>ADORA</button>
           <h2 className="text-2xl text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>Tạo tài khoản</h2>
           <p className="text-sm text-[#6B7A8D] mb-8">Bước {step}/2 — {step === 1 ? "Chọn vai trò" : "Thông tin doanh nghiệp"}</p>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm">
+              Đăng ký thành công! Đang chuyển hướng sang trang đăng nhập...
+            </div>
+          )}
 
           {step === 1 ? (
             <div className="space-y-4">
@@ -87,64 +154,115 @@ export default function RegisterPage() {
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm text-[#6B7A8D] mb-1.5 block">Họ</label>
                   <div className="relative">
                     <User className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input type="text" placeholder="Nguyễn" className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all" />
+                    <input
+                      type="text"
+                      placeholder="Nguyễn"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                      required
+                    />
                   </div>
                 </div>
                 <div>
                   <label className="text-sm text-[#6B7A8D] mb-1.5 block">Tên</label>
-                  <input type="text" placeholder="Văn A" className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all" />
+                  <input
+                    type="text"
+                    placeholder="Văn A"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    required
+                  />
                 </div>
               </div>
               <div>
                 <label className="text-sm text-[#6B7A8D] mb-1.5 block">Tên Công Ty</label>
                 <div className="relative">
                   <Building2 className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input type="text" placeholder="Công ty ABC" className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all" />
+                  <input
+                    type="text"
+                    placeholder="Công ty ABC"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                  />
                 </div>
               </div>
               <div>
                 <label className="text-sm text-[#6B7A8D] mb-1.5 block">Email Doanh Nghiệp</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input type="email" placeholder="ten@congty.com" className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all" />
+                  <input
+                    type="email"
+                    placeholder="ten@congty.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    required
+                  />
                 </div>
               </div>
               <div>
                 <label className="text-sm text-[#6B7A8D] mb-1.5 block">Số Điện Thoại</label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input type="tel" placeholder="0901 234 567" className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all" />
+                  <input
+                    type="tel"
+                    placeholder="0901 234 567"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    required
+                  />
                 </div>
               </div>
               <div>
                 <label className="text-sm text-[#6B7A8D] mb-1.5 block">Mật Khẩu</label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input type="password" placeholder="Tối thiểu 8 ký tự" className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all" />
+                  <input
+                    type="password"
+                    placeholder="Tối thiểu 8 ký tự"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    required
+                  />
                 </div>
               </div>
               <label className="flex items-start gap-2 text-xs text-[#6B7A8D] cursor-pointer">
-                <input type="checkbox" className="rounded accent-[#06B6D4] mt-0.5" />
+                <input
+                  type="checkbox"
+                  checked={agree}
+                  onChange={(e) => setAgree(e.target.checked)}
+                  className="rounded accent-[#06B6D4] mt-0.5"
+                />
                 Tôi đồng ý với Điều Khoản Dịch Vụ và Chính Sách Bảo Mật
               </label>
               <div className="flex gap-3">
-                <button onClick={() => setStep(1)} className="flex-1 py-3 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-[#F0F9FF] transition-colors cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="flex-1 py-3 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+                >
                   Quay Lại
                 </button>
                 <button
-                  onClick={() => navigate(selectedRole === "advertiser" ? "/advertiser" : "/owner")}
-                  className="flex-1 bg-[#1D4ED8] text-white py-3 rounded-lg text-sm hover:bg-[#3B82F6] transition-colors cursor-pointer"
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-[#1D4ED8] text-white py-3 rounded-lg text-sm hover:bg-[#3B82F6] transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  Tạo Tài Khoản
+                  {loading ? "Đang xử lý..." : "Tạo Tài Khoản"}
                 </button>
               </div>
-            </div>
+            </form>
           )}
 
           <p className="text-center text-sm text-[#6B7A8D] mt-8">

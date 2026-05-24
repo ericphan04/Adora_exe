@@ -5,6 +5,7 @@ import {
   Settings, LogOut, ChevronLeft, ChevronRight, Monitor, Calendar,
   DollarSign, Users, CheckSquare, AlertTriangle, BarChart3, Cog, Eye
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 interface NavItem {
   icon: React.ReactNode;
@@ -51,6 +52,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
   const items = navItems[role];
 
   return (
@@ -73,7 +75,10 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
 
       <nav className="flex-1 py-4 overflow-y-auto">
         {items.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive =
+            item.path === "/admin" || item.path === "/owner" || item.path === "/advertiser"
+              ? location.pathname === item.path
+              : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
           return (
             <button
               key={item.path}
@@ -95,7 +100,10 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
 
       <div className="border-t border-white/15 p-4">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => {
+            logout();
+            navigate("/");
+          }}
           className={`w-full flex items-center gap-3 text-sm text-white/70 hover:text-white transition-colors cursor-pointer ${
             collapsed ? "justify-center" : ""
           }`}

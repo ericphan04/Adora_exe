@@ -1,83 +1,195 @@
 @custom-variant dark (&:is(.dark *));
 
+/* =============================================
+   ADORA BRAND THEME – LIGHT MODE (DEFAULT)
+   Deep Ocean Blue B2B SaaS Design System
+   ============================================= */
 :root {
   --font-size: 16px;
+
+  /* Core Backgrounds */
   --background: #FFFFFF;
+  --surface: #F4F7FA;
+  --surface-elevated: #FFFFFF;
+
+  /* Foregrounds / Text */
   --foreground: #1A2332;
+  --foreground-muted: #6B7A8D;
+  --foreground-subtle: #94A3B8;
+
+  /* Card & Popover */
   --card: #FFFFFF;
   --card-foreground: #1A2332;
   --popover: #FFFFFF;
   --popover-foreground: #1A2332;
-  --primary: #0B3C5D;
+
+  /* Brand Primary – Ocean Blue */
+  --primary: #1D4ED8;
+  --primary-hover: #3B82F6;
   --primary-foreground: #FFFFFF;
+  --primary-light: #EFF6FF;
+
+  /* Brand Secondary */
   --secondary: #F4F7FA;
   --secondary-foreground: #0B3C5D;
+
+  /* Accent – Cyan/Teal */
+  --accent: #0891B2;
+  --accent-hover: #06B6D4;
+  --accent-foreground: #FFFFFF;
+  --accent-light: #ECFEFF;
+
+  /* Muted */
   --muted: #F4F7FA;
   --muted-foreground: #6B7A8D;
-  --accent: #2FA4FF;
-  --accent-foreground: #FFFFFF;
+
+  /* Status Colors */
+  --success: #22C55E;
+  --success-light: #F0FDF4;
+  --warning: #F59E0B;
+  --warning-light: #FFFBEB;
   --destructive: #EF4444;
+  --destructive-light: #FEF2F2;
   --destructive-foreground: #FFFFFF;
+
+  /* Borders & Inputs */
   --border: #E3E8EF;
+  --border-hover: #CBD5E1;
   --input: #E3E8EF;
-  --input-background: #F4F7FA;
-  --switch-background: #cbced4;
+  --input-background: #F8FAFC;
+  --switch-background: #CBD5E1;
+
+  /* Ring (focus outline) */
+  --ring: #3B82F6;
+
+  /* Charts */
+  --chart-1: #1D4ED8;
+  --chart-2: #0891B2;
+  --chart-3: #22C55E;
+  --chart-4: #F59E0B;
+  --chart-5: #8B5CF6;
+
+  /* Border Radius */
+  --radius: 0.5rem;
+
+  /* Font Weights */
   --font-weight-medium: 600;
   --font-weight-normal: 400;
-  --ring: #2FA4FF;
-  --chart-1: #0B3C5D;
-  --chart-2: #1E5F9E;
-  --chart-3: #2FA4FF;
-  --chart-4: #22C55E;
-  --chart-5: #F59E0B;
-  --radius: 0.5rem;
-  --sidebar: #0B3C5D;
+
+  /* Sidebar */
+  --sidebar: #1D4ED8;
+  --sidebar-gradient-from: #1D4ED8;
+  --sidebar-gradient-to: #1E3A8A;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #0B3C5D;
-  --sidebar-accent: rgba(255,255,255,0.1);
+  --sidebar-primary-foreground: #1D4ED8;
+  --sidebar-active-bg: rgba(255, 255, 255, 0.15);
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(255,255,255,0.15);
-  --sidebar-ring: #2FA4FF;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: #06B6D4;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
+/* =============================================
+   ADORA BRAND THEME – DARK MODE
+   Premium dark B2B SaaS experience
+   ============================================= */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  /* Core Backgrounds */
+  --background: #0D1117;
+  --surface: #161B22;
+  --surface-elevated: #1C2333;
+
+  /* Foregrounds / Text */
+  --foreground: #E6EDF3;
+  --foreground-muted: #8B949E;
+  --foreground-subtle: #6E7681;
+
+  /* Card & Popover */
+  --card: #161B22;
+  --card-foreground: #E6EDF3;
+  --popover: #1C2333;
+  --popover-foreground: #E6EDF3;
+
+  /* Brand Primary – stays blue but shifted for dark */
+  --primary: #3B82F6;
+  --primary-hover: #60A5FA;
+  --primary-foreground: #FFFFFF;
+  --primary-light: rgba(59, 130, 246, 0.12);
+
+  /* Brand Secondary */
+  --secondary: #1C2333;
+  --secondary-foreground: #E6EDF3;
+
+  /* Accent – Cyan/Teal */
+  --accent: #22D3EE;
+  --accent-hover: #67E8F9;
+  --accent-foreground: #0D1117;
+  --accent-light: rgba(34, 211, 238, 0.12);
+
+  /* Muted */
+  --muted: #1C2333;
+  --muted-foreground: #8B949E;
+
+  /* Status Colors */
+  --success: #2ECC71;
+  --success-light: rgba(46, 204, 113, 0.12);
+  --warning: #FBBF24;
+  --warning-light: rgba(251, 191, 36, 0.12);
+  --destructive: #F87171;
+  --destructive-light: rgba(248, 113, 113, 0.12);
+  --destructive-foreground: #FFFFFF;
+
+  /* Borders & Inputs */
+  --border: #30363D;
+  --border-hover: #484F58;
+  --input: #30363D;
+  --input-background: #0D1117;
+  --switch-background: #484F58;
+
+  /* Ring */
+  --ring: #3B82F6;
+
+  /* Charts */
+  --chart-1: #60A5FA;
+  --chart-2: #22D3EE;
+  --chart-3: #4ADE80;
+  --chart-4: #FBBF24;
+  --chart-5: #A78BFA;
+
+  /* Font Weights */
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+
+  /* Sidebar – slightly lighter dark for contrast */
+  --sidebar: #161B22;
+  --sidebar-gradient-from: #161B22;
+  --sidebar-gradient-to: #0D1117;
+  --sidebar-foreground: #E6EDF3;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-active-bg: rgba(59, 130, 246, 0.2);
+  --sidebar-accent: rgba(255, 255, 255, 0.05);
+  --sidebar-accent-foreground: #E6EDF3;
+  --sidebar-border: #30363D;
+  --sidebar-ring: #3B82F6;
+
+  /* Shadows (more visible in dark) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
 }
 
+/* =============================================
+   TAILWIND THEME BRIDGE (inline tokens)
+   ============================================= */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -119,6 +231,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* =============================================
+   BASE STYLES
+   ============================================= */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -126,12 +241,8 @@
 
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
-
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
 
   html {
     font-size: var(--font-size);
@@ -179,4 +290,13 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
+}
+
+/* =============================================
+   THEME TRANSITION ANIMATIONS
+   ============================================= */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
 }
