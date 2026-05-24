@@ -54,7 +54,16 @@ export function formatBillboardSize(b: BillboardDto): string {
 }
 
 export function getGoogleMapsApiKey(): string {
-  return import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim() ?? "";
+  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim() ?? "";
+  if (
+    !key ||
+    key === "YOUR_GOOGLE_MAPS_API_KEY" ||
+    key === "your_google_maps_api_key_here" ||
+    key.includes("YOUR_")
+  ) {
+    return "";
+  }
+  return key;
 }
 
 export const MAP_BILLBOARD_MOCKS: BillboardDto[] = [

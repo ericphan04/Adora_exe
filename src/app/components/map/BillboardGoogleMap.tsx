@@ -1,17 +1,12 @@
-import React, { useCallback, useEffect, useMemo } from "react";
-import {
-  APIProvider,
-  Map,
-  Marker,
-  useMap,
-} from "@vis.gl/react-google-maps";
+import React, { useEffect, useMemo, useRef } from "react";
+import { Map, MapMarker, type MapRef } from "@/components/ui/map";
 import { BillboardDto } from "../../../types/billboard";
 import {
   DANANG_CENTER,
   getBillboardRentalStatus,
-  getGoogleMapsApiKey,
   resolveBillboardPosition,
 } from "../../utils/billboardMap";
+import maplibregl from "maplibre-gl";
 
 export interface MapMarkerBillboard {
   billboard: BillboardDto;
@@ -42,33 +37,17 @@ function markerIcon(status: "available" | "booked", selected: boolean): string {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
-function FitBoundsHandler({
-  markers,
-  enabled,
-}: {
-  markers: MapMarkerBillboard[];
-  enabled: boolean;
-}) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || !enabled || markers.length === 0) return;
-    const bounds = new google.maps.LatLngBounds();
-    markers.forEach((m) => bounds.extend(m.position));
-    map.fitBounds(bounds, { top: 80, right: 80, bottom: 80, left: 80 });
-  }, [map, markers, enabled]);
-
-  return null;
-}
-
-function MapInner({
+export function BillboardGoogleMap({
   billboards,
   selectedId,
   onSelect,
-  fitBounds,
+  className,
+  fitBounds = true,
   zoom = 13,
   singleMarker,
 }: BillboardGoogleMapProps) {
+  const mapRef = useRef<MapRef>(null);
+
   const markers = useMemo<MapMarkerBillboard[]>(
     () =>
       billboards.map((b, i) => ({
@@ -82,68 +61,56 @@ function MapInner({
   const selectedMarker = markers.find((m) => m.billboard.id === selectedId);
   const center = selectedMarker?.position ?? DANANG_CENTER;
 
-  const handleSelect = useCallback(
-    (id: number) => {
-      if (!onSelect) return;
-      onSelect(selectedId === id ? null : id);
-    },
-    [onSelect, selectedId]
-  );
+  // Fit bounds when markers change
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !fitBounds || markers.length === 0 || singleMarker) return;
+
+    const bounds = new maplibregl.LngLatBounds();
+    markers.forEach((m) => bounds.extend([m.position.lng, m.position.lat]));
+
+    map.fitBounds(bounds, { padding: 80, duration: 800 });
+  }, [markers, fitBounds, singleMarker]);
+
+  // Center on selected marker when it changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || selectedId == null || !selectedMarker) return;
+
+    map.easeTo({
+      center: [selectedMarker.position.lng, selectedMarker.position.lat],
+      zoom: 15,
+      duration: 800,
+    });
+  }, [selectedId]);
 
   return (
-    <Map
-      defaultCenter={center}
-      defaultZoom={zoom}
-      gestureHandling="greedy"
-      disableDefaultUI={false}
-      className="w-full h-full"
-      colorScheme="LIGHT"
-    >
-      {fitBounds && !singleMarker && (
-        <FitBoundsHandler markers={markers} enabled />
-      )}
-      {markers.map((m) => (
-        <Marker
-          key={m.billboard.id}
-          position={m.position}
-          title={m.billboard.title}
-          icon={{
-            url: markerIcon(m.status, selectedId === m.billboard.id),
-            scaledSize: new google.maps.Size(40, 48),
-            anchor: new google.maps.Point(20, 48),
-          }}
-          onClick={() => handleSelect(m.billboard.id)}
-        />
-      ))}
-    </Map>
-  );
-}
-
-export function BillboardGoogleMap(props: BillboardGoogleMapProps) {
-  const apiKey = getGoogleMapsApiKey();
-
-  if (!apiKey) {
-    return (
-      <div
-        className={`flex items-center justify-center bg-[#0f172a] text-white p-8 ${props.className ?? ""}`}
+    <div className={className ?? "w-full h-full relative"}>
+      <Map
+        ref={mapRef}
+        center={[center.lng, center.lat]} // [lng, lat]
+        zoom={zoom}
+        styles={{
+          light: "https://tiles.openfreemap.org/styles/bright",
+        }}
       >
-        <div className="max-w-md text-center space-y-3">
-          <p className="text-lg font-semibold">Cần Google Maps API Key</p>
-          <p className="text-sm text-slate-300">
-            Tạo file <code className="bg-white/10 px-1 rounded">.env</code> và thêm{" "}
-            <code className="bg-white/10 px-1 rounded">VITE_GOOGLE_MAPS_API_KEY</code>.
-            Bật Maps JavaScript API trong Google Cloud Console.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={props.className ?? "w-full h-full"}>
-      <APIProvider apiKey={apiKey} language="vi" region="VN">
-        <MapInner {...props} />
-      </APIProvider>
+        {markers.map((m) => (
+          <MapMarker
+            key={m.billboard.id}
+            longitude={m.position.lng}
+            latitude={m.position.lat}
+            onClick={() => onSelect?.(selectedId === m.billboard.id ? null : m.billboard.id)}
+            anchor="bottom"
+          >
+            <img
+              src={markerIcon(m.status, selectedId === m.billboard.id)}
+              className="w-10 h-12 select-none"
+              alt={m.billboard.title}
+              title={m.billboard.title}
+            />
+          </MapMarker>
+        ))}
+      </Map>
     </div>
   );
 }
