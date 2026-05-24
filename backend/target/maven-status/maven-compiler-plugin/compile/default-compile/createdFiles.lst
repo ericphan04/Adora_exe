@@ -2,6 +2,7 @@ com\adora\dto\BookingDto.class
 com\adora\AdoraBackendApplication.class
 com\adora\dto\RenterDashboardResponse.class
 com\adora\dto\CreateBillboardRequest$CreateBillboardRequestBuilder.class
+com\adora\entity\Notification$NotificationBuilder.class
 com\adora\dto\LoginResponse$LoginResponseBuilder.class
 com\adora\dto\CreatePaymentRequest.class
 com\adora\dto\ApiResponse$ApiResponseBuilder.class
@@ -13,6 +14,7 @@ com\adora\dto\BillboardFeatureDto$BillboardFeatureDtoBuilder.class
 com\adora\dto\BookingDto$BookingDtoBuilder.class
 com\adora\entity\ReportStatus.class
 com\adora\controller\ConversationController.class
+com\adora\dto\NotificationDto$NotificationDtoBuilder.class
 com\adora\service\DashboardService.class
 com\adora\entity\Booking.class
 com\adora\dto\AddImageRequest.class
@@ -63,6 +65,7 @@ com\adora\dto\CreateConversationRequest.class
 com\adora\dto\ReviewDto.class
 com\adora\dto\UserDto.class
 com\adora\repository\ConversationRepository.class
+com\adora\repository\NotificationRepository.class
 com\adora\security\UserPrincipal.class
 com\adora\dto\CreateReviewRequest.class
 com\adora\entity\Role.class
@@ -84,6 +87,7 @@ com\adora\repository\PaymentRepository.class
 com\adora\controller\AdminUserController.class
 com\adora\dto\ConversationDto.class
 com\adora\config\DatabaseInitializer.class
+com\adora\entity\Notification.class
 com\adora\dto\WsChatSendPayload$WsChatSendPayloadBuilder.class
 com\adora\dto\CreateBookingRequest$CreateBookingRequestBuilder.class
 com\adora\dto\SendMessageRequest.class
@@ -107,6 +111,7 @@ com\adora\repository\UserRepository.class
 com\adora\dto\RenterDashboardResponse$RenterDashboardResponseBuilder.class
 com\adora\controller\BookingController.class
 com\adora\config\VnPayConfig.class
+com\adora\service\NotificationService.class
 com\adora\dto\UserDto$UserDtoBuilder.class
 com\adora\dto\BillboardFeatureDto.class
 com\adora\entity\User$UserBuilder.class
@@ -120,8 +125,10 @@ com\adora\entity\Review$ReviewBuilder.class
 com\adora\config\WebSocketConfig.class
 com\adora\dto\SendMessageRequest$SendMessageRequestBuilder.class
 com\adora\service\ConversationService.class
+com\adora\entity\NotificationType.class
 com\adora\dto\SetAvailabilityRequest$SetAvailabilityRequestBuilder.class
 com\adora\dto\CreateReportRequest.class
+com\adora\controller\NotificationController.class
 com\adora\entity\BillboardStatus.class
 com\adora\repository\BookingRepository.class
 com\adora\dto\BillboardDto.class
@@ -132,6 +139,7 @@ com\adora\entity\BillboardAvailability$BillboardAvailabilityBuilder.class
 com\adora\repository\ReviewRepository.class
 com\adora\dto\CreateReportRequest$CreateReportRequestBuilder.class
 com\adora\dto\AdminDashboardResponse.class
+com\adora\dto\NotificationDto.class
 com\adora\service\UserService.class
 com\adora\entity\BillboardCategory$BillboardCategoryBuilder.class
 com\adora\entity\Conversation.class

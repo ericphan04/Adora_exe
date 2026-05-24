@@ -21,6 +21,7 @@ import { AdminSettingsView } from "../components/dashboard/AdminSettingsView";
 import { MessagesView } from "../components/messages/MessagesView";
 import { useConfirm } from "../context/ConfirmContext";
 import { notify, apiErrorMessage } from "../utils/notify";
+import { NotificationBell } from "../components/NotificationBell";
 
 type BadgeVariant = "active" | "pending" | "booked" | "expired" | "available" | "unavailable";
 
@@ -719,7 +720,7 @@ export default function AdminDashboard() {
                   : `Chào mừng trở lại, ${currentUser?.fullName || "Admin"}. Quản lý hệ thống LED Billboard.`}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <button
                 onClick={loadAllData}
                 className="p-2 border border-[#E3E8EF] rounded-lg text-[#1D4ED8] hover:bg-[#F0F9FF] cursor-pointer"
@@ -727,6 +728,7 @@ export default function AdminDashboard() {
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
+              <NotificationBell />
             </div>
           </div>
         </div>

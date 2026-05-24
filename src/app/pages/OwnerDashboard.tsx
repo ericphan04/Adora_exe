@@ -17,6 +17,7 @@ import { OwnerAvailabilityView } from "../components/dashboard/OwnerAvailability
 import { MiniMonthCalendar } from "../components/dashboard/MiniMonthCalendar";
 import { useConfirm } from "../context/ConfirmContext";
 import { notify, apiErrorMessage } from "../utils/notify";
+import { NotificationBell } from "../components/NotificationBell";
 import { getBookingMonthEvents } from "../utils/bookingEvents";
 import { getTodayParts } from "../utils/calendar";
 import { MessagesView } from "../components/messages/MessagesView";
@@ -591,7 +592,7 @@ export default function OwnerDashboard() {
                   : `Chào mừng trở lại, ${user?.fullName || "Chủ sở hữu"}. Đây là danh mục quảng cáo của bạn.`}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {view === "billboards" && (
                 <button
                   onClick={openCreateModal}
@@ -600,6 +601,7 @@ export default function OwnerDashboard() {
                   <Plus className="w-4 h-4" /> Thêm Bảng QC
                 </button>
               )}
+              <NotificationBell />
             </div>
           </div>
         </div>

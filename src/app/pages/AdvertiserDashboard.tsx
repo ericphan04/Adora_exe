@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useAuth } from "../context/AuthContext";
 import { useConfirm } from "../context/ConfirmContext";
+import { NotificationBell } from "../components/NotificationBell";
 import { notify, apiErrorMessage } from "../utils/notify";
 import { mergeBookings } from "../utils/advertiser";
 import renterDashboardApi from "../../api/renterDashboardApi";
@@ -276,17 +277,18 @@ export default function AdvertiserDashboard() {
                   : pageMeta.subtitle}
               </p>
             </div>
-            {view === "dashboard" && (
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              {view === "dashboard" && (
                 <button
                   type="button"
                   onClick={() => navigate("/billboards")}
-                  className="bg-[#1D4ED8] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#3B82F6] transition-colors cursor-pointer font-semibold"
+                  className="bg-[#1D4ED8] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#3B82F6] transition-colors cursor-pointer font-semibold animate-in fade-in"
                 >
                   + Chiến dịch mới
                 </button>
-              </div>
-            )}
+              )}
+              <NotificationBell />
+            </div>
           </div>
         </div>
 

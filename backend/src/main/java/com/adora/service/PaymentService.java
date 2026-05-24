@@ -9,6 +9,7 @@ import com.adora.exception.ResourceNotFoundException;
 import com.adora.repository.BookingRepository;
 import com.adora.repository.PaymentRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,13 +29,16 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final VnPayConfig vnPayConfig;
+    private final NotificationService notificationService;
 
     public PaymentService(PaymentRepository paymentRepository,
                           BookingRepository bookingRepository,
-                          VnPayConfig vnPayConfig) {
+                          VnPayConfig vnPayConfig,
+                          @Lazy NotificationService notificationService) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.vnPayConfig = vnPayConfig;
+        this.notificationService = notificationService;
     }
 
     public String createPaymentUrl(CreatePaymentRequest request, Long renterId, HttpServletRequest httpServletRequest) {
@@ -53,10 +57,10 @@ public class PaymentService {
         BigDecimal platformCommission = finalAmount.multiply(BigDecimal.valueOf(0.05)).setScale(2, RoundingMode.HALF_UP);
         BigDecimal ownerRevenue = finalAmount.subtract(platformCommission);
 
-        // Generate txnRef code
+        // Generate unique txnRef (BookingId_Timestamp)
         String txnRef = booking.getId() + "_" + System.currentTimeMillis();
 
-        // Create or update pending payment record
+        // Create or update PENDING payment record
         Payment payment = paymentRepository.findByBookingRenterId(renterId).stream()
                 .filter(p -> p.getBooking().getId().equals(booking.getId()) && p.getPaymentStatus() == PaymentStatus.PENDING)
                 .findFirst()
@@ -78,92 +82,102 @@ public class PaymentService {
         }
         paymentRepository.save(payment);
 
-        // VNPay Parameters
+        // Build VNPay Parameters Map
         Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", "2.1.0");
         vnpParams.put("vnp_Command", "pay");
         vnpParams.put("vnp_TmnCode", vnPayConfig.getTmnCode());
-        
-        // Amount needs to be multiplied by 100 for VND
-        BigDecimal amountInCents = finalAmount.multiply(BigDecimal.valueOf(100));
-        vnpParams.put("vnp_Amount", String.valueOf(amountInCents.longValue()));
-        
+
+        // VNPay requires amount * 100 (no decimal for VND)
+        long amountInVnd = finalAmount.longValue() * 100;
+        vnpParams.put("vnp_Amount", String.valueOf(amountInVnd));
+
         vnpParams.put("vnp_CurrCode", "VND");
         vnpParams.put("vnp_TxnRef", txnRef);
-        vnpParams.put("vnp_OrderInfo", "Pay for booking " + booking.getId());
-        vnpParams.put("vnp_OrderType", "200000"); // billpayment
+        vnpParams.put("vnp_OrderInfo", "Thanh toan don dat bang QC " + booking.getId());
+        vnpParams.put("vnp_OrderType", "200000");
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
-        
         vnpParams.put("vnp_IpAddr", VnPayConfig.getIpAddress(httpServletRequest));
 
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         vnpParams.put("vnp_CreateDate", now.format(formatter));
 
-        // Build query string
+        // Expire time: +15 minutes
+        LocalDateTime expireTime = now.plusMinutes(15);
+        vnpParams.put("vnp_ExpireDate", expireTime.format(formatter));
+
+        // Sort parameters alphabetically
         List<String> fieldNames = new ArrayList<>(vnpParams.keySet());
         Collections.sort(fieldNames);
 
+        // Build hashData (raw values, NO URL encoding) and query (URL encoded)
+        // This is the correct VNPay 2.1.0 algorithm:
+        // - hashData: fieldName=rawValue&fieldName=rawValue (for HMAC-SHA512)
+        // - query: URLEncoded(fieldName)=URLEncoded(value)& (for HTTP query string)
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
 
-        for (String fieldName : fieldNames) {
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
             String fieldValue = vnpParams.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                try {
-                    // Hash data (without url encoding raw values, or with encoding depending on VNPay requirements)
-                    // VNPay 2.1.0 requires fields in hashData to be URL encoded using StandardCharsets.US_ASCII or StandardCharsets.UTF_8
-                    hashData.append(fieldName).append("=").append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
-                    query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()))
-                            .append("=")
-                            .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
-                } catch (Exception e) {
-                    throw new BadRequestException("Encoding error: " + e.getMessage());
-                }
-                
-                if (fieldNames.indexOf(fieldName) < fieldNames.size() - 1) {
-                    query.append("&");
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                // hashData uses raw (non-encoded) values
+                hashData.append(fieldName).append("=").append(fieldValue);
+
+                // query uses UTF-8 URL encoded values
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8))
+                        .append("=")
+                        .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
+
+                if (itr.hasNext()) {
                     hashData.append("&");
+                    query.append("&");
                 }
             }
         }
 
-        String queryUrl = query.toString();
-        String vnp_SecureHash = VnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
-        queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
+        String secureHash = VnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
+        query.append("&vnp_SecureHash=").append(secureHash);
 
-        return vnPayConfig.getPayUrl() + "?" + queryUrl;
+        return vnPayConfig.getPayUrl() + "?" + query.toString();
     }
 
     public PaymentDto processCallback(Map<String, String> queryParams) {
-        String vnp_SecureHash = queryParams.get("vnp_SecureHash");
-        
-        // Remove hash params to verify signature
+        String vnpSecureHash = queryParams.get("vnp_SecureHash");
+
+        if (vnpSecureHash == null || vnpSecureHash.isEmpty()) {
+            throw new BadRequestException("Missing payment signature");
+        }
+
+        // Remove hash params before verifying signature
         Map<String, String> verifyParams = new HashMap<>(queryParams);
         verifyParams.remove("vnp_SecureHash");
         verifyParams.remove("vnp_SecureHashType");
 
+        // Sort alphabetically
         List<String> fieldNames = new ArrayList<>(verifyParams.keySet());
         Collections.sort(fieldNames);
 
+        // Build hashData with RAW values (same method as createPaymentUrl)
         StringBuilder hashData = new StringBuilder();
-        for (String fieldName : fieldNames) {
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
             String fieldValue = verifyParams.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                try {
-                    hashData.append(fieldName).append("=").append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
-                } catch (Exception e) {
-                    throw new BadRequestException("Signature verification encoding error");
-                }
-                if (fieldNames.indexOf(fieldName) < fieldNames.size() - 1) {
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                hashData.append(fieldName).append("=").append(fieldValue);
+                if (itr.hasNext()) {
                     hashData.append("&");
                 }
             }
         }
 
+        // Verify signature
         String calculatedHash = VnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
-        if (!calculatedHash.equalsIgnoreCase(vnp_SecureHash)) {
+        if (!calculatedHash.equalsIgnoreCase(vnpSecureHash)) {
             throw new BadRequestException("Invalid payment signature");
         }
 
@@ -179,24 +193,39 @@ public class PaymentService {
         }
 
         Payment payment = paymentRepository.findByTransactionCode(txnRef)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment transaction not found for booking: " + bookingId));
+                .orElseThrow(() -> new ResourceNotFoundException("Payment transaction not found for txnRef: " + txnRef));
 
         Booking booking = payment.getBooking();
 
         if ("00".equals(responseCode)) {
+            // Payment SUCCESS
             payment.setPaymentStatus(PaymentStatus.SUCCESS);
             payment.setPaidAt(LocalDateTime.now());
-            
             booking.setStatus(BookingStatus.PAID);
             bookingRepository.save(booking);
-        } else {
-            payment.setPaymentStatus(PaymentStatus.FAILED);
-            // Optionally, we could revert availability if needed, but since it's already BOOKED, 
-            // the user might want to retry payment. If they cancel, then dates will be released.
-        }
+            Payment saved = paymentRepository.save(payment);
 
-        Payment saved = paymentRepository.save(payment);
-        return mapToDto(saved);
+            // Send notifications to renter and owner
+            try {
+                notificationService.sendPaymentSuccessNotifications(saved);
+            } catch (Exception e) {
+                // Don't fail the callback if notification fails
+                System.err.println("Warning: Failed to send payment success notifications: " + e.getMessage());
+            }
+            return mapToDto(saved);
+        } else {
+            // Payment FAILED
+            payment.setPaymentStatus(PaymentStatus.FAILED);
+            Payment saved = paymentRepository.save(payment);
+
+            // Send failure notification to renter
+            try {
+                notificationService.sendPaymentFailedNotification(saved);
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to send payment failed notifications: " + e.getMessage());
+            }
+            return mapToDto(saved);
+        }
     }
 
     public List<PaymentDto> getRenterPayments(Long renterId) {

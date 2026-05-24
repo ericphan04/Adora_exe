@@ -8,20 +8,34 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * VNPay Configuration
+ *
+ * To switch from Sandbox to Production, update the following in application.properties
+ * (or set environment variables):
+ *   VNP_PAY_URL=https://pay.vnpay.vn/vpcpay.html
+ *   VNP_TMN_CODE=your_production_tmn_code
+ *   VNP_HASH_SECRET=your_production_hash_secret
+ *   VNP_RETURN_URL=https://yourdomain.com/api/payments/callback
+ *   VNP_FRONTEND_BASE_URL=https://yourdomain.com
+ */
 @Configuration
 public class VnPayConfig {
 
-    @Value("${vnp.payUrl:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
+    @Value("${vnp.pay-url}")
     private String payUrl;
 
-    @Value("${vnp.tmnCode:2QXUIBJZ}")
+    @Value("${vnp.tmn-code}")
     private String tmnCode;
 
-    @Value("${vnp.hashSecret:99A99B99C99D99E99F99}")
+    @Value("${vnp.hash-secret}")
     private String hashSecret;
 
-    @Value("${vnp.returnUrl:http://localhost:8085/api/payments/callback}")
+    @Value("${vnp.return-url}")
     private String returnUrl;
+
+    @Value("${vnp.frontend-base-url}")
+    private String frontendBaseUrl;
 
     public String getPayUrl() {
         return payUrl;
@@ -39,10 +53,18 @@ public class VnPayConfig {
         return returnUrl;
     }
 
+    public String getFrontendBaseUrl() {
+        return frontendBaseUrl;
+    }
+
+    /**
+     * Computes HMAC-SHA512 signature.
+     * Uses UTF-8 encoding for both key and data as per VNPay 2.1.0 spec.
+     */
     public static String hmacSHA512(final String key, final String data) {
         try {
             if (key == null || data == null) {
-                return null;
+                return "";
             }
             final Mac hmac512 = Mac.getInstance("HmacSHA512");
             byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8);
@@ -60,6 +82,9 @@ public class VnPayConfig {
         }
     }
 
+    /**
+     * Gets the real client IP address, handling proxies and load balancers.
+     */
     public static String getIpAddress(HttpServletRequest request) {
         String ipAddress;
         try {
@@ -72,6 +97,10 @@ public class VnPayConfig {
             }
             if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
                 ipAddress = request.getRemoteAddr();
+            }
+            // Handle multiple IPs in X-Forwarded-For (take the first)
+            if (ipAddress != null && ipAddress.contains(",")) {
+                ipAddress = ipAddress.split(",")[0].trim();
             }
         } catch (Exception e) {
             ipAddress = "127.0.0.1";

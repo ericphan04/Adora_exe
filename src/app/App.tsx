@@ -4,16 +4,19 @@ import { router } from "./routes";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ConfirmProvider } from "./context/ConfirmContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "./components/ui/sonner";
 
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <ConfirmProvider>
-          <RouterProvider router={router} />
-          <Toaster />
-        </ConfirmProvider>
+        <NotificationProvider>
+          <ConfirmProvider>
+            <RouterProvider router={router} />
+            <Toaster />
+          </ConfirmProvider>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );
