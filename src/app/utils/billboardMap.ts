@@ -37,8 +37,10 @@ export function resolveBillboardPosition(
     return { lat: b.latitude, lng: b.longitude };
   }
   const base = DISTRICT_COORDS[b.district] ?? DANANG_CENTER;
-  const angle = index * 0.9;
-  const offset = 0.004 + (index % 3) * 0.002;
+  // Use stable ID instead of dynamic index to ensure position compatibility across pages
+  const stableKey = b.id || index || 0;
+  const angle = stableKey * 0.9;
+  const offset = 0.004 + (stableKey % 3) * 0.002;
   return {
     lat: base.lat + Math.sin(angle) * offset,
     lng: base.lng + Math.cos(angle) * offset,
