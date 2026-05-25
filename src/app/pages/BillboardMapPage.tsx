@@ -1,16 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import {
-  ArrowLeft,
-  MapPin,
-  Search,
-  SlidersHorizontal,
-  List,
-} from "lucide-react";
+import { ArrowLeft, MapPin, Search, SlidersHorizontal, List, X, Maximize, Eye, Navigation } from "lucide-react";
 import billboardApi from "../../api/billboardApi";
 import { BillboardDto } from "../../types/billboard";
 import { BillboardGoogleMap } from "../components/map/BillboardGoogleMap";
-import { BillboardMapPanel } from "../components/map/BillboardMapPanel";
+import { TopNav } from "../components/TopNav";
 import {
   getBillboardRentalStatus,
   MAP_BILLBOARD_MOCKS,
@@ -26,25 +20,28 @@ const DISTRICTS = [
   "Cẩm Lệ",
 ];
 
+const CITIES = ["Đà Nẵng", "Hồ Chí Minh", "Hà Nội"];
+
 export default function BillboardMapPage() {
   const navigate = useNavigate();
   const [billboards, setBillboards] = useState<BillboardDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  
+  // Filters state
   const [search, setSearch] = useState("");
+  const [city, setCity] = useState("Đà Nẵng");
   const [district, setDistrict] = useState("Tất cả");
-  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "booked">(
-    "all"
-  );
+  const [priceRange, setPriceRange] = useState("Tất cả giá");
+  const [chipFilter, setChipFilter] = useState("Tất cả");
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const response = await billboardApi.getAll({ city: "Đà Nẵng" });
-        const data =
-          response.success && response.data?.length ? response.data : [];
+        const response = await billboardApi.getAll({ city });
+        const data = response.success && response.data?.length ? response.data : [];
         if (!cancelled) {
           setBillboards(data.length > 0 ? data : MAP_BILLBOARD_MOCKS);
         }
@@ -57,164 +54,277 @@ export default function BillboardMapPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [city]);
 
+  // Combined Filters Logic
   const filtered = useMemo(() => {
     return billboards.filter((b) => {
+      // 1. Search Query
       const q = search.trim().toLowerCase();
       if (q) {
         const hay = `${b.title} ${b.address} ${b.district} ${b.description}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
+
+      // 2. District Filter
       if (district !== "Tất cả" && b.district !== district) return false;
-      if (statusFilter !== "all") {
-        const st = getBillboardRentalStatus(b);
-        if (st !== statusFilter) return false;
+
+      // 3. Price Range Filter
+      if (priceRange !== "Tất cả giá") {
+        const price = b.pricePerMonth;
+        if (priceRange === "Dưới 50tr" && price >= 50000000) return false;
+        if (priceRange === "50tr - 150tr" && (price < 50000000 || price > 150000000)) return false;
+        if (priceRange === "Trên 150tr" && price <= 150000000) return false;
       }
+
+      // 4. Chip category filter
+      if (chipFilter !== "Tất cả") {
+        if (chipFilter === "Sân bay") {
+          const text = `${b.title} ${b.address} ${b.description}`.toLowerCase();
+          if (!text.includes("sân bay") && !text.includes("airport")) return false;
+        }
+        if (chipFilter === "Trung tâm TM") {
+          const text = `${b.title} ${b.address} ${b.description} ${b.screenType}`.toLowerCase();
+          if (!text.includes("tttm") && !text.includes("mall") && !text.includes("vincom") && !text.includes("lotte")) return false;
+        }
+        if (chipFilter === "Trung tâm thành phố") {
+          // Typically center districts like Hải Châu in Đà Nẵng or Quận 1 in HCM
+          if (b.district !== "Hải Châu" && b.district !== "Quận 1") return false;
+        }
+      }
+
       return true;
     });
-  }, [billboards, search, district, statusFilter]);
+  }, [billboards, search, district, priceRange, chipFilter]);
 
-  const selected = filtered.find((b) => b.id === selectedId) ?? null;
-
-  const counts = useMemo(() => {
-    const available = filtered.filter(
-      (b) => getBillboardRentalStatus(b) === "available"
-    ).length;
-    return { total: filtered.length, available, booked: filtered.length - available };
-  }, [filtered]);
+  const selected = useMemo(() => {
+    return filtered.find((b) => b.id === selectedId) ?? null;
+  }, [filtered, selectedId]);
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col bg-[#0f172a] overflow-hidden">
-      {/* Floating header */}
-      <header className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
-        <div className="p-3 sm:p-4 flex flex-col gap-3 max-w-7xl mx-auto">
-          <div className="flex items-center gap-2 pointer-events-auto">
-            <button
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-xl bg-white/95 shadow-lg flex items-center justify-center text-[#1D4ED8] hover:bg-white cursor-pointer"
-              aria-label="Quay lại"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex-1 min-w-0 rounded-xl bg-white/95 backdrop-blur-md shadow-lg px-4 py-2.5 border border-white/60">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#06B6D4] shrink-0" />
-                <div className="min-w-0">
-                  <h1
-                    className="text-sm sm:text-base text-[#1D4ED8] truncate"
-                    style={{ fontWeight: 700 }}
-                  >
-                    Bản đồ Billboard LED — Đà Nẵng
-                  </h1>
-                  <p className="text-[11px] text-[#6B7A8D] truncate">
-                    {loading
-                      ? "Đang tải..."
-                      : `${counts.total} bảng · ${counts.available} Available · ${counts.booked} Booked`}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() => navigate("/billboards")}
-              className="hidden sm:flex w-10 h-10 rounded-xl bg-white/95 shadow-lg items-center justify-center text-[#6B7A8D] hover:text-[#1D4ED8] cursor-pointer"
-              title="Danh sách"
-            >
-              <List className="w-5 h-5" />
-            </button>
-          </div>
+    <div className="h-screen w-full flex flex-col bg-background text-foreground overflow-hidden font-sans">
+      <TopNav />
 
-          <div className="flex flex-wrap gap-2 pointer-events-auto">
-            <div className="flex-1 min-w-[200px] flex items-center gap-2 bg-white/95 rounded-xl px-3 py-2 shadow-lg border border-white/60">
-              <Search className="w-4 h-4 text-[#6B7A8D] shrink-0" />
+      {/* Main split-screen panel */}
+      <main className="flex-1 flex flex-col md:flex-row min-h-0 pt-16 overflow-hidden">
+        
+        {/* Left Column: Filter & List */}
+        <section className="w-full md:w-[400px] lg:w-[450px] bg-card border-r border-border/40 flex flex-col h-full z-10 overflow-hidden flex-shrink-0">
+          
+          {/* Header & Filters Box */}
+          <div className="p-5 space-y-4 border-b border-border/30">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-extrabold text-primary flex items-center gap-1.5">
+                <MapPin className="w-5.5 h-5.5 text-accent animate-pulse" />
+                Bản đồ LED
+              </h1>
+              <span className="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold">
+                {loading ? "Đang tải..." : `${filtered.length} Bảng QC`}
+              </span>
+            </div>
+
+            {/* Smart Keyword Search */}
+            <div className="relative flex items-center bg-background border border-border/50 rounded-xl px-3 py-2 shadow-sm">
+              <Search className="w-4 h-4 text-muted-foreground shrink-0 mr-2" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo tên, địa chỉ..."
-                className="flex-1 bg-transparent text-sm outline-none min-w-0"
+                placeholder="Tìm theo tên, địa chỉ, vị trí..."
+                className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground/60"
               />
+              {search && (
+                <button onClick={() => setSearch("")} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            <div className="flex items-center gap-2 bg-white/95 rounded-xl px-3 py-2 shadow-lg border border-white/60">
-              <SlidersHorizontal className="w-4 h-4 text-[#6B7A8D]" />
-              <select
-                value={district}
-                onChange={(e) => setDistrict(e.target.value)}
-                className="text-sm bg-transparent outline-none cursor-pointer"
-              >
-                {DISTRICTS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
+
+            {/* Selector Filters Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Thành Phố</label>
+                <select 
+                  value={city} 
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    setDistrict("Tất cả");
+                  }}
+                  className="w-full bg-background border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-1 focus:ring-accent outline-none appearance-none cursor-pointer"
+                >
+                  {CITIES.map(c => (
+                    <option key={c} value={c} className="bg-card">{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Quận / Huyện</label>
+                <select 
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  className="w-full bg-background border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-1 focus:ring-accent outline-none appearance-none cursor-pointer"
+                >
+                  <option value="Tất cả" className="bg-card">Tất cả quận</option>
+                  {DISTRICTS.filter(d => d !== "Tất cả").map((d) => (
+                    <option key={d} value={d} className="bg-card">
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="flex rounded-xl overflow-hidden shadow-lg border border-white/60 bg-white/95">
-              {(
-                [
-                  ["all", "Tất cả"],
-                  ["available", "Available"],
-                  ["booked", "Booked"],
-                ] as const
-              ).map(([key, label]) => (
+
+            <div className="grid grid-cols-1 gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Khoảng giá thuê tháng</label>
+                <select 
+                  value={priceRange}
+                  onChange={(e) => setPriceRange(e.target.value)}
+                  className="w-full bg-background border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-1 focus:ring-accent outline-none appearance-none cursor-pointer"
+                >
+                  <option value="Tất cả giá" className="bg-card">Tất cả giá</option>
+                  <option value="Dưới 50tr" className="bg-card">Dưới 50 triệu / tháng</option>
+                  <option value="50tr - 150tr" className="bg-card">50 triệu – 150 triệu</option>
+                  <option value="Trên 150tr" className="bg-card">Trên 150 triệu / tháng</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Quick Chips Categories */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {["Tất cả", "Trung tâm thành phố", "Sân bay", "Trung tâm TM"].map((chip) => (
                 <button
-                  key={key}
-                  onClick={() => setStatusFilter(key)}
-                  className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${
-                    statusFilter === key
-                      ? "bg-[#1D4ED8] text-white"
-                      : "text-[#6B7A8D] hover:bg-[#F0F9FF]"
+                  key={chip}
+                  onClick={() => setChipFilter(chip)}
+                  className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                    chipFilter === chip
+                      ? "bg-accent/15 border-accent text-accent"
+                      : "border-border text-muted-foreground hover:border-muted-foreground"
                   }`}
                 >
-                  {label}
+                  {chip}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex gap-3 text-[11px] pointer-events-none">
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/90 shadow">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              Available
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/90 shadow">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-              Booked
-            </span>
+          {/* List Scrollable Container */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {loading ? (
+              <div className="text-center py-20 text-sm text-muted-foreground font-semibold animate-pulse">
+                Đang tải danh sách bảng hiệu...
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-20 text-sm text-muted-foreground font-medium">
+                Không tìm thấy bảng hiệu nào khớp bộ lọc.
+              </div>
+            ) : (
+              filtered.map((b) => {
+                const isSelected = b.id === selectedId;
+                const thumbnail = b.images?.find(img => img.isThumbnail)?.imageUrl || b.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1585504303098-9785dc784742?w=500";
+                const isAvailable = getBillboardRentalStatus(b) === "available";
+
+                return (
+                  <div
+                    key={b.id}
+                    onClick={() => setSelectedId(b.id)}
+                    className={`group bg-surface/40 border rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                      isSelected 
+                        ? "border-accent shadow-[0_0_12px_rgba(6,182,212,0.15)] bg-primary/5" 
+                        : "border-border/60 hover:border-accent/40"
+                    }`}
+                  >
+                    <div className="aspect-video relative overflow-hidden bg-background">
+                      <img 
+                        src={thumbnail} 
+                        alt={b.title} 
+                        className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500" 
+                      />
+                      <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-md border border-accent/20 flex items-center gap-1.5 shadow-sm">
+                        <span className={`w-2 h-2 rounded-full ${isAvailable ? "bg-accent animate-ping" : "bg-amber-500"}`}></span>
+                        <span className={`w-2 h-2 rounded-full absolute ${isAvailable ? "bg-accent" : "bg-amber-500"}`}></span>
+                        <span className={`text-[9px] font-extrabold uppercase tracking-wider ${isAvailable ? "text-accent" : "text-amber-500"}`}>
+                          {isAvailable ? "Đang trống" : "Đã đặt chỗ"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 space-y-2">
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                          {b.title}
+                        </h3>
+                        <span className="font-bold text-xs text-primary shrink-0 text-right">
+                          {b.pricePerMonth.toLocaleString("vi-VN")}₫/th
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{b.address}, {b.district}</p>
+                      
+                      <div className="flex items-center gap-4 pt-3 border-t border-border/30 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <div className="flex items-center gap-1.5">
+                          <Maximize className="w-3.5 h-3.5 text-accent" />
+                          <span>{b.width}m x {b.height}m</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5 text-accent" />
+                          <span>{b.dailyViews ? `${(b.dailyViews / 1000).toFixed(0)}K` : "50K"} views/ngày</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
-        </div>
-      </header>
+        </section>
 
-      {/* Map + panel layout */}
-      <div className="flex-1 relative min-h-0">
-        <BillboardGoogleMap
-          billboards={filtered}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          fitBounds
-          className="absolute inset-0"
-        />
+        {/* Right Column: Google Interactive Map */}
+        <section className="flex-1 relative bg-background overflow-hidden min-h-[300px] md:min-h-0">
+          <BillboardGoogleMap
+            billboards={filtered}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            fitBounds
+            className="absolute inset-0"
+          />
 
-        {/* Desktop side panel */}
-        {selected && (
-          <aside className="hidden lg:block absolute top-28 right-4 bottom-4 w-[380px] z-10 animate-in slide-in-from-right-4">
-            <BillboardMapPanel
-              billboard={selected}
-              onClose={() => setSelectedId(null)}
-            />
-          </aside>
-        )}
-
-        {/* Mobile bottom sheet */}
-        {selected && (
-          <div className="lg:hidden absolute inset-x-0 bottom-0 z-10 p-3 pb-5 max-h-[55vh]">
-            <BillboardMapPanel
-              billboard={selected}
-              onClose={() => setSelectedId(null)}
-              compact
-            />
-          </div>
-        )}
-      </div>
+          {/* Floating Details Preview Card over Map (Conditional Visibility) */}
+          {selected && (
+            <div className="absolute bottom-8 left-8 w-80 bg-card/95 backdrop-blur-xl rounded-2xl border border-accent/40 p-5 shadow-2xl z-20 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h4 className="text-sm font-bold text-primary truncate max-w-[210px]" title={selected.title}>
+                    {selected.title}
+                  </h4>
+                  <p className="text-xs text-muted-foreground truncate max-w-[210px] mt-0.5">
+                    {selected.address}, {selected.district}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setSelectedId(null)}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="flex justify-between items-center pt-3.5 border-t border-border">
+                <div className="text-left">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Giá thuê tháng</span>
+                  <span className="font-extrabold text-sm text-accent">
+                    {selected.pricePerMonth.toLocaleString("vi-VN")}₫
+                  </span>
+                </div>
+                <button 
+                  onClick={() => navigate(`/billboard/${selected.id}`)}
+                  className="px-4.5 py-2.5 rounded-xl bg-primary hover:bg-primary/95 text-white font-bold text-xs tracking-wider transition-all cursor-pointer active:scale-95 shadow-md shadow-primary/20"
+                >
+                  CHI TIẾT
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }

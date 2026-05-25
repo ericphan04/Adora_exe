@@ -18,33 +18,37 @@ const trafficLabels: Record<string, string> = { High: "Cao", Medium: "TB", Low: 
 
 export function BillboardCard({ image, name, location, size, trafficIndex, price, availability, onViewDetails }: BillboardCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden hover:shadow-lg transition-all group">
-      <div className="relative h-48 overflow-hidden">
-        <ImageWithFallback src={image} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        <div className="absolute top-3 left-3">
-          <StatusBadge variant={availability} />
+    <div className="bg-card text-card-foreground rounded-xl border border-border overflow-hidden hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:border-accent/40 transition-all duration-300 group flex flex-col justify-between h-full">
+      <div>
+        <div className="relative h-48 overflow-hidden">
+          <ImageWithFallback src={image} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <div className="absolute top-3 left-3">
+            <StatusBadge variant={availability} />
+          </div>
+          <div className="absolute top-3 right-3 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-md font-semibold">
+            Lưu lượng {trafficLabels[trafficIndex] || trafficIndex}
+          </div>
         </div>
-        <div className="absolute top-3 right-3 bg-[#1D4ED8]/80 text-white text-xs px-2 py-1 rounded-md">
-          Lưu lượng {trafficLabels[trafficIndex] || trafficIndex}
+        <div className="p-4">
+          <h3 className="text-primary font-bold text-lg mb-1 truncate" title={name}>{name}</h3>
+          <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+            <MapPin className="w-3.5 h-3.5 text-accent" />
+            <span className="truncate">{location}</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+            <span className="bg-primary/10 text-primary px-2.5 py-1 rounded font-medium">{size}</span>
+          </div>
         </div>
       </div>
-      <div className="p-4">
-        <h3 className="text-[#1D4ED8] mb-1 truncate">{name}</h3>
-        <div className="flex items-center gap-1 text-sm text-[#6B7A8D] mb-2">
-          <MapPin className="w-3.5 h-3.5" />
-          <span className="truncate">{location}</span>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-[#6B7A8D] mb-3">
-          <span className="bg-[#F0F9FF] px-2 py-1 rounded">{size}</span>
-        </div>
-        <div className="flex items-center justify-between pt-3 border-t border-[#E3E8EF]">
+      <div className="p-4 pt-0">
+        <div className="flex items-center justify-between pt-3 border-t border-border">
           <div>
-            <span className="text-lg text-[#1D4ED8]" style={{ fontWeight: 700 }}>{price}</span>
-            <span className="text-xs text-[#6B7A8D]">/tháng</span>
+            <span className="text-lg text-primary font-extrabold">{price}</span>
+            <span className="text-xs text-muted-foreground">/tháng</span>
           </div>
           <button
             onClick={onViewDetails}
-            className="flex items-center gap-1.5 text-sm text-[#3B82F6] hover:text-[#06B6D4] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-sm text-primary hover:text-accent font-semibold transition-colors cursor-pointer active:scale-95"
           >
             <Eye className="w-4 h-4" />
             Xem Chi Tiết
@@ -54,3 +58,4 @@ export function BillboardCard({ image, name, location, size, trafficIndex, price
     </div>
   );
 }
+

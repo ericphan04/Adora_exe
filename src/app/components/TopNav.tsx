@@ -27,8 +27,9 @@ export function TopNav() {
     <header className="w-full border-b border-[#E3E8EF] bg-white/95 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
         <div className="flex items-center gap-8">
-          <button onClick={() => navigate("/")} className="text-xl text-[#1D4ED8] tracking-tight cursor-pointer" style={{ fontWeight: 800 }}>
-            ADORA
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-xl text-[#1D4ED8] tracking-tight cursor-pointer font-black">
+            <img src="/logo.png" className="w-8 h-8 rounded-lg shadow-sm border border-[#1D4ED8]/10" alt="ADORA logo" />
+            <span>ADORA</span>
           </button>
           <nav className="hidden md:flex items-center gap-6">
             <button onClick={() => navigate("/billboards")} className="text-sm text-[#6B7A8D] hover:text-[#1D4ED8] transition-colors cursor-pointer">
