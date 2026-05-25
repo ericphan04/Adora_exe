@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink, Info, Maximize, Lightbulb, Grid, CheckCircle, HelpCircle, Users, Calendar } from "lucide-react";
 import { BillboardGoogleMap } from "../components/map/BillboardGoogleMap";
-import { getBillboardRentalStatus } from "../utils/billboardMap";
+import { getBillboardRentalStatus, MAP_BILLBOARD_MOCKS } from "../utils/billboardMap";
 import { TopNav } from "../components/TopNav";
 import { Footer } from "../components/Footer";
 import { StatusBadge } from "../components/StatusBadge";
@@ -106,44 +106,63 @@ export default function BillboardDetailPage() {
       } catch (err) {
         console.warn("Backend API not running, using fallback details:", err);
         if (active) {
-          const dummyBillboard: BillboardDto = {
-            id: billboardId,
-            title: billboardId === 2 ? "Bạch Đằng Digital" : billboardId === 3 ? "Nguyễn Văn Linh Screen" : "Cầu Rồng LED",
-            description: "Bảng quảng cáo LED kỹ thuật số cao cấp tọa lạc tại vị trí đắc địa ở TP Đà Nẵng. Mang lại khả năng hiển thị vượt trội với ước tính hàng chục ngàn lượt đi qua mỗi ngày. Màn hình độ nét cao đảm bảo nội dung nổi bật cả ngày lẫn đêm.",
-            address: billboardId === 2 ? "Đường Bạch Đằng" : billboardId === 3 ? "Nguyễn Văn Linh" : "Đường 2/9",
-            city: "Đà Nẵng",
-            district: billboardId === 2 ? "Sơn Trà" : billboardId === 3 ? "Thanh Khê" : "Hải Châu",
-            width: billboardId === 2 ? 10 : billboardId === 3 ? 12 : 14,
-            height: billboardId === 2 ? 4 : billboardId === 3 ? 5 : 6,
-            resolution: "P10 4K UHD",
-            brightness: 6500,
-            refreshRate: 3840,
-            screenType: "Outdoor Digital LED",
-            operatingHours: "24/7",
-            pricePerDay: billboardId === 2 ? 2000000 : billboardId === 3 ? 2300000 : 3000000,
-            pricePerMonth: billboardId === 2 ? 55000000 : billboardId === 3 ? 68000000 : 85000000,
-            locationSurcharge: billboardId === 2 ? 5000000 : billboardId === 3 ? 8000000 : 10000000,
-            status: "APPROVED",
-            dailyViews: billboardId === 2 ? 80000 : billboardId === 3 ? 110000 : 150000,
-            isFeatured: true,
-            images: fallbackImages.map((img, i) => ({ id: i, imageUrl: img, isThumbnail: i === 0 })),
-            features: [
-              { id: 1, name: "Độ phân giải 4K" },
-              { id: 2, name: "Hỗ trợ HDR" },
-              { id: 3, name: "Chống thời tiết IP65" },
-              { id: 4, name: "Mật độ điểm ảnh 6mm" }
-            ],
-            availabilities: (() => {
-              const { year, month } = getTodayParts();
-              return [3, 4, 5, 8, 9, 10].map((day, i) => ({
-                id: i + 1,
-                availableDate: toIsoDate(year, month, day),
-                status: "BOOKED" as const,
-              }));
-            })()
-          };
-          setBillboard(dummyBillboard);
-          setReviews(fallbackReviewsList);
+          const found = MAP_BILLBOARD_MOCKS.find(b => b.id === billboardId);
+          if (found) {
+            const mockWithAvailability = {
+              ...found,
+              availabilities: found.availabilities && found.availabilities.length > 0 ? found.availabilities : (() => {
+                const { year, month } = getTodayParts();
+                return [3, 4, 5, 8, 9, 10].map((day, i) => ({
+                  id: i + 1,
+                  availableDate: toIsoDate(year, month, day),
+                  status: "BOOKED" as const,
+                }));
+              })()
+            };
+            setBillboard(mockWithAvailability);
+            setReviews(fallbackReviewsList);
+          } else {
+            const dummyBillboard: BillboardDto = {
+              id: billboardId,
+              title: billboardId === 2 ? "Bạch Đằng Digital" : billboardId === 3 ? "Nguyễn Văn Linh Screen" : "Cầu Rồng LED",
+              description: "Bảng quảng cáo LED kỹ thuật số cao cấp tọa lạc tại vị trí đắc địa ở TP Đà Nẵng. Mang lại khả năng hiển thị vượt trội với ước tính hàng chục ngàn lượt đi qua mỗi ngày. Màn hình độ nét cao đảm bảo nội dung nổi bật cả ngày lẫn đêm.",
+              address: billboardId === 2 ? "Đường Bạch Đằng" : billboardId === 3 ? "Nguyễn Văn Linh" : "Đường 2/9",
+              city: "Đà Nẵng",
+              district: billboardId === 2 ? "Sơn Trà" : billboardId === 3 ? "Thanh Khê" : "Hải Châu",
+              latitude: billboardId === 2 ? 16.0708 : billboardId === 3 ? 16.0545 : 16.0614,
+              longitude: billboardId === 2 ? 108.2483 : billboardId === 3 ? 108.2020 : 108.2275,
+              width: billboardId === 2 ? 10 : billboardId === 3 ? 12 : 14,
+              height: billboardId === 2 ? 4 : billboardId === 3 ? 5 : 6,
+              resolution: "P10 4K UHD",
+              brightness: 6500,
+              refreshRate: 3840,
+              screenType: "Outdoor Digital LED",
+              operatingHours: "24/7",
+              pricePerDay: billboardId === 2 ? 2000000 : billboardId === 3 ? 2300000 : 3000000,
+              pricePerMonth: billboardId === 2 ? 55000000 : billboardId === 3 ? 68000000 : 85000000,
+              locationSurcharge: billboardId === 2 ? 5000000 : billboardId === 3 ? 8000000 : 10000000,
+              status: "APPROVED",
+              dailyViews: billboardId === 2 ? 80000 : billboardId === 3 ? 110000 : 150000,
+              isFeatured: true,
+              images: fallbackImages.map((img, i) => ({ id: i, imageUrl: img, isThumbnail: i === 0 })),
+              features: [
+                { id: 1, name: "Độ phân giải 4K" },
+                { id: 2, name: "Hỗ trợ HDR" },
+                { id: 3, name: "Chống thời tiết IP65" },
+                { id: 4, name: "Mật độ điểm ảnh 6mm" }
+              ],
+              availabilities: (() => {
+                const { year, month } = getTodayParts();
+                return [3, 4, 5, 8, 9, 10].map((day, i) => ({
+                  id: i + 1,
+                  availableDate: toIsoDate(year, month, day),
+                  status: "BOOKED" as const,
+                }));
+              })()
+            };
+            setBillboard(dummyBillboard);
+            setReviews(fallbackReviewsList);
+          }
         }
       } finally {
         if (active) setLoading(false);
