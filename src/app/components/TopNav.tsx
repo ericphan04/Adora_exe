@@ -1,10 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { Search, Bell, User } from "lucide-react";
+import { Search, Bell, User, LogOut, LayoutDashboard } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export function TopNav() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const getDashboardPath = () => {
+    if (!user) return "/";
+    if (user.role === "ADMIN") return "/admin";
+    if (user.role === "OWNER") return "/owner";
+    return "/advertiser";
+  };
+
+  const getRoleLabel = () => {
+    if (!user) return "";
+    if (user.role === "ADMIN") return "Admin";
+    if (user.role === "OWNER") return "Chủ bảng";
+    return "Nhà quảng cáo";
+  };
 
   return (
     <header className="w-full border-b border-[#E3E8EF] bg-white/95 backdrop-blur-sm sticky top-0 z-50">
@@ -38,18 +55,75 @@ export function TopNav() {
             <Bell className="w-4.5 h-4.5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EF4444] rounded-full" />
           </button>
-          <button
-            onClick={() => navigate("/login")}
-            className="text-sm text-[#1D4ED8] border border-[#E3E8EF] px-4 py-2 rounded-lg hover:bg-[#F0F9FF] transition-colors cursor-pointer"
-          >
-            Đăng Nhập
-          </button>
-          <button
-            onClick={() => navigate("/register")}
-            className="text-sm text-white bg-[#1D4ED8] px-4 py-2 rounded-lg hover:bg-[#3B82F6] transition-colors cursor-pointer"
-          >
-            Bắt Đầu
-          </button>
+          
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-2 hover:bg-[#F0F9FF] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#1D4ED8]/10 text-[#1D4ED8] flex items-center justify-center font-semibold text-sm">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    user.fullName.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="hidden md:block text-left">
+                  <p className="text-xs font-semibold text-[#1A2332] leading-tight">{user.fullName}</p>
+                  <p className="text-[10px] text-[#6B7A8D]">{getRoleLabel()}</p>
+                </div>
+              </button>
+
+              {showDropdown && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)} />
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E3E8EF] rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-2 border-b border-[#E3E8EF]">
+                      <p className="text-sm font-semibold text-[#1A2332] truncate">{user.fullName}</p>
+                      <p className="text-xs text-[#6B7A8D] truncate">{user.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        navigate(getDashboardPath());
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#1A2332] hover:bg-[#F0F9FF] transition-colors text-left"
+                    >
+                      <LayoutDashboard className="w-4 h-4 text-[#6B7A8D]" />
+                      <span>Trang Quản Lý</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        logout();
+                        navigate("/");
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#EF4444] hover:bg-red-50 transition-colors text-left border-t border-[#E3E8EF] mt-1"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Đăng Xuất</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate("/login")}
+                className="text-sm text-[#1D4ED8] border border-[#E3E8EF] px-4 py-2 rounded-lg hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+              >
+                Đăng Nhập
+              </button>
+              <button
+                onClick={() => navigate("/register")}
+                className="text-sm text-white bg-[#1D4ED8] px-4 py-2 rounded-lg hover:bg-[#3B82F6] transition-colors cursor-pointer"
+              >
+                Bắt Đầu
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>

@@ -55,7 +55,7 @@ export function AdvertiserBookingsView({
     (async () => {
       setBillboardsLoading(true);
       try {
-        const res = await billboardApi.getAll({ city: "Đà Nẵng" });
+        const res = await billboardApi.getAll();
         if (active && res.success && res.data) {
           setAllBillboards(res.data.filter((b) => b.status === "APPROVED"));
           setBillboardsError(false);

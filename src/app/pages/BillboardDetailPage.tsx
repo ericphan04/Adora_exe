@@ -439,11 +439,35 @@ export default function BillboardDetailPage() {
                 {activeTab === "map" && (
                   <div>
                     <h3 className="text-[#1D4ED8] mb-4" style={{ fontWeight: 600 }}>Vị Trí Bản Đồ</h3>
-                    <div className="bg-[#F0F9FF] rounded-lg h-80 flex items-center justify-center text-[#6B7A8D]">
-                      <div className="text-center">
-                        <MapPin className="w-10 h-10 mx-auto mb-2 text-[#06B6D4]" />
-                        <p className="text-sm" style={{ fontWeight: 500 }}>{billboard.address}, {billboard.district}, {billboard.city}</p>
-                        <p className="text-xs text-[#6B7A8D] mt-1">{billboard.latitude || 16.0611}° N, {billboard.longitude || 108.2275}° E</p>
+                    <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden shadow-sm h-[400px] flex flex-col">
+                      <div className="flex-1 w-full h-full relative">
+                        <iframe
+                          title="Bản đồ vị trí bảng quảng cáo"
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                            billboard.latitude && billboard.longitude
+                              ? `${billboard.latitude},${billboard.longitude}`
+                              : `${billboard.address}, ${billboard.district}, ${billboard.city}`
+                          )}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                          allowFullScreen
+                          loading="lazy"
+                          className="w-full h-full"
+                        ></iframe>
+                      </div>
+                      <div className="p-4 bg-[#F8FAFC] border-t border-[#E3E8EF]">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-[#06B6D4] shrink-0" />
+                          <p className="text-sm text-[#1A2332]" style={{ fontWeight: 500 }}>
+                            {billboard.address}, {billboard.district}, {billboard.city}
+                          </p>
+                        </div>
+                        {(billboard.latitude || billboard.longitude) && (
+                          <p className="text-xs text-[#6B7A8D] mt-1 ml-6">
+                            Tọa độ: {billboard.latitude}° N, {billboard.longitude}° E
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -563,14 +587,18 @@ export default function BillboardDetailPage() {
 
               <button
                 onClick={handleBookingSubmit}
-                disabled={bookingLoading}
-                className="w-full bg-[#06B6D4] text-white py-3 rounded-lg hover:bg-[#0891B2] transition-colors cursor-pointer mb-3 disabled:opacity-50"
+                disabled={bookingLoading || (!!user && user.role !== "RENTER")}
+                className="w-full bg-[#06B6D4] text-white py-3 rounded-lg hover:bg-[#0891B2] transition-colors cursor-pointer mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {bookingLoading
                   ? "Đang xử lý..."
-                  : selectedStartDay && selectedEndDay
-                    ? `Đặt lịch (${formatDisplayDate(toIsoDate(calendarYear, calendarMonth, selectedStartDay))} – ${formatDisplayDate(toIsoDate(calendarYear, calendarMonth, selectedEndDay))})`
-                    : "Đặt ngay (chọn ngày trên lịch)"}
+                  : !user
+                    ? "Đăng nhập để đặt lịch"
+                    : user.role !== "RENTER"
+                      ? "Chỉ dành cho nhà quảng cáo"
+                      : selectedStartDay && selectedEndDay
+                        ? `Đặt lịch (${formatDisplayDate(toIsoDate(calendarYear, calendarMonth, selectedStartDay))} – ${formatDisplayDate(toIsoDate(calendarYear, calendarMonth, selectedEndDay))})`
+                        : "Đặt ngay (chọn ngày trên lịch)"}
               </button>
               
               <button
