@@ -33,6 +33,7 @@ public class UpdateBillboardRequest {
 
     private Double latitude;
     private Double longitude;
+    private String demoVideoUrl;
 
     private Double width;
     private Double height;

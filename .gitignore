@@ -100,3 +100,5 @@ dist
 
 # iOS/macOS
 .DS_Store
+# Java / Maven
+backend/target/

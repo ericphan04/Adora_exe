@@ -34,6 +34,9 @@ export function TopNav() {
             <button onClick={() => navigate("/billboards")} className="text-sm text-[#6B7A8D] hover:text-[#1D4ED8] transition-colors cursor-pointer">
               Tìm Bảng Quảng Cáo
             </button>
+            <button onClick={() => navigate("/billboards/map")} className="text-sm text-[#6B7A8D] hover:text-[#1D4ED8] transition-colors cursor-pointer">
+              Bản Đồ
+            </button>
             <button onClick={() => navigate("/")} className="text-sm text-[#6B7A8D] hover:text-[#1D4ED8] transition-colors cursor-pointer">
               Cách Hoạt Động
             </button>

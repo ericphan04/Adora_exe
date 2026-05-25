@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import HomePage from "./pages/HomePage";
 import BillboardListingPage from "./pages/BillboardListingPage";
+import BillboardMapPage from "./pages/BillboardMapPage";
 import BillboardDetailPage from "./pages/BillboardDetailPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -31,6 +32,7 @@ const ProtectedAdmin = () => (
 export const router = createBrowserRouter([
   { path: "/", Component: HomePage },
   { path: "/billboards", Component: BillboardListingPage },
+  { path: "/billboards/map", Component: BillboardMapPage },
   { path: "/billboard/:id", Component: BillboardDetailPage },
   { path: "/login", Component: LoginPage },
   { path: "/register", Component: RegisterPage },

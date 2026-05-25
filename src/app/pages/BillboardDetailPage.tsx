@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye } from "lucide-react";
+import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink } from "lucide-react";
+import { BillboardGoogleMap } from "../components/map/BillboardGoogleMap";
+import { getBillboardRentalStatus } from "../utils/billboardMap";
 import { TopNav } from "../components/TopNav";
 import { Footer } from "../components/Footer";
 import { StatusBadge } from "../components/StatusBadge";
@@ -438,36 +440,38 @@ export default function BillboardDetailPage() {
                 )}
                 {activeTab === "map" && (
                   <div>
-                    <h3 className="text-[#1D4ED8] mb-4" style={{ fontWeight: 600 }}>Vị Trí Bản Đồ</h3>
-                    <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden shadow-sm h-[400px] flex flex-col">
-                      <div className="flex-1 w-full h-full relative">
-                        <iframe
-                          title="Bản đồ vị trí bảng quảng cáo"
-                          width="100%"
-                          height="100%"
-                          style={{ border: 0 }}
-                          src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                            billboard.latitude && billboard.longitude
-                              ? `${billboard.latitude},${billboard.longitude}`
-                              : `${billboard.address}, ${billboard.district}, ${billboard.city}`
-                          )}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                          allowFullScreen
-                          loading="lazy"
-                          className="w-full h-full"
-                        ></iframe>
-                      </div>
-                      <div className="p-4 bg-[#F8FAFC] border-t border-[#E3E8EF]">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-[#06B6D4] shrink-0" />
-                          <p className="text-sm text-[#1A2332]" style={{ fontWeight: 500 }}>
-                            {billboard.address}, {billboard.district}, {billboard.city}
-                          </p>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>Vị Trí Bản Đồ</h3>
+                      <button
+                        onClick={() => navigate(`/billboards/map`)}
+                        className="text-xs text-[#1D4ED8] flex items-center gap-1 hover:underline cursor-pointer"
+                      >
+                        Mở bản đồ toàn màn hình
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="rounded-xl overflow-hidden border border-[#E3E8EF] h-80 relative">
+                      <BillboardGoogleMap
+                        billboards={[billboard]}
+                        selectedId={billboard.id}
+                        singleMarker
+                        zoom={15}
+                        className="w-full h-full"
+                      />
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
+                        <div className="bg-white/95 backdrop-blur rounded-lg px-3 py-2 shadow text-sm">
+                          <p className="text-[#1D4ED8] font-medium">{billboard.address}</p>
+                          <p className="text-xs text-[#6B7A8D]">{billboard.district}, {billboard.city}</p>
                         </div>
-                        {(billboard.latitude || billboard.longitude) && (
-                          <p className="text-xs text-[#6B7A8D] mt-1 ml-6">
-                            Tọa độ: {billboard.latitude}° N, {billboard.longitude}° E
-                          </p>
-                        )}
+                        <span
+                          className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold shadow ${
+                            getBillboardRentalStatus(billboard) === "available"
+                              ? "bg-emerald-500 text-white"
+                              : "bg-amber-500 text-white"
+                          }`}
+                        >
+                          {getBillboardRentalStatus(billboard) === "available" ? "Available" : "Booked"}
+                        </span>
                       </div>
                     </div>
                   </div>
