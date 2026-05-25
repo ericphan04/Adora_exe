@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye } from "lucide-react";
+import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink } from "lucide-react";
+import { BillboardGoogleMap } from "../components/map/BillboardGoogleMap";
+import { getBillboardRentalStatus } from "../utils/billboardMap";
 import { TopNav } from "../components/TopNav";
 import { Footer } from "../components/Footer";
 import { StatusBadge } from "../components/StatusBadge";
@@ -438,12 +440,38 @@ export default function BillboardDetailPage() {
                 )}
                 {activeTab === "map" && (
                   <div>
-                    <h3 className="text-[#1D4ED8] mb-4" style={{ fontWeight: 600 }}>Vị Trí Bản Đồ</h3>
-                    <div className="bg-[#F0F9FF] rounded-lg h-80 flex items-center justify-center text-[#6B7A8D]">
-                      <div className="text-center">
-                        <MapPin className="w-10 h-10 mx-auto mb-2 text-[#06B6D4]" />
-                        <p className="text-sm" style={{ fontWeight: 500 }}>{billboard.address}, {billboard.district}, {billboard.city}</p>
-                        <p className="text-xs text-[#6B7A8D] mt-1">{billboard.latitude || 16.0611}° N, {billboard.longitude || 108.2275}° E</p>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>Vị Trí Bản Đồ</h3>
+                      <button
+                        onClick={() => navigate(`/billboards/map`)}
+                        className="text-xs text-[#1D4ED8] flex items-center gap-1 hover:underline cursor-pointer"
+                      >
+                        Mở bản đồ toàn màn hình
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="rounded-xl overflow-hidden border border-[#E3E8EF] h-80 relative">
+                      <BillboardGoogleMap
+                        billboards={[billboard]}
+                        selectedId={billboard.id}
+                        singleMarker
+                        zoom={15}
+                        className="w-full h-full"
+                      />
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
+                        <div className="bg-white/95 backdrop-blur rounded-lg px-3 py-2 shadow text-sm">
+                          <p className="text-[#1D4ED8] font-medium">{billboard.address}</p>
+                          <p className="text-xs text-[#6B7A8D]">{billboard.district}, {billboard.city}</p>
+                        </div>
+                        <span
+                          className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold shadow ${
+                            getBillboardRentalStatus(billboard) === "available"
+                              ? "bg-emerald-500 text-white"
+                              : "bg-amber-500 text-white"
+                          }`}
+                        >
+                          {getBillboardRentalStatus(billboard) === "available" ? "Available" : "Booked"}
+                        </span>
                       </div>
                     </div>
                   </div>

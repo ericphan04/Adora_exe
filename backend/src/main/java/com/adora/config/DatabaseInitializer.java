@@ -153,6 +153,9 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .address("Đường 2/9, Hải Châu")
                     .city("Đà Nẵng")
                     .district("Hải Châu")
+                    .latitude(16.0614)
+                    .longitude(108.2275)
+                    .demoVideoUrl("https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4")
                     .width(14.0)
                     .height(6.0)
                     .resolution("1920x1080")
@@ -179,6 +182,9 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .address("Đường Bạch Đằng, Sơn Trà")
                     .city("Đà Nẵng")
                     .district("Sơn Trà")
+                    .latitude(16.0708)
+                    .longitude(108.2483)
+                    .demoVideoUrl("https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4")
                     .width(10.0)
                     .height(4.0)
                     .resolution("1920x1080")
@@ -204,6 +210,8 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .address("Đường Nguyễn Văn Linh, Thanh Khê")
                     .city("Đà Nẵng")
                     .district("Thanh Khê")
+                    .latitude(16.0545)
+                    .longitude(108.2020)
                     .width(12.0)
                     .height(5.0)
                     .resolution("1280x720")
@@ -229,6 +237,9 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .address("Ngô Quyền, An Hải Bắc, Hải Châu")
                     .city("Đà Nẵng")
                     .district("Hải Châu")
+                    .latitude(16.0678)
+                    .longitude(108.2208)
+                    .demoVideoUrl("https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
                     .width(16.0)
                     .height(8.0)
                     .resolution("1920x1080")
@@ -387,6 +398,48 @@ public class DatabaseInitializer implements ApplicationRunner {
                 conv.setLastMessagePreview(m2.getContent());
                 conv.setLastMessageAt(m2.getCreatedAt());
                 conversationRepository.save(conv);
+            }
+        }
+
+        // 9. Backfill map coordinates & demo videos for existing billboards
+        patchBillboardMapData();
+    }
+
+    private void patchBillboardMapData() {
+        record MapPatch(double lat, double lng, String videoUrl) {}
+        java.util.Map<String, MapPatch> patches = java.util.Map.of(
+                "Cầu Rồng", new MapPatch(16.0614, 108.2275, "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"),
+                "Bạch Đằng", new MapPatch(16.0708, 108.2483, "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"),
+                "Nguyễn Văn Linh", new MapPatch(16.0545, 108.2020, null),
+                "Vincom", new MapPatch(16.0678, 108.2208, "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+        );
+
+        for (Billboard b : billboardRepository.findAll()) {
+            boolean changed = false;
+            if (b.getLatitude() == null || b.getLongitude() == null) {
+                for (var entry : patches.entrySet()) {
+                    if (b.getTitle().contains(entry.getKey())) {
+                        b.setLatitude(entry.getValue().lat());
+                        b.setLongitude(entry.getValue().lng());
+                        if (b.getDemoVideoUrl() == null && entry.getValue().videoUrl() != null) {
+                            b.setDemoVideoUrl(entry.getValue().videoUrl());
+                        }
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+            if (b.getDemoVideoUrl() == null) {
+                for (var entry : patches.entrySet()) {
+                    if (b.getTitle().contains(entry.getKey()) && entry.getValue().videoUrl() != null) {
+                        b.setDemoVideoUrl(entry.getValue().videoUrl());
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+            if (changed) {
+                billboardRepository.save(b);
             }
         }
     }

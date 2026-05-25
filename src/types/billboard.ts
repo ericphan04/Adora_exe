@@ -37,6 +37,7 @@ export interface BillboardDto {
   district: string;
   latitude?: number;
   longitude?: number;
+  demoVideoUrl?: string;
   width: number;
   height: number;
   resolution: string;

@@ -23,6 +23,7 @@ public class BillboardDto {
     private String district;
     private Double latitude;
     private Double longitude;
+    private String demoVideoUrl;
     private Double width;
     private Double height;
     private String resolution;
