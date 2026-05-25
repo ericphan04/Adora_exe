@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Search, MapPin, Shield, Zap, Clock, ArrowRight, CheckCircle, Users, Building2, DollarSign } from "lucide-react";
+import { Search, MapPin, Shield, Zap, Clock, ArrowRight, CheckCircle, Users, Building2, DollarSign, Calendar, Tv } from "lucide-react";
 import { BillboardCard } from "../components/BillboardCard";
 import { TopNav } from "../components/TopNav";
 import { Footer } from "../components/Footer";
@@ -114,25 +114,56 @@ const fallbackBillboards: BillboardDto[] = [
   }
 ];
 
-const steps = [
-  { icon: <Search className="w-6 h-6" />, title: "Tìm Kiếm", desc: "Tìm bảng quảng cáo phù hợp theo vị trí, kích thước, lưu lượng và ngân sách." },
-  { icon: <CheckCircle className="w-6 h-6" />, title: "So Sánh", desc: "So sánh thông số, giá cả, đánh giá và lịch trống theo thời gian thực." },
-  { icon: <Shield className="w-6 h-6" />, title: "Đặt & Thanh Toán", desc: "Đặt chỗ an toàn với hệ thống thanh toán ký quỹ và hợp đồng bảo vệ." },
-];
+function useCountUp(target: number, duration: number = 2000, trigger: boolean = true) {
+  const [count, setCount] = useState(0);
 
-const stats = [
-  { value: "1.200+", label: "Bảng QC Đang Hoạt Động", icon: <Building2 className="w-5 h-5" /> },
-  { value: "5.000+", label: "Nhà Quảng Cáo", icon: <Users className="w-5 h-5" /> },
-  { value: "25 Tỷ+", label: "Giá Trị Giao Dịch", icon: <DollarSign className="w-5 h-5" /> },
-  { value: "98%", label: "Tỷ Lệ Hài Lòng", icon: <CheckCircle className="w-5 h-5" /> },
-];
+  useEffect(() => {
+    if (!trigger) return;
+    let startTimestamp: number | null = null;
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      setCount(Math.floor(progress * target));
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      }
+    };
+    window.requestAnimationFrame(step);
+  }, [target, duration, trigger]);
+
+  return count;
+}
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [billboards, setBillboards] = React.useState<BillboardDto[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [billboards, setBillboards] = useState<BillboardDto[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
+  // Smart search bar states
+  const [searchCity, setSearchCity] = useState("");
+  const [searchDate, setSearchDate] = useState("");
+  const [searchType, setSearchType] = useState("Tất cả màn hình");
+
+  // Parallax background blobs state
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: (e.clientX - window.innerWidth / 2) / 60,
+        y: (e.clientY - window.innerHeight / 2) / 60,
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  // Counters animators
+  const trafficCount = useCountUp(12500000, 1800);
+  const panelsCount = useCountUp(450, 1800);
+  const campaignsCount = useCountUp(128, 1800);
+
+  useEffect(() => {
     let active = true;
     const fetchFeatured = async () => {
       try {
@@ -159,208 +190,269 @@ export default function HomePage() {
     };
   }, []);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (searchCity) params.append("city", searchCity);
+    if (searchDate) params.append("date", searchDate);
+    if (searchType !== "Tất cả màn hình") params.append("type", searchType);
+    navigate(`/billboards?${params.toString()}`);
+  };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
       <TopNav />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#1D4ED8] via-[#3B82F6] to-[#0891B2]">
-        <div className="absolute inset-0 opacity-15">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-[#06B6D4] rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-20 w-96 h-96 bg-[#06B6D4] rounded-full blur-3xl" />
-        </div>
-        <div className="max-w-7xl mx-auto px-6 py-24 flex items-center gap-12 relative z-10">
-          <div className="flex-1 text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs mb-6">
-              <Zap className="w-3.5 h-3.5 text-[#06B6D4]" />
+      <main className="flex-grow pt-16">
+        {/* Hero Section */}
+        <section className="relative min-h-[700px] flex flex-col items-center justify-center px-4 md:px-10 scanline-effect py-20 overflow-hidden">
+          {/* Atmospheric background elements (Mouse Parallax) */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            <div 
+              className="absolute top-1/4 left-1/4 w-[350px] md:w-[500px] h-[350px] md:h-[500px] bg-primary/10 rounded-full blur-[100px] md:blur-[120px] transition-transform duration-300 ease-out"
+              style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px)` }}
+            />
+            <div 
+              className="absolute bottom-1/4 right-1/4 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-accent/5 rounded-full blur-[120px] md:blur-[150px] transition-transform duration-300 ease-out"
+              style={{ transform: `translate(${-mousePos.x}px, ${-mousePos.y}px)` }}
+            />
+          </div>
+
+          <div className="z-10 text-center max-w-4xl mx-auto space-y-6">
+            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4.5 py-1.5 text-xs text-primary font-semibold mb-2">
+              <Zap className="w-3.5 h-3.5 text-accent animate-pulse" />
               <span>Được tin tưởng bởi hơn 5.000 nhà quảng cáo trên cả nước</span>
             </div>
-            <h1 className="text-5xl leading-tight mb-6" style={{ fontWeight: 800 }}>
-              Sàn Giao Dịch<br />
-              <span className="text-[#06B6D4]">Bảng Quảng Cáo LED</span>
+            <h1 className="text-4xl md:text-6xl font-extrabold led-gradient-text animate-pulse leading-tight">
+              Thống trị bầu trời với<br />Quảng cáo LED Kỹ thuật số
             </h1>
-            <p className="text-lg text-white/70 mb-8 max-w-lg leading-relaxed">
-              Giá minh bạch. Cập nhật theo thời gian thực. Thanh toán an toàn. Kết nối với các vị trí bảng quảng cáo cao cấp tại Đà Nẵng và toàn quốc.
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto pt-2 leading-relaxed">
+              Nền tảng DOOH hàng đầu giúp doanh nghiệp tiếp cận hàng triệu khách hàng mục tiêu thông qua mạng lưới màn hình LED cao cấp trên toàn quốc.
             </p>
-            <div className="flex items-center gap-4">
+
+            {/* Smart Search Bar */}
+            <form 
+              onSubmit={handleSearchSubmit} 
+              className="mt-12 glass-card rounded-2xl p-2 md:p-3 flex flex-col lg:flex-row items-center gap-3 max-w-5xl mx-auto shadow-2xl"
+            >
+              <div className="flex items-center gap-3 px-4 py-2.5 flex-1 w-full lg:border-r border-border/30">
+                <MapPin className="text-accent w-5 h-5 flex-shrink-0" />
+                <div className="flex flex-col items-start w-full">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Địa điểm</span>
+                  <input 
+                    type="text" 
+                    value={searchCity}
+                    onChange={(e) => setSearchCity(e.target.value)}
+                    placeholder="Đà Nẵng, TP. Hồ Chí Minh..." 
+                    className="bg-transparent border-none p-0 focus:outline-none focus:ring-0 text-foreground font-semibold text-base w-full placeholder:text-muted-foreground/60"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 px-4 py-2.5 flex-1 w-full lg:border-r border-border/30">
+                <Calendar className="text-accent w-5 h-5 flex-shrink-0" />
+                <div className="flex flex-col items-start w-full">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Thời gian</span>
+                  <input 
+                    type="text" 
+                    value={searchDate}
+                    onChange={(e) => setSearchDate(e.target.value)}
+                    placeholder="Tháng 12, 2026" 
+                    className="bg-transparent border-none p-0 focus:outline-none focus:ring-0 text-foreground font-semibold text-base w-full placeholder:text-muted-foreground/60"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 px-4 py-2.5 flex-1 w-full">
+                <Tv className="text-accent w-5 h-5 flex-shrink-0" />
+                <div className="flex flex-col items-start w-full">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Loại màn hình</span>
+                  <select 
+                    value={searchType}
+                    onChange={(e) => setSearchType(e.target.value)}
+                    className="bg-transparent border-none p-0 focus:outline-none focus:ring-0 text-foreground font-semibold text-base w-full appearance-none cursor-pointer"
+                  >
+                    <option value="Tất cả màn hình" className="bg-card">Tất cả màn hình</option>
+                    <option value="Outdoor LED" className="bg-card">LED Ngoài trời</option>
+                    <option value="Indoor LED" className="bg-card">LED Trong nhà</option>
+                    <option value="TTTM" className="bg-card">Màn hình TTTM</option>
+                  </select>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full lg:w-auto bg-primary text-white hover:bg-primary/95 px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-[0_0_15px_rgba(29,78,216,0.3)] cursor-pointer"
+              >
+                <Search className="w-5 h-5" />
+                Tìm kiếm
+              </button>
+            </form>
+          </div>
+        </section>
+
+        {/* Stats Section */}
+        <section className="py-20 px-4 md:px-10 max-w-7xl mx-auto border-t border-border/20">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Stat Card 1 */}
+            <div className="glass-card p-8 flex flex-col items-center text-center space-y-2 rounded-2xl glow-border transition-all group shadow-lg">
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                <Users className="text-accent text-3xl w-7 h-7" />
+              </div>
+              <div className="text-4xl font-extrabold text-accent">
+                {trafficCount.toLocaleString()}+
+              </div>
+              <div className="text-lg text-foreground font-bold uppercase tracking-wider">Lưu lượng tiếp cận</div>
+              <p className="text-sm text-muted-foreground pt-2">Lượt hiển thị trung bình hàng tháng trên toàn hệ thống.</p>
+            </div>
+
+            {/* Stat Card 2 */}
+            <div className="glass-card p-8 flex flex-col items-center text-center space-y-2 rounded-2xl glow-border transition-all group shadow-lg">
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                <Building2 className="text-accent text-3xl w-7 h-7" />
+              </div>
+              <div className="text-4xl font-extrabold text-accent">
+                {panelsCount}+
+              </div>
+              <div className="text-lg text-foreground font-bold uppercase tracking-wider">Số lượng bảng</div>
+              <p className="text-sm text-muted-foreground pt-2">Vị trí màn hình LED đắc địa tại các nút giao thông trọng yếu.</p>
+            </div>
+
+            {/* Stat Card 3 */}
+            <div className="glass-card p-8 flex flex-col items-center text-center space-y-2 rounded-2xl glow-border transition-all group shadow-lg">
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                <Zap className="text-accent text-3xl w-7 h-7" />
+              </div>
+              <div className="text-4xl font-extrabold text-accent">
+                {campaignsCount}+
+              </div>
+              <div className="text-lg text-foreground font-bold uppercase tracking-wider">Chiến dịch đang chạy</div>
+              <p className="text-sm text-muted-foreground pt-2">Thương hiệu đang tin tưởng sử dụng giải pháp của ADORA.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Visual Proof Section */}
+        <section className="py-24 px-4 md:px-10 max-w-7xl mx-auto overflow-hidden">
+          <div className="flex flex-col lg:flex-row gap-12 items-center">
+            <div className="w-full lg:w-1/2 space-y-6">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+                Vị trí đắc địa, <span className="text-accent">Tầm nhìn vô hạn</span>
+              </h2>
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+                Chúng tôi không chỉ cung cấp không gian quảng cáo; chúng tôi kiến tạo những điểm chạm thị giác đẳng cấp giúp thương hiệu của bạn tỏa sáng giữa không gian đô thị nhộn nhịp.
+              </p>
+              <ul className="space-y-4">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="text-accent w-5 h-5 flex-shrink-0" />
+                  <span className="text-base text-foreground/90 font-medium">Màn hình độ phân giải 4K siêu nét</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="text-accent w-5 h-5 flex-shrink-0" />
+                  <span className="text-base text-foreground/90 font-medium">Báo cáo real-time chuẩn xác</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="text-accent w-5 h-5 flex-shrink-0" />
+                  <span className="text-base text-foreground/90 font-medium">Quản lý nội dung từ xa thông minh</span>
+                </li>
+              </ul>
+              <button 
+                onClick={() => navigate("/billboards/map")}
+                className="border border-accent text-accent px-8 py-3.5 rounded-xl font-semibold hover:bg-accent/10 transition-all cursor-pointer active:scale-95"
+              >
+                Khám phá bản đồ màn hình
+              </button>
+            </div>
+            
+            <div className="w-full lg:w-1/2 relative">
+              <div className="rounded-2xl overflow-hidden border border-border shadow-2xl">
+                <ImageWithFallback 
+                  alt="Urban LED Display" 
+                  className="w-full h-auto object-cover" 
+                  src="https://images.unsplash.com/photo-1585504303098-9785dc784742?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMRUQlMjBiaWxsYm9hcmQlMjBkaWdpdGFsJTIwY2l0eSUyMG5pZ2h0fGVufDF8fHx8MTc3MjU0NjU5M3ww&ixlib=rb-4.1.0&q=80&w=1080" 
+                />
+              </div>
+              <div className="absolute -bottom-6 -left-6 glass-card p-6 rounded-2xl border border-accent/30 hidden md:block shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-accent rounded-full animate-ping"></div>
+                  <div className="w-3 h-3 bg-accent rounded-full absolute"></div>
+                  <span className="text-sm font-semibold text-accent">LIVE NOW: Campaign tại Ngã 6 Phù Đổng</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Billboards Section */}
+        <section className="bg-surface py-20 border-y border-border">
+          <div className="max-w-7xl mx-auto px-4 md:px-10">
+            <div className="flex items-center justify-between mb-12">
+              <div>
+                <h2 className="text-3xl font-bold text-foreground mb-2">Vị trí Bảng QC Nổi Bật</h2>
+                <p className="text-muted-foreground">Vị trí cao cấp được tuyển chọn tại Đà Nẵng và toàn quốc</p>
+              </div>
               <button
                 onClick={() => navigate("/billboards")}
-                className="flex items-center gap-2 bg-[#06B6D4] hover:bg-[#0891B2] text-white px-6 py-3 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center gap-2 text-sm font-bold text-primary hover:text-accent transition-colors cursor-pointer"
               >
-                <Search className="w-4 h-4" />
-                Tìm Bảng QC
-              </button>
-              <button
-                onClick={() => navigate("/register")}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3 rounded-lg transition-colors cursor-pointer"
-              >
-                Đăng Bảng QC
+                Xem Tất Cả
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-          </div>
-          <div className="flex-1 hidden lg:block">
-            <div className="relative">
-              <div className="rounded-xl overflow-hidden shadow-2xl">
-                <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1757843298369-6e5503c14bfd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBjaXR5JTIwc2t5bGluZSUyMG5pZ2h0fGVufDF8fHx8MTc3MjQ4MTQ1M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                  alt="Thành phố hiện đại với bảng quảng cáo LED"
-                  className="w-full h-80 object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-lg shadow-xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-[#1D4ED8]" style={{ fontWeight: 600 }}>Đặt Chỗ Thành Công</p>
-                  <p className="text-xs text-[#6B7A8D]">Cầu Rồng LED • 85.000.000₫</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Stats */}
-      <section className="bg-white border-b border-[#E3E8EF]">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <span className="text-[#06B6D4]">{stat.icon}</span>
-                  <span className="text-2xl text-[#1D4ED8]" style={{ fontWeight: 800 }}>{stat.value}</span>
-                </div>
-                <p className="text-sm text-[#6B7A8D]">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="bg-[#F0F9FF] py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl text-[#1D4ED8] mb-3" style={{ fontWeight: 700 }}>Cách Hoạt Động</h2>
-            <p className="text-[#6B7A8D] max-w-md mx-auto">Chỉ cần 3 bước đơn giản để chiến dịch quảng cáo của bạn lên sóng</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map((step, i) => (
-              <div key={i} className="bg-white rounded-xl p-8 text-center hover:shadow-lg transition-shadow relative">
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 z-10">
-                    <ArrowRight className="w-6 h-6 text-[#E3E8EF]" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="animate-pulse bg-card rounded-xl h-80 border border-border flex items-center justify-center text-muted-foreground font-semibold text-sm">
+                    Đang tải bảng quảng cáo nổi bật...
                   </div>
-                )}
-                <div className="w-14 h-14 rounded-xl bg-[#EFF6FF] flex items-center justify-center text-[#3B82F6] mx-auto mb-5">
-                  {step.icon}
+                ))
+              ) : billboards.length === 0 ? (
+                <div className="col-span-full text-center py-10 text-muted-foreground font-medium">
+                  Không tìm thấy bảng quảng cáo nổi bật nào.
                 </div>
-                <div className="text-xs text-[#06B6D4] mb-2" style={{ fontWeight: 600 }}>BƯỚC {i + 1}</div>
-                <h3 className="text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>{step.title}</h3>
-                <p className="text-sm text-[#6B7A8D] leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Value Props */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl text-[#1D4ED8] mb-3" style={{ fontWeight: 700 }}>Tại Sao Chọn ADORA</h2>
-            <p className="text-[#6B7A8D] max-w-md mx-auto">Tính năng đẳng cấp doanh nghiệp dành cho nhà quảng cáo hiện đại</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: <DollarSign className="w-5 h-5" />, title: "Giá Minh Bạch", desc: "Không phí ẩn. Giá thị trường cập nhật theo thời gian thực cho mọi bảng quảng cáo." },
-              { icon: <MapPin className="w-5 h-5" />, title: "Tìm Trên Bản Đồ", desc: "Tìm kiếm trực quan với bản đồ tương tác hiển thị vị trí chính xác và lưu lượng." },
-              { icon: <Clock className="w-5 h-5" />, title: "Cập Nhật Thời Gian Thực", desc: "Lịch cập nhật trực tiếp. Biết chính xác khi nào bảng quảng cáo còn trống." },
-              { icon: <Shield className="w-5 h-5" />, title: "Thanh Toán An Toàn", desc: "Thanh toán ký quỹ với hợp đồng bảo vệ cho tất cả các bên tham gia." },
-            ].map((item, i) => (
-              <div key={i} className="border border-[#E3E8EF] rounded-xl p-6 hover:border-[#06B6D4]/40 hover:shadow-md transition-all group">
-                <div className="w-10 h-10 rounded-lg bg-[#06B6D4]/10 flex items-center justify-center text-[#06B6D4] mb-4 group-hover:bg-[#06B6D4] group-hover:text-white transition-colors">
-                  {item.icon}
-                </div>
-                <h3 className="text-[#1D4ED8] mb-2" style={{ fontWeight: 600 }}>{item.title}</h3>
-                <p className="text-sm text-[#6B7A8D] leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Billboards */}
-      <section className="bg-[#F0F9FF] py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <h2 className="text-3xl text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>Bảng QC Nổi Bật</h2>
-              <p className="text-[#6B7A8D]">Vị trí cao cấp được tuyển chọn tại Đà Nẵng</p>
+              ) : (
+                billboards.map((b) => (
+                  <BillboardCard
+                    key={b.id}
+                    {...mapBillboardDtoToCardProps(b)}
+                    onViewDetails={() => navigate(`/billboard/${b.id}`)}
+                  />
+                ))
+              )}
             </div>
-            <button
-              onClick={() => navigate("/billboards")}
-              className="flex items-center gap-2 text-sm text-[#3B82F6] hover:text-[#06B6D4] transition-colors cursor-pointer"
-            >
-              Xem Tất Cả
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="animate-pulse bg-[#EFF6FF] rounded-xl h-80 border border-[#E3E8EF] flex items-center justify-center text-[#6B7A8D] font-semibold text-sm">
-                  Đang tải bảng quảng cáo nổi bật...
-                </div>
-              ))
-            ) : billboards.length === 0 ? (
-              <div className="col-span-full text-center py-10 text-[#6B7A8D] font-medium">
-                Không tìm thấy bảng quảng cáo nổi bật nào.
-              </div>
-            ) : (
-              billboards.map((b) => (
-                <BillboardCard
-                  key={b.id}
-                  {...mapBillboardDtoToCardProps(b)}
-                  onViewDetails={() => navigate(`/billboard/${b.id}`)}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="bg-gradient-to-r from-[#1D4ED8] via-[#3B82F6] to-[#0891B2] rounded-2xl p-12 text-center text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-[#06B6D4]/20 rounded-full blur-3xl" />
-            <div className="relative z-10">
-              <h2 className="text-3xl mb-3" style={{ fontWeight: 700 }}>Sẵn Sàng Bắt Đầu?</h2>
-              <p className="text-white/70 mb-8 max-w-md mx-auto">
-                Tham gia cùng hàng ngàn nhà quảng cáo và chủ sở hữu bảng quảng cáo trên sàn giao dịch đáng tin cậy nhất.
-              </p>
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={() => navigate("/register")}
-                  className="bg-[#06B6D4] hover:bg-[#0891B2] text-white px-6 py-3 rounded-lg transition-colors cursor-pointer"
-                >
-                  Tạo Tài Khoản Miễn Phí
-                </button>
-                <button
-                  onClick={() => navigate("/billboards")}
-                  className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3 rounded-lg transition-colors cursor-pointer"
-                >
-                  Tìm Bảng QC
-                </button>
+        {/* CTA Section */}
+        <section className="py-24 px-4 md:px-10">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-gradient-to-r from-primary via-primary-hover to-accent rounded-3xl p-12 text-center text-white relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
+              <div className="relative z-10 space-y-6">
+                <h2 className="text-3xl md:text-4xl font-extrabold">Sẵn Sàng Bắt Đầu Chiến Dịch?</h2>
+                <p className="text-white/80 mb-8 max-w-lg mx-auto text-base leading-relaxed">
+                  Tham gia cùng hàng ngàn nhà quảng cáo và chủ sở hữu bảng quảng cáo trên sàn giao dịch kỹ thuật số đáng tin cậy nhất.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <button
+                    onClick={() => navigate("/register")}
+                    className="bg-accent hover:bg-accent/95 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-accent/20 cursor-pointer active:scale-95 w-full sm:w-auto"
+                  >
+                    Tạo Tài Khoản Miễn Phí
+                  </button>
+                  <button
+                    onClick={() => navigate("/billboards")}
+                    className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-xl font-bold transition-all backdrop-blur-sm cursor-pointer active:scale-95 w-full sm:w-auto"
+                  >
+                    Tìm Bảng Quảng Cáo
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
     </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Search, Moon, Sun, Bell, Menu } from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useAuth } from "../context/AuthContext";
 import { useConfirm } from "../context/ConfirmContext";
@@ -69,6 +69,35 @@ export default function AdvertiserDashboard() {
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    return document.documentElement.classList.contains("dark");
+  });
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+      document.documentElement.classList.add("dark");
+      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+      setIsDark(false);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  };
+
   const [submittingReview, setSubmittingReview] = useState(false);
 
   const view = useMemo(() => {
@@ -240,10 +269,10 @@ export default function AdvertiserDashboard() {
 
   if (loading && !data) {
     return (
-      <div className="flex h-screen bg-[#F0F9FF]">
+      <div className="flex h-screen bg-background">
         <DashboardSidebar role="advertiser" />
         <main className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#E3E8EF] border-t-[#1D4ED8]" />
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary" />
         </main>
       </div>
     );
@@ -251,103 +280,183 @@ export default function AdvertiserDashboard() {
 
   if (!data) return null;
 
+  const avatarUrl = user?.avatarUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuDVTzsXMFUBL6xS6CmJJJch9mV7DFDkQqCHSqxIDDBQzqkTqqGhzLzhUT4hU_XmxjYGu0SDYJXpaBApwGDaEwbHJtSAjjNterm154XUJ6M51e7zXHfsUQ9nopH9haH_hxlj3gPTj_ikOSm6xeb0naB_ncdtyMsbyWyhL4qViWWtjOC8dwml4QfkeTxAN6bdXM5rhUgWsNWf2m2LXQs1zQz8ULaErakKC6ph4ba3IW67FcDW0YSZhjzo1ACJ4S_4vvMeAbE-9npkDfE";
+
   return (
-    <div className="flex h-screen bg-[#F0F9FF]">
-      <DashboardSidebar role="advertiser" />
-      <main className="flex-1 overflow-y-auto">
+    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden relative">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block">
+        <DashboardSidebar role="advertiser" />
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileSidebarOpen(false)} />
+          <div className="relative w-64 bg-card h-full flex flex-col shadow-2xl animate-in slide-in-from-left duration-200">
+            <DashboardSidebar role="advertiser" />
+            <button 
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-foreground hover:bg-border/30 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto scroll-smooth">
+        {/* Offline Fallback Banner */}
         {isUsingFallback && (
-          <div className="bg-amber-50 border-b border-amber-200 px-8 py-3 flex items-center gap-2 text-xs text-amber-800">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold shrink-0">
+            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
             <span>
               <strong>Chế độ ngoại tuyến:</strong> Đang hiển thị dữ liệu mô phỏng.
             </span>
           </div>
         )}
 
-        <div className="bg-white border-b border-[#E3E8EF] px-8 py-5">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl text-[#1D4ED8]" style={{ fontWeight: 700 }}>
-                {pageMeta.title}
-              </h1>
-              <p className="text-sm text-[#6B7A8D] mt-0.5">
-                {view === "dashboard"
-                  ? `Chào mừng trở lại, ${user?.fullName || "Thành viên"}. ${pageMeta.subtitle}`
-                  : pageMeta.subtitle}
-              </p>
+        {/* Top Header */}
+        <header className="sticky top-0 w-full z-40 bg-surface/80 backdrop-blur-xl border-b border-border/30 px-8 h-16 flex items-center justify-between shadow-[0_0_20px_rgba(6,182,212,0.1)] shrink-0">
+          <div className="flex items-center gap-4">
+            {/* Hamburger for mobile */}
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden text-foreground hover:text-accent transition-colors cursor-pointer"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <h2 className="text-lg md:text-xl font-black text-foreground">{pageMeta.title}</h2>
+            
+            {/* Search Input */}
+            <div className="hidden md:flex items-center bg-card rounded-full px-4 py-1.5 gap-2 border border-border/30">
+              <Search className="text-muted-foreground w-4 h-4" />
+              <input 
+                className="bg-transparent border-none outline-none focus:ring-0 text-sm w-64 placeholder:text-muted-foreground" 
+                placeholder="Tìm chiến dịch, vị trí LED..." 
+                type="text"
+              />
             </div>
-            {view === "dashboard" && (
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate("/billboards")}
-                  className="bg-[#1D4ED8] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#3B82F6] transition-colors cursor-pointer font-semibold"
-                >
-                  + Chiến dịch mới
-                </button>
-              </div>
-            )}
           </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex gap-4 items-center">
+              {/* Dark/Light mode toggle */}
+              <button 
+                onClick={toggleTheme}
+                className="text-muted-foreground hover:text-accent transition-colors cursor-pointer active:scale-95"
+                title="Đổi giao diện"
+              >
+                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              
+              {/* Notifications */}
+              <button className="relative text-muted-foreground hover:text-accent transition-colors cursor-pointer active:scale-95">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full animate-ping"></span>
+              </button>
+            </div>
+            
+            <div className="h-8 w-px bg-border/30"></div>
+            
+            {/* User Profile */}
+            <div className="flex items-center gap-3 cursor-pointer group">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-bold text-foreground">{user?.fullName || "Admin User"}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-extrabold">
+                  {user?.role === "RENTER" ? "Premium Account" : "Enterprise Account"}
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-full border-2 border-primary/20 overflow-hidden group-hover:border-primary transition-colors">
+                <img 
+                  alt="User Profile" 
+                  className="w-full h-full object-cover" 
+                  src={avatarUrl}
+                />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* View Router Render Area */}
+        <div className="flex-1 p-6 md:p-8 space-y-8 max-w-7xl w-full mx-auto">
+          {view === "dashboard" && (
+            <AdvertiserOverviewView
+              data={data}
+              onCancelBooking={handleCancelBooking}
+              onPayBooking={handlePayBooking}
+              onReviewBooking={handleOpenReview}
+            />
+          )}
+
+          {view === "bookings" && (
+            <AdvertiserBookingsView
+              bookings={bookings}
+              onCancelBooking={handleCancelBooking}
+              onPayBooking={handlePayBooking}
+              onReviewBooking={handleOpenReview}
+            />
+          )}
+
+          {view === "saved" && (
+            <AdvertiserSavedView
+              savedBillboards={data.savedBillboards ?? []}
+              onRemoveSaved={handleRemoveSaved}
+            />
+          )}
+
+          {view === "campaigns" && (
+            <AdvertiserCampaignsView bookings={bookings} />
+          )}
+
+          {view === "invoices" && (
+            <AdvertiserInvoicesView
+              bookings={bookings}
+              payments={payments}
+              onPayBooking={handlePayBooking}
+            />
+          )}
+
+          {view === "settings" && <AdvertiserSettingsView />}
+
+          {view === "messages" && <MessagesView role="RENTER" />}
         </div>
 
-        {view === "dashboard" && (
-          <AdvertiserOverviewView
-            data={data}
-            onCancelBooking={handleCancelBooking}
-            onPayBooking={handlePayBooking}
-            onReviewBooking={handleOpenReview}
-          />
-        )}
-
-        {view === "bookings" && (
-          <AdvertiserBookingsView
-            bookings={bookings}
-            onCancelBooking={handleCancelBooking}
-            onPayBooking={handlePayBooking}
-            onReviewBooking={handleOpenReview}
-          />
-        )}
-
-        {view === "saved" && (
-          <AdvertiserSavedView
-            savedBillboards={data.savedBillboards ?? []}
-            onRemoveSaved={handleRemoveSaved}
-          />
-        )}
-
-        {view === "campaigns" && (
-          <AdvertiserCampaignsView bookings={bookings} />
-        )}
-
-        {view === "invoices" && (
-          <AdvertiserInvoicesView
-            bookings={bookings}
-            payments={payments}
-            onPayBooking={handlePayBooking}
-          />
-        )}
-
-        {view === "settings" && <AdvertiserSettingsView />}
-
-        {view === "messages" && <MessagesView role="RENTER" />}
+        {/* Shared Footer */}
+        <footer className="w-full py-8 mt-auto border-t border-border/20 bg-card/40">
+          <div className="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-bold text-foreground">ADORA LED</span>
+              <span className="text-xs text-muted-foreground">© 2024 ADORA LED Marketplace. All rights reserved.</span>
+            </div>
+            <div className="flex gap-6">
+              <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="#">Privacy Policy</a>
+              <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="#">Terms of Service</a>
+              <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="#">API Docs</a>
+              <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="#">Contact Support</a>
+            </div>
+          </div>
+        </footer>
       </main>
 
+      {/* Review Modal Dialog */}
       {isReviewModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-[#E3E8EF]">
-            <h3 className="text-lg font-bold text-[#1D4ED8] mb-4">Đánh giá chiến dịch</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-card text-card-foreground rounded-2xl max-w-md w-full p-6 shadow-2xl border border-border/80">
+            <h3 className="text-lg font-bold text-primary mb-4">Đánh giá chiến dịch</h3>
             <form onSubmit={handleSubmitReview} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#6B7A8D] mb-1">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                   Số sao (1-5)
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 text-amber-400">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       type="button"
                       onClick={() => setRating(star)}
-                      className={`text-2xl cursor-pointer ${
+                      className={`text-3xl cursor-pointer transition-transform hover:scale-110 active:scale-95 ${
                         star <= rating ? "text-amber-400" : "text-gray-300"
                       }`}
                     >
@@ -357,7 +466,7 @@ export default function AdvertiserDashboard() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#6B7A8D] mb-1">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
                   Nhận xét
                 </label>
                 <textarea
@@ -366,21 +475,21 @@ export default function AdvertiserDashboard() {
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Trải nghiệm về vị trí và chất lượng hiển thị..."
-                  className="w-full border border-[#E3E8EF] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#1D4ED8]"
+                  className="w-full bg-background border border-border/50 rounded-xl p-3 text-sm focus:outline-none focus:border-accent text-foreground placeholder:text-muted-foreground/60"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsReviewModalOpen(false)}
-                  className="px-4 py-2 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-gray-50 cursor-pointer"
+                  className="px-4.5 py-2.5 border border-border rounded-xl text-sm font-semibold text-muted-foreground hover:bg-surface/50 cursor-pointer transition-colors active:scale-95"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={submittingReview}
-                  className="px-4 py-2 bg-[#1D4ED8] text-white rounded-lg text-sm hover:bg-[#3B82F6] cursor-pointer disabled:opacity-50"
+                  className="px-4.5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/95 cursor-pointer disabled:opacity-50 transition-colors active:scale-95 shadow-md shadow-primary/10"
                 >
                   {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
                 </button>
@@ -392,3 +501,4 @@ export default function AdvertiserDashboard() {
     </div>
   );
 }
+

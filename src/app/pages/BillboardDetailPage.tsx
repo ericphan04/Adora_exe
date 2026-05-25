@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink } from "lucide-react";
+import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink, Info, Maximize, Lightbulb, Grid, CheckCircle, HelpCircle, Users, Calendar } from "lucide-react";
 import { BillboardGoogleMap } from "../components/map/BillboardGoogleMap";
 import { getBillboardRentalStatus } from "../utils/billboardMap";
 import { TopNav } from "../components/TopNav";
@@ -59,7 +59,6 @@ export default function BillboardDetailPage() {
   const [loading, setLoading] = useState(true);
   
   const [activeImage, setActiveImage] = useState(0);
-  const [activeTab, setActiveTab] = useState("overview");
 
   const today = getTodayParts();
   const [calendarYear, setCalendarYear] = useState(today.year);
@@ -107,7 +106,6 @@ export default function BillboardDetailPage() {
       } catch (err) {
         console.warn("Backend API not running, using fallback details:", err);
         if (active) {
-          // Construct fallback BillboardDto matching standard mock listings
           const dummyBillboard: BillboardDto = {
             id: billboardId,
             title: billboardId === 2 ? "Bạch Đằng Digital" : billboardId === 3 ? "Nguyễn Văn Linh Screen" : "Cầu Rồng LED",
@@ -233,9 +231,9 @@ export default function BillboardDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F0F9FF] flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
         <TopNav />
-        <div className="flex-1 flex items-center justify-center font-semibold text-lg text-[#1D4ED8] animate-pulse py-20">
+        <div className="flex-grow flex items-center justify-center font-bold text-lg text-primary animate-pulse py-32">
           Đang tải chi tiết bảng quảng cáo...
         </div>
         <Footer />
@@ -245,11 +243,15 @@ export default function BillboardDetailPage() {
 
   if (!billboard) {
     return (
-      <div className="min-h-screen bg-[#F0F9FF] flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
         <TopNav />
-        <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-lg text-[#6B7A8D] font-semibold">Không tìm thấy thông tin bảng quảng cáo.</p>
-          <button onClick={() => navigate("/billboards")} className="mt-4 bg-[#1D4ED8] text-white px-4 py-2 rounded-lg">
+        <div className="flex-grow flex flex-col items-center justify-center py-32 text-center space-y-4">
+          <HelpCircle className="w-16 h-16 text-muted-foreground" />
+          <p className="text-lg text-muted-foreground font-semibold">Không tìm thấy thông tin bảng quảng cáo.</p>
+          <button 
+            onClick={() => navigate("/billboards")} 
+            className="bg-primary hover:bg-primary/95 text-white px-6 py-2.5 rounded-xl font-semibold cursor-pointer active:scale-95"
+          >
             Quay lại danh sách
           </button>
         </div>
@@ -274,371 +276,340 @@ export default function BillboardDetailPage() {
         )
       : null;
 
-  const tabs = [
-    { key: "overview", label: "Tổng Quan" },
-    { key: "specs", label: "Thông Số Kỹ Thuật" },
-    { key: "reviews", label: `Đánh Giá (${reviews.length})` },
-    { key: "map", label: "Bản Đồ" },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#F0F9FF]">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
       <TopNav />
 
-      <div className="bg-white border-b border-[#E3E8EF]">
-        <div className="max-w-7xl mx-auto px-6 py-3">
-          <div className="flex items-center gap-2 text-sm">
-            <button onClick={() => navigate("/")} className="text-[#6B7A8D] hover:text-[#1D4ED8] cursor-pointer">Trang Chủ</button>
-            <span className="text-[#E3E8EF]">/</span>
-            <button onClick={() => navigate("/billboards")} className="text-[#6B7A8D] hover:text-[#1D4ED8] cursor-pointer">Bảng Quảng Cáo</button>
-            <span className="text-[#E3E8EF]">/</span>
-            <span className="text-[#1D4ED8]" style={{ fontWeight: 500 }}>{billboard.title}</span>
+      {/* Breadcrumbs */}
+      <div className="border-b border-border/30 bg-surface/50 backdrop-blur-md pt-16">
+        <div className="max-w-7xl mx-auto px-6 py-3.5">
+          <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+            <button onClick={() => navigate("/")} className="hover:text-primary cursor-pointer transition-colors">Trang Chủ</button>
+            <span>/</span>
+            <button onClick={() => navigate("/billboards")} className="hover:text-primary cursor-pointer transition-colors">Bảng Quảng Cáo</button>
+            <span>/</span>
+            <span className="text-primary font-semibold truncate max-w-[200px]">{billboard.title}</span>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Gallery */}
-          <div className="flex-1">
-            <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden">
-              <div className="relative h-96">
-                <ImageWithFallback src={imagesList[activeImage] || fallbackImages[0]} alt={billboard.title} className="w-full h-full object-cover" />
-                <button
-                  onClick={() => setActiveImage(Math.max(0, activeImage - 1))}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center hover:bg-white transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setActiveImage(Math.min(imagesList.length - 1, activeImage + 1))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center hover:bg-white transition-colors cursor-pointer"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-                <div className="absolute top-3 right-3 flex gap-2">
-                  <button className="w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center hover:bg-white transition-colors cursor-pointer">
-                    <Heart className="w-4 h-4 text-[#6B7A8D]" />
-                  </button>
-                  <button className="w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center hover:bg-white transition-colors cursor-pointer">
-                    <Share2 className="w-4 h-4 text-[#6B7A8D]" />
-                  </button>
-                </div>
-                <div className="absolute top-3 left-3">
-                  <StatusBadge variant="available" />
-                </div>
+      <main className="flex-grow">
+        {/* Gallery Slider Section */}
+        <section className="relative w-full h-[500px] md:h-[614px] overflow-hidden group">
+          <img 
+            alt="Main LED View" 
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102" 
+            src={imagesList[activeImage] || fallbackImages[0]} 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-80" />
+          
+          <div className="absolute bottom-12 left-6 right-6 md:left-10 md:right-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 z-10 max-w-7xl mx-auto">
+            <div className="max-w-2xl text-white">
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-semibold border border-accent/30 flex items-center gap-1.5 backdrop-blur-md shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span> TRỰC TUYẾN
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-white/10 backdrop-blur-md">
+                  {billboard.district}, {billboard.city}
+                </span>
               </div>
-              <div className="p-3 flex gap-2 overflow-x-auto">
-                {imagesList.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={`w-20 h-14 rounded-lg overflow-hidden border-2 shrink-0 transition-all cursor-pointer ${
-                      i === activeImage ? "border-[#06B6D4]" : "border-transparent opacity-70 hover:opacity-100"
-                    }`}
-                  >
-                    <ImageWithFallback src={img} alt={`Ảnh ${i + 1}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
+              <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight drop-shadow-md">{billboard.title}</h1>
+              <p className="text-white/80 text-sm md:text-base max-w-xl font-medium leading-relaxed drop-shadow-sm">{billboard.address}</p>
             </div>
-
-            {/* Tabs */}
-            <div className="mt-6 bg-white rounded-xl border border-[#E3E8EF]">
-              <div className="flex border-b border-[#E3E8EF]">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`px-5 py-3.5 text-sm transition-colors cursor-pointer relative ${
-                      activeTab === tab.key ? "text-[#1D4ED8]" : "text-[#6B7A8D] hover:text-[#1D4ED8]"
-                    }`}
-                    style={activeTab === tab.key ? { fontWeight: 600 } : {}}
-                  >
-                    {tab.label}
-                    {activeTab === tab.key && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#06B6D4]" />}
-                  </button>
-                ))}
-              </div>
-              <div className="p-6">
-                {activeTab === "overview" && (
-                  <div className="space-y-4">
-                    <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>Giới Thiệu Bảng Quảng Cáo</h3>
-                    <p className="text-sm text-[#6B7A8D] leading-relaxed">
-                      {billboard.description}
-                    </p>
-                    <div className="grid grid-cols-3 gap-4 mt-6">
-                      {[
-                        { icon: <Eye className="w-5 h-5" />, label: "Lượt Xem/Ngày", value: billboard.dailyViews?.toLocaleString() || "N/A" },
-                        { icon: <Monitor className="w-5 h-5" />, label: "Màn Hình", value: billboard.screenType || "N/A" },
-                        { icon: <Zap className="w-5 h-5" />, label: "Tần Số Quét", value: `${billboard.refreshRate} Hz` },
-                      ].map((s, i) => (
-                        <div key={i} className="bg-[#F0F9FF] rounded-lg p-4 text-center">
-                          <div className="text-[#06B6D4] flex justify-center mb-2">{s.icon}</div>
-                          <p className="text-xs text-[#6B7A8D] mb-0.5">{s.label}</p>
-                          <p className="text-sm text-[#1D4ED8]" style={{ fontWeight: 600 }}>{s.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {activeTab === "specs" && (
-                  <div>
-                    <h3 className="text-[#1D4ED8] mb-4" style={{ fontWeight: 600 }}>Thông Số Kỹ Thuật</h3>
-                    <div className="border border-[#E3E8EF] rounded-lg overflow-hidden">
-                      {[
-                        { label: "Loại Màn Hình", value: billboard.screenType },
-                        { label: "Độ Phân Giải", value: billboard.resolution },
-                        { label: "Kích Thước", value: `${billboard.width}m x ${billboard.height}m (${billboard.width * billboard.height} m²)` },
-                        { label: "Độ Sáng", value: `${billboard.brightness.toLocaleString()} nits` },
-                        { label: "Thời Gian Hoạt Động", value: billboard.operatingHours },
-                        { label: "Tần Số Quét", value: `${billboard.refreshRate} Hz` },
-                        { label: "Độ phân giải kĩ thuật", value: billboard.resolution },
-                        { label: "Hệ thống chống nước", value: "IP65 Standard" }
-                      ].map((s, i) => (
-                        <div key={i} className={`flex ${i % 2 === 0 ? "bg-[#F0F9FF]" : "bg-white"}`}>
-                          <div className="w-48 px-4 py-3 text-sm text-[#6B7A8D]">{s.label}</div>
-                          <div className="flex-1 px-4 py-3 text-sm text-[#1D4ED8]" style={{ fontWeight: 500 }}>{s.value}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {activeTab === "reviews" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>Đánh Giá ({reviews.length})</h3>
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} className="w-4 h-4 fill-[#F59E0B] text-[#F59E0B]" />
-                        ))}
-                        <span className="text-sm text-[#6B7A8D] ml-1">4.8/5</span>
-                      </div>
-                    </div>
-                    {reviews.length === 0 ? (
-                      <p className="text-sm text-[#6B7A8D] italic py-4">Chưa có đánh giá nào cho bảng này.</p>
-                    ) : (
-                      reviews.map((r) => (
-                        <div key={r.id} className="border border-[#E3E8EF] rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <p className="text-sm text-[#1D4ED8]" style={{ fontWeight: 600 }}>{r.renter?.fullName || "Khách Hàng ADORA"}</p>
-                              <p className="text-xs text-[#6B7A8D]">{r.renter?.companyName || "Nhà quảng cáo"}</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {Array.from({ length: r.rating }).map((_, j) => (
-                                <Star key={j} className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-sm text-[#6B7A8D]">{r.comment}</p>
-                          <p className="text-xs text-[#6B7A8D]/60 mt-2">{r.createdAt?.substring(0, 10)}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-                {activeTab === "map" && (
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>Vị Trí Bản Đồ</h3>
-                      <button
-                        onClick={() => navigate(`/billboards/map`)}
-                        className="text-xs text-[#1D4ED8] flex items-center gap-1 hover:underline cursor-pointer"
-                      >
-                        Mở bản đồ toàn màn hình
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="rounded-xl overflow-hidden border border-[#E3E8EF] h-80 relative">
-                      <BillboardGoogleMap
-                        billboards={[billboard]}
-                        selectedId={billboard.id}
-                        singleMarker
-                        zoom={15}
-                        className="w-full h-full"
-                      />
-                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
-                        <div className="bg-white/95 backdrop-blur rounded-lg px-3 py-2 shadow text-sm">
-                          <p className="text-[#1D4ED8] font-medium">{billboard.address}</p>
-                          <p className="text-xs text-[#6B7A8D]">{billboard.district}, {billboard.city}</p>
-                        </div>
-                        <span
-                          className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold shadow ${
-                            getBillboardRentalStatus(billboard) === "available"
-                              ? "bg-emerald-500 text-white"
-                              : "bg-amber-500 text-white"
-                          }`}
-                        >
-                          {getBillboardRentalStatus(billboard) === "available" ? "Available" : "Booked"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+            
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setActiveImage((activeImage - 1 + imagesList.length) % imagesList.length)}
+                className="p-3 rounded-full glass-card hover:bg-white/10 text-white transition-colors cursor-pointer active:scale-90"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => setActiveImage((activeImage + 1) % imagesList.length)}
+                className="p-3 rounded-full glass-card hover:bg-white/10 text-white transition-colors cursor-pointer active:scale-90"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
+        </section>
 
-          {/* Sidebar */}
-          <div className="w-full lg:w-[420px] shrink-0 space-y-6">
-            <div className="bg-white rounded-xl border border-[#E3E8EF] p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <StatusBadge variant="available" />
-                <span className="text-xs text-[#6B7A8D] bg-[#1D4ED8]/5 px-2 py-0.5 rounded">Lưu lượng Cao</span>
+        {/* Layout Grid */}
+        <div className="max-w-7xl mx-auto px-6 mt-12 grid grid-cols-12 gap-8 pb-24">
+          
+          {/* Left Column: Details */}
+          <div className="col-span-12 lg:col-span-8 space-y-8">
+            
+            {/* Spec Cards Bento Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
+                <Maximize className="text-accent w-6 h-6" />
+                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Độ phân giải</span>
+                <span className="font-bold text-sm md:text-base truncate">{billboard.resolution || "4K UHD Premium"}</span>
               </div>
-              <h2 className="text-xl text-[#1D4ED8] mt-3 mb-1" style={{ fontWeight: 700 }}>{billboard.title}</h2>
-              <div className="flex items-center gap-1 text-sm text-[#6B7A8D] mb-4">
-                <MapPin className="w-3.5 h-3.5" />
-                <span>{billboard.address}, {billboard.district}, {billboard.city}</span>
+              <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
+                <Lightbulb className="text-accent w-6 h-6" />
+                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Độ sáng</span>
+                <span className="font-bold text-sm md:text-base truncate">
+                  {billboard.brightness ? `${billboard.brightness.toLocaleString()} Nits` : "8,500 Nits"}
+                </span>
               </div>
+              <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
+                <Grid className="text-accent w-6 h-6" />
+                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Loại màn hình</span>
+                <span className="font-bold text-sm md:text-base truncate">{billboard.screenType || "P3 Outdoor SMD"}</span>
+              </div>
+              <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
+                <Monitor className="text-accent w-6 h-6" />
+                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Kích thước</span>
+                <span className="font-bold text-sm md:text-base truncate">
+                  {billboard.width * billboard.height}m² ({billboard.width}m x {billboard.height}m)
+                </span>
+              </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                {[
-                  { label: "Kích Thước", value: `${billboard.width}m x ${billboard.height}m` },
-                  { label: "Độ Phân Giải", value: billboard.resolution },
-                  { label: "Lượt Xem/Ngày", value: billboard.dailyViews?.toLocaleString() || "N/A" },
-                  { label: "Đánh Giá", value: "4.8/5 ★" },
-                ].map((s, i) => (
-                  <div key={i} className="bg-[#F0F9FF] rounded-lg p-3">
-                    <p className="text-xs text-[#6B7A8D]">{s.label}</p>
-                    <p className="text-sm text-[#1D4ED8]" style={{ fontWeight: 600 }}>{s.value}</p>
+            {/* Description & Metrics Detail */}
+            <div className="glass-card p-8 rounded-2xl space-y-6 shadow-md">
+              <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                <Info className="text-primary w-5.5 h-5.5" /> Chi tiết vị trí
+              </h2>
+              <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                {billboard.description}
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-6 pt-6 border-t border-border/30">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-primary/10 rounded-xl">
+                    <Users className="text-primary w-6 h-6" />
                   </div>
-                ))}
-              </div>
-
-              {/* Pricing */}
-              <div className="border border-[#E3E8EF] rounded-lg p-4 mb-5">
-                <p className="text-xs text-[#6B7A8D] mb-2">Chi tiết giá</p>
-                <div className="space-y-2 text-sm">
-                  {priceBreakdown ? (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="text-[#6B7A8D]">
-                          {billboard.pricePerDay.toLocaleString("vi-VN")}₫ × {priceBreakdown.daysCount} ngày
-                        </span>
-                        <span className="text-[#1D4ED8]">
-                          {priceBreakdown.subtotal.toLocaleString("vi-VN")}₫
-                        </span>
-                      </div>
-                      {priceBreakdown.surcharge > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-[#6B7A8D]">Phụ phí vị trí</span>
-                          <span className="text-[#1D4ED8]">
-                            +{priceBreakdown.surcharge.toLocaleString("vi-VN")}₫
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-[#6B7A8D]">Phí nền tảng (5%)</span>
-                        <span className="text-[#1D4ED8]">
-                          {priceBreakdown.serviceFee.toLocaleString("vi-VN")}₫
-                        </span>
-                      </div>
-                      <div className="border-t border-[#E3E8EF] pt-2 flex justify-between">
-                        <span className="text-[#1D4ED8] font-semibold">Tổng ước tính</span>
-                        <span className="text-xl text-[#1D4ED8] font-bold">
-                          {priceBreakdown.total.toLocaleString("vi-VN")}₫
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="text-[#6B7A8D]">Giá theo ngày</span>
-                        <span className="text-[#1D4ED8] font-semibold">
-                          {billboard.pricePerDay.toLocaleString("vi-VN")}₫/ngày
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#6B7A8D] pt-1">
-                        Chọn khoảng ngày trên lịch để xem tổng chi phí.
-                      </p>
-                    </>
-                  )}
+                  <div>
+                    <h4 className="text-lg font-bold text-foreground">
+                      {billboard.dailyViews ? `${billboard.dailyViews.toLocaleString()}+` : "550,000+"}
+                    </h4>
+                    <p className="text-muted-foreground text-xs md:text-sm">Lượt tiếp cận/ngày</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-accent/10 rounded-xl">
+                    <Zap className="text-accent w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-foreground">{billboard.refreshRate} Hz</h4>
+                    <p className="text-muted-foreground text-xs md:text-sm">Tần suất làm mới màn hình</p>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="mb-5">
-                {bookingError && (
-                  <div className="mb-3 p-2 bg-red-50 border border-red-200 text-red-600 rounded text-xs">
-                    {bookingError}
+            {/* Google Interactive Map */}
+            <div className="glass-card h-80 rounded-2xl overflow-hidden relative border border-border/30 shadow-md">
+              <BillboardGoogleMap
+                billboards={[billboard]}
+                selectedId={billboard.id}
+                singleMarker
+                zoom={15}
+                className="w-full h-full"
+              />
+              <div className="absolute bottom-4 left-4 bg-surface/90 backdrop-blur-md px-4 py-2.5 rounded-lg border border-border/50 z-10">
+                <span className="text-xs md:text-sm font-bold text-foreground">{billboard.address}, {billboard.district}</span>
+              </div>
+            </div>
+
+            {/* Reviews Section */}
+            <div className="glass-card p-8 rounded-2xl space-y-6 shadow-md">
+              <div className="flex items-center justify-between border-b border-border/30 pb-4">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Star className="text-accent fill-accent w-5.5 h-5.5" /> Đánh giá ({reviews.length})
+                </h3>
+                {reviews.length > 0 && (
+                  <div className="flex items-center gap-1 text-sm font-semibold">
+                    <span className="text-accent">4.8</span>
+                    <span className="text-muted-foreground">/ 5 ★</span>
                   </div>
                 )}
-
-                <BookingCalendar
-                  year={calendarYear}
-                  month={calendarMonth}
-                  onMonthChange={handleMonthChange}
-                  bookedDays={bookedDaysSet}
-                  selectedStartDay={selectedStartDay}
-                  selectedEndDay={selectedEndDay}
-                  onDayClick={handleDayClick}
-                />
               </div>
-
-              {selectedStartDay && selectedEndDay && (
-                <div className="mb-4">
-                  <label className="text-xs text-[#6B7A8D] mb-1.5 block">Ghi chú chiến dịch (Note)</label>
-                  <input
-                    type="text"
-                    placeholder="Ghi chú cho chủ sở hữu..."
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#06B6D4] transition-all"
-                  />
+              
+              {reviews.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic py-2">Chưa có đánh giá nào cho bảng này.</p>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((r) => (
+                    <div key={r.id} className="border border-border/50 rounded-xl p-5 bg-surface/20 hover:border-accent/30 transition-colors">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="text-sm font-bold text-primary">{r.renter?.fullName || "Khách Hàng ADORA"}</p>
+                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{r.renter?.companyName || "Nhà quảng cáo"}</p>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: r.rating }).map((_, j) => (
+                            <Star key={j} className="w-3.5 h-3.5 fill-accent text-accent" />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{r.comment}</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-3 font-medium">{r.createdAt?.substring(0, 10)}</p>
+                    </div>
+                  ))}
                 </div>
               )}
-
-              <button
-                onClick={handleBookingSubmit}
-                disabled={bookingLoading || (!!user && user.role !== "RENTER")}
-                className="w-full bg-[#06B6D4] text-white py-3 rounded-lg hover:bg-[#0891B2] transition-colors cursor-pointer mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {bookingLoading
-                  ? "Đang xử lý..."
-                  : !user
-                    ? "Đăng nhập để đặt lịch"
-                    : user.role !== "RENTER"
-                      ? "Chỉ dành cho nhà quảng cáo"
-                      : selectedStartDay && selectedEndDay
-                        ? `Đặt lịch (${formatDisplayDate(toIsoDate(calendarYear, calendarMonth, selectedStartDay))} – ${formatDisplayDate(toIsoDate(calendarYear, calendarMonth, selectedEndDay))})`
-                        : "Đặt ngay (chọn ngày trên lịch)"}
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  if (!user) {
-                    navigate("/login");
-                    return;
-                  }
-                  if (user.role !== "RENTER") {
-                    notify.error("Chỉ tài khoản nhà quảng cáo mới có thể nhắn tin với chủ bảng.");
-                    return;
-                  }
-                  navigate(`/advertiser/messages?billboardId=${billboardId}`);
-                }}
-                className="w-full border border-[#E3E8EF] text-[#1D4ED8] py-3 rounded-lg hover:bg-[#F0F9FF] transition-colors cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Phone className="w-4 h-4" />
-                Liên Hệ Chủ Sở Hữu
-              </button>
             </div>
 
-            <div className="bg-white rounded-xl border border-[#E3E8EF] p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-emerald-600" />
-                </div>
+          </div>
+
+          {/* Right Column: Booking & Calculator Sidebar Widget */}
+          <div className="col-span-12 lg:col-span-4">
+            <div className="sticky top-24 glass-card p-6 rounded-2xl border border-accent/20 shadow-xl space-y-6">
+              
+              {/* Widget Header */}
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-[#1D4ED8]" style={{ fontWeight: 600 }}>Đặt Chỗ An Toàn</p>
-                  <p className="text-xs text-[#6B7A8D]">Được bảo vệ bởi hệ thống ký quỹ ADORA</p>
+                  <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider block mb-1">Giá thuê ngày</span>
+                  <div className="flex items-baseline gap-1">
+                    <h3 className="text-3xl font-extrabold text-accent">{(billboard.pricePerDay / 1000).toLocaleString("vi-VN")}K</h3>
+                    <span className="text-muted-foreground text-xs font-semibold">đ/ngày</span>
+                  </div>
+                </div>
+                <div className="bg-primary/10 text-primary p-2.5 rounded-lg flex items-center justify-center">
+                  <Zap className="w-5 h-5 fill-primary" />
                 </div>
               </div>
+
+              {/* Booking Calendar Input Simulation */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Lịch Trống Màn Hình</label>
+                  
+                  {bookingError && (
+                    <div className="mb-3 p-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium">
+                      {bookingError}
+                    </div>
+                  )}
+
+                  <div className="border border-border/50 rounded-xl p-2 bg-background/50">
+                    <BookingCalendar
+                      year={calendarYear}
+                      month={calendarMonth}
+                      onMonthChange={handleMonthChange}
+                      bookedDays={bookedDaysSet}
+                      selectedStartDay={selectedStartDay}
+                      selectedEndDay={selectedEndDay}
+                      onDayClick={handleDayClick}
+                    />
+                  </div>
+                </div>
+
+                {/* Campaign Notes */}
+                {selectedStartDay && selectedEndDay && (
+                  <div className="animate-in fade-in duration-300">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Ghi chú chiến dịch (Note)</label>
+                    <input
+                      type="text"
+                      placeholder="Thông điệp gửi chủ sở hữu..."
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      className="w-full bg-background border border-border/50 rounded-xl px-3.5 py-3 text-xs outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-foreground"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Price Calculation breakdown */}
+              <div className="bg-surface/50 rounded-xl p-4.5 border border-border/30 space-y-3">
+                {priceBreakdown ? (
+                  <>
+                    <div className="flex justify-between text-xs md:text-sm">
+                      <span className="text-muted-foreground font-medium">
+                        Giá thuê ({priceBreakdown.daysCount} ngày)
+                      </span>
+                      <span className="text-foreground font-semibold">
+                        {priceBreakdown.subtotal.toLocaleString("vi-VN")}₫
+                      </span>
+                    </div>
+                    {priceBreakdown.surcharge > 0 && (
+                      <div className="flex justify-between text-xs md:text-sm">
+                        <span className="text-muted-foreground font-medium">Phụ phí vị trí</span>
+                        <span className="text-foreground font-semibold">
+                          +{priceBreakdown.surcharge.toLocaleString("vi-VN")}₫
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-xs md:text-sm">
+                      <span className="text-muted-foreground font-medium">Phí dịch vụ sàn (5%)</span>
+                      <span className="text-foreground font-semibold">
+                        {priceBreakdown.serviceFee.toLocaleString("vi-VN")}₫
+                      </span>
+                    </div>
+                    <div className="pt-3 border-t border-border/30 flex justify-between items-end">
+                      <span className="font-bold text-sm">Tổng tạm tính</span>
+                      <span className="text-xl font-extrabold text-foreground" id="total-price">
+                        {priceBreakdown.total.toLocaleString("vi-VN")}₫
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-4 text-xs text-muted-foreground font-semibold">
+                    <Calendar className="w-5 h-5 text-accent mx-auto mb-2 animate-bounce" />
+                    Chọn khoảng ngày trên lịch để tính giá thuê
+                  </div>
+                )}
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={handleBookingSubmit}
+                  disabled={bookingLoading || (!!user && user.role !== "RENTER")}
+                  className="w-full py-4 bg-primary text-white hover:bg-primary/95 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] shadow-[0_4px_20px_rgba(29,78,216,0.3)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Calendar className="w-4 h-4" />
+                  {bookingLoading
+                    ? "ĐANG XỬ LÝ..."
+                    : !user
+                      ? "ĐĂNG NHẬP ĐỂ ĐẶT LỊCH"
+                      : user.role !== "RENTER"
+                        ? "CHỈ DÀNH CHO NHÀ QUẢNG CÁO"
+                        : selectedStartDay && selectedEndDay
+                          ? `ĐẶT LỊCH NGAY (${selectedDaysCount} ngày)`
+                          : "ĐẶT LỊCH NGAY (CHỌN LỊCH)"}
+                </button>
+                
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      navigate("/login");
+                      return;
+                    }
+                    if (user.role !== "RENTER") {
+                      notify.error("Chỉ tài khoản nhà quảng cáo mới có thể nhắn tin với chủ bảng.");
+                      return;
+                    }
+                    navigate(`/advertiser/messages?billboardId=${billboardId}`);
+                  }}
+                  className="w-full py-3.5 border border-border hover:bg-surface/30 text-primary rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Phone className="w-4 h-4" />
+                  LIÊN HỆ CHỦ SỞ HỮU
+                </button>
+              </div>
+
+              {/* Security Banner */}
+              <div className="bg-surface/30 rounded-xl p-4 border border-border/20 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs md:text-sm font-bold text-primary">Đặt Chỗ An Toàn</p>
+                    <p className="text-[10px] text-muted-foreground font-semibold">Được bảo vệ bởi hệ thống ký quỹ ADORA</p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
+
         </div>
-      </div>
+      </main>
 
       <Footer />
     </div>
