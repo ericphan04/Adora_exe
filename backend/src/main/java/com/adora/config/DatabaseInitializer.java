@@ -403,6 +403,9 @@ public class DatabaseInitializer implements ApplicationRunner {
 
         // 9. Backfill map coordinates & demo videos for existing billboards
         patchBillboardMapData();
+
+        // 10. Seed new billboards for surrounding districts
+        seedNewBillboards();
     }
 
     private void patchBillboardMapData() {
@@ -441,6 +444,146 @@ public class DatabaseInitializer implements ApplicationRunner {
             if (changed) {
                 billboardRepository.save(b);
             }
+        }
+    }
+
+    private void seedNewBillboards() {
+        User owner = userRepository.findByEmail("owner@adora.com").orElse(null);
+        if (owner == null) return;
+
+        List<BillboardCategory> categories = categoryRepository.findAll();
+        if (categories.isEmpty()) return;
+
+        BillboardCategory highwayCat = categories.stream()
+                .filter(c -> c.getName().contains("Highways"))
+                .findFirst()
+                .orElse(categories.get(0));
+        BillboardCategory buildingCat = categories.stream()
+                .filter(c -> c.getName().contains("Building"))
+                .findFirst()
+                .orElse(categories.get(0));
+        BillboardCategory streetCat = categories.stream()
+                .filter(c -> c.getName().contains("Street"))
+                .findFirst()
+                .orElse(categories.get(0));
+
+        List<Billboard> existing = billboardRepository.findAll();
+
+        // 1. Sơn Trà - High
+        createIfNotExist(existing, owner, buildingCat, "Vòng xoay Phạm Văn Đồng LED",
+                "Màn hình LED lớn tại vòng xoay Phạm Văn Đồng - Ngô Quyền, đón đầu lượng giao thông từ cầu Sông Hàn ra bãi biển Mỹ Khê.",
+                "Vòng xoay Phạm Văn Đồng - Ngô Quyền, An Hải Bắc, Sơn Trà, Đà Nẵng", "Sơn Trà",
+                16.0722, 108.2340, 12.0, 6.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
+                "16h/ngày", 3200000, 95000000, 1.1, 110000,
+                "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 2. Sơn Trà - Low
+        createIfNotExist(existing, owner, streetCat, "Võ Văn Kiệt Pedestrian LED",
+                "Bảng Led quảng cáo tầm thấp tại dải phân cách đường Võ Văn Kiệt, tiếp cận người đi bộ và lưu lượng xe đi ra biển Mỹ Khê.",
+                "Đường Võ Văn Kiệt, Phước Mỹ, Sơn Trà, Đà Nẵng", "Sơn Trà",
+                16.0645, 108.2415, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
+                "16h/ngày", 1400000, 42000000, 1.0, 45000,
+                "https://images.unsplash.com/photo-1626785774573-4b799315345d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 3. Thanh Khê - High
+        createIfNotExist(existing, owner, highwayCat, "Ngã Tư Điện Biên Phủ LED",
+                "Bảng quảng cáo LED ngoài trời tại nút giao thông ngã tư Điện Biên Phủ - Nguyễn Tri Phương, nơi có mật độ giao thông cực kỳ cao.",
+                "Ngã tư Điện Biên Phủ - Nguyễn Tri Phương, Chính Gián, Thanh Khê, Đà Nẵng", "Thanh Khê",
+                16.0655, 108.1970, 14.0, 7.0, "1920x1080", "6500 nits", "3840Hz", "Outdoor LED",
+                "16h/ngày", 3000000, 88000000, 1.05, 115000,
+                "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 4. Thanh Khê - Low
+        createIfNotExist(existing, owner, streetCat, "Nguyễn Tất Thành Street Screen",
+                "Màn hình LED dọc tuyến đường ven biển Nguyễn Tất Thành, phù hợp cho các chiến dịch quảng bá địa phương.",
+                "Đường Nguyễn Tất Thành, Xuân Hà, Thanh Khê, Đà Nẵng", "Thanh Khê",
+                16.0745, 108.1925, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
+                "16h/ngày", 1300000, 38000000, 1.0, 35000,
+                "https://images.unsplash.com/photo-1506744038136-46273834b3fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 5. Ngũ Hành Sơn - High
+        createIfNotExist(existing, owner, highwayCat, "Võ Nguyên Giáp Beachfront LED",
+                "Vị trí đắc địa mặt tiền biển Võ Nguyên Giáp, tiếp cận lượng lớn khách du lịch trong nước và quốc tế.",
+                "Đường Võ Nguyên Giáp, Khuê Mỹ, Ngũ Hành Sơn, Đà Nẵng", "Ngũ Hành Sơn",
+                16.0355, 108.2520, 12.0, 6.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
+                "16h/ngày", 3100000, 90000000, 1.1, 95000,
+                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 6. Ngũ Hành Sơn - Low
+        createIfNotExist(existing, owner, streetCat, "Lê Văn Hiến Street Screen",
+                "Màn hình LED kỹ thuật số nằm trên trục đường chính Lê Văn Hiến kết nối Đà Nẵng và Hội An.",
+                "Đường Lê Văn Hiến, Hòa Hải, Ngũ Hành Sơn, Đà Nẵng", "Ngũ Hành Sơn",
+                15.9920, 108.2610, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
+                "14h/ngày", 1200000, 35000000, 1.0, 30000,
+                "https://images.unsplash.com/photo-1519046904884-53103b34b206?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 7. Liên Chiểu - High
+        createIfNotExist(existing, owner, highwayCat, "Tôn Đức Thắng Junction LED",
+                "Nằm ngay trục đường giao thông huyết mạch Tôn Đức Thắng, gần bến xe trung tâm thành phố Đà Nẵng.",
+                "Đường Tôn Đức Thắng, Hòa Minh, Liên Chiểu, Đà Nẵng", "Liên Chiểu",
+                16.0615, 108.1685, 10.0, 5.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
+                "16h/ngày", 2200000, 65000000, 1.05, 75000,
+                "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 8. Liên Chiểu - Low
+        createIfNotExist(existing, owner, streetCat, "Nguyễn Lương Bằng Campus Screen",
+                "Màn hình quảng cáo trước khu đô thị công nghệ cao Nguyễn Lương Bằng, gần các trường đại học lớn.",
+                "Đường Nguyễn Lương Bằng, Hòa Khánh Bắc, Liên Chiểu, Đà Nẵng", "Liên Chiểu",
+                16.0750, 108.1520, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
+                "16h/ngày", 950000, 28000000, 1.0, 25000,
+                "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 9. Cẩm Lệ - High
+        createIfNotExist(existing, owner, buildingCat, "Nguyễn Hữu Thọ Avenue LED",
+                "Màn hình LED lớn ốp tường tại đại lộ Nguyễn Hữu Thọ, tiếp cận luồng giao thông từ các quận phía Nam vào trung tâm.",
+                "Đường Nguyễn Hữu Thọ, Khuê Trung, Cẩm Lệ, Đà Nẵng", "Cẩm Lệ",
+                16.0270, 108.2095, 10.0, 5.0, "1920x1080", "5500 nits", "3840Hz", "Building LED",
+                "18h/ngày", 2000000, 60000000, 1.05, 70000,
+                "https://images.unsplash.com/photo-1472214222555-d404758b1c42?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+
+        // 10. Cẩm Lệ - Low
+        createIfNotExist(existing, owner, streetCat, "Cách Mạng Tháng Tám Highway Screen",
+                "Bảng quảng cáo LED tầm trung trên quốc lộ Cách Mạng Tháng Tám hướng đi cầu vượt Hòa Cầm.",
+                "Đường Cách Mạng Tháng Tám, Hòa Thọ Đông, Cẩm Lệ, Đà Nẵng", "Cẩm Lệ",
+                16.0125, 108.2045, 10.0, 5.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
+                "16h/ngày", 1000000, 30000000, 1.0, 40000,
+                "https://images.unsplash.com/photo-1469474968028-56623f02e42e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
+    }
+
+    private void createIfNotExist(List<Billboard> existing, User owner, BillboardCategory category,
+                                  String title, String description, String address, String district,
+                                  Double latitude, Double longitude, Double width, Double height,
+                                  String resolution, String brightness, String refreshRate, String screenType,
+                                  String operatingHours, long pricePerDay, long pricePerMonth, double surcharge,
+                                  int dailyViews, String imageUrl) {
+        boolean exists = existing.stream().anyMatch(b -> b.getTitle().equalsIgnoreCase(title));
+        if (!exists) {
+            Billboard b = Billboard.builder()
+                    .owner(owner)
+                    .category(category)
+                    .title(title)
+                    .description(description)
+                    .address(address)
+                    .city("Đà Nẵng")
+                    .district(district)
+                    .latitude(latitude)
+                    .longitude(longitude)
+                    .width(width)
+                    .height(height)
+                    .resolution(resolution)
+                    .brightness(brightness)
+                    .refreshRate(refreshRate)
+                    .screenType(screenType)
+                    .operatingHours(operatingHours)
+                    .pricePerDay(BigDecimal.valueOf(pricePerDay))
+                    .pricePerMonth(BigDecimal.valueOf(pricePerMonth))
+                    .locationSurcharge(BigDecimal.valueOf(surcharge))
+                    .status(BillboardStatus.APPROVED)
+                    .dailyViews(dailyViews)
+                    .isFeatured(false)
+                    .build();
+            b.addImage(BillboardImage.builder().imageUrl(imageUrl).isThumbnail(true).build());
+            billboardRepository.save(b);
         }
     }
 }
