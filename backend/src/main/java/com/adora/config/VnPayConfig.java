@@ -14,10 +14,10 @@ public class VnPayConfig {
     @Value("${vnp.payUrl:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
     private String payUrl;
 
-    @Value("${vnp.tmnCode:2QXUIBJZ}")
+    @Value("${vnp.tmnCode:GXHPFV8Z}")
     private String tmnCode;
 
-    @Value("${vnp.hashSecret:99A99B99C99D99E99F99}")
+    @Value("${vnp.hashSecret:YJIY0MNU5P8T80EGSPJTP1XP830KVFBG}")
     private String hashSecret;
 
     @Value("${vnp.returnUrl:http://localhost:8085/api/payments/callback}")
