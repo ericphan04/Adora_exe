@@ -8,6 +8,7 @@ import com.adora.repository.BillboardAvailabilityRepository;
 import com.adora.repository.BillboardRepository;
 import com.adora.repository.BookingRepository;
 import com.adora.repository.UserRepository;
+import com.adora.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,17 +28,20 @@ public class BookingService {
     private final UserRepository userRepository;
     private final BillboardAvailabilityRepository availabilityRepository;
     private final BillboardService billboardService;
+    private final NotificationService notificationService;
 
     public BookingService(BookingRepository bookingRepository,
                           BillboardRepository billboardRepository,
                           UserRepository userRepository,
                           BillboardAvailabilityRepository availabilityRepository,
-                          BillboardService billboardService) {
+                          BillboardService billboardService,
+                          NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.billboardRepository = billboardRepository;
         this.userRepository = userRepository;
         this.availabilityRepository = availabilityRepository;
         this.billboardService = billboardService;
+        this.notificationService = notificationService;
     }
 
     public BookingDto createBooking(CreateBookingRequest request, Long renterId) {
@@ -188,7 +192,19 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.ACCEPTED);
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Send BOOKING_ACCEPTED notification to renter
+        notificationService.createNotification(
+                saved.getRenter(),
+                "Yêu cầu đặt bảng được chấp nhận",
+                "Yêu cầu đặt màn hình LED #" + saved.getId() + " (" + saved.getBillboard().getTitle() + ") đã được chấp nhận. Vui lòng thanh toán đơn hàng.",
+                NotificationType.BOOKING_ACCEPTED,
+                saved,
+                null
+        );
+
+        return mapToDto(saved);
     }
 
     public BookingDto rejectBooking(Long id, Long ownerId) {
@@ -205,8 +221,19 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.REJECTED);
         releaseAvailabilityDates(booking);
+        Booking saved = bookingRepository.save(booking);
 
-        return mapToDto(bookingRepository.save(booking));
+        // Send BOOKING_REJECTED notification to renter
+        notificationService.createNotification(
+                saved.getRenter(),
+                "Yêu cầu đặt bảng bị từ chối",
+                "Yêu cầu đặt màn hình LED #" + saved.getId() + " (" + saved.getBillboard().getTitle() + ") đã bị từ chối bởi chủ sở hữu.",
+                NotificationType.BOOKING_REJECTED,
+                saved,
+                null
+        );
+
+        return mapToDto(saved);
     }
 
     private void releaseAvailabilityDates(Booking booking) {
