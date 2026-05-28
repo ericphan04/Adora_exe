@@ -2,6 +2,7 @@ package com.adora.controller;
 
 import com.adora.dto.ApiResponse;
 import com.adora.dto.LoginRequest;
+import com.adora.dto.GoogleLoginRequest;
 import com.adora.dto.LoginResponse;
 import com.adora.dto.RegisterRequest;
 import com.adora.dto.UserDto;
@@ -38,6 +39,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse loginResponse = authService.login(request);
         ApiResponse<LoginResponse> response = ApiResponse.success("Login successfully", loginResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<LoginResponse>> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        LoginResponse loginResponse = authService.loginWithGoogle(request);
+        ApiResponse<LoginResponse> response = ApiResponse.success("Google login successfully", loginResponse);
         return ResponseEntity.ok(response);
     }
 

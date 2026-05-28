@@ -13,6 +13,9 @@ const authApi = {
   getCurrentUser: (): Promise<ApiResponse<User>> => {
     return axiosClient.get('/api/auth/me');
   },
+  loginWithGoogle: (idToken: string): Promise<ApiResponse<LoginResponse>> => {
+    return axiosClient.post('/api/auth/google', { idToken });
+  },
 };
 
 export default authApi;
