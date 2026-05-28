@@ -1,5 +1,5 @@
 import axiosClient from './axiosClient';
-import { LoginRequest, LoginResponse, RegisterRequest } from '../types/auth';
+import { LoginRequest, LoginResponse, RegisterRequest, VerifyEmailRequest, ResendCodeRequest } from '../types/auth';
 import { User } from '../types/user';
 import { ApiResponse } from '../types/api';
 
@@ -15,6 +15,12 @@ const authApi = {
   },
   loginWithGoogle: (idToken: string): Promise<ApiResponse<LoginResponse>> => {
     return axiosClient.post('/api/auth/google', { idToken });
+  },
+  verifyEmail: (data: VerifyEmailRequest): Promise<ApiResponse<void>> => {
+    return axiosClient.post('/api/auth/verify', data);
+  },
+  resendCode: (data: ResendCodeRequest): Promise<ApiResponse<void>> => {
+    return axiosClient.post('/api/auth/resend-code', data);
   },
 };
 

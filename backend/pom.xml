@@ -95,6 +95,12 @@
             <version>2.2.0</version>
         </dependency>
 
+        <!-- Spring Mail for Email Verification -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
 
         <!-- Test -->
         <dependency>

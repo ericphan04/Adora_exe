@@ -5,6 +5,8 @@ import com.adora.dto.LoginRequest;
 import com.adora.dto.GoogleLoginRequest;
 import com.adora.dto.LoginResponse;
 import com.adora.dto.RegisterRequest;
+import com.adora.dto.VerifyEmailRequest;
+import com.adora.dto.ResendCodeRequest;
 import com.adora.dto.UserDto;
 import com.adora.security.UserPrincipal;
 import com.adora.service.AuthService;
@@ -31,8 +33,20 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserDto>> register(@Valid @RequestBody RegisterRequest request) {
         UserDto registeredUser = authService.register(request);
-        ApiResponse<UserDto> response = ApiResponse.success("Register successfully", registeredUser);
+        ApiResponse<UserDto> response = ApiResponse.success("Register successfully. Please check your email for the verification code.", registeredUser);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request);
+        return ResponseEntity.ok(ApiResponse.success("Email verified successfully", null));
+    }
+
+    @PostMapping("/resend-code")
+    public ResponseEntity<ApiResponse<Void>> resendVerificationCode(@Valid @RequestBody ResendCodeRequest request) {
+        authService.resendVerificationCode(request);
+        return ResponseEntity.ok(ApiResponse.success("Verification code resent successfully", null));
     }
 
     @PostMapping("/login")

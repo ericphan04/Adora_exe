@@ -23,3 +23,12 @@ export interface RegisterRequest {
   role: 'RENTER' | 'OWNER';
   companyName?: string;
 }
+
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface ResendCodeRequest {
+  email: string;
+}
