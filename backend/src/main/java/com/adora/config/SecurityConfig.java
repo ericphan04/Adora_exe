@@ -63,7 +63,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/google").permitAll()
+                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/google", "/api/auth/verify", "/api/auth/resend-code").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api/payments/callback").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/billboards/**").permitAll()

@@ -17,12 +17,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.adora.dto.GoogleLoginRequest;
+import com.adora.dto.VerifyEmailRequest;
+import com.adora.dto.ResendCodeRequest;
+import com.adora.entity.VerificationCode;
+import com.adora.repository.VerificationCodeRepository;
+import com.adora.service.EmailService;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
@@ -37,37 +41,70 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final VerificationCodeRepository verificationCodeRepository;
+    private final EmailService emailService;
 
     @Autowired
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
-                       JwtTokenProvider tokenProvider) {
+                       JwtTokenProvider tokenProvider,
+                       VerificationCodeRepository verificationCodeRepository,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
+        this.verificationCodeRepository = verificationCodeRepository;
+        this.emailService = emailService;
     }
 
     @Transactional
     public UserDto register(RegisterRequest request) {
+        User user;
+        
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("Email address is already in use");
+            User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+            if (existingUser != null && existingUser.getStatus() == UserStatus.PENDING) {
+                // Update existing pending user info (in case they retry with typo corrections)
+                existingUser.setFullName(request.getFullName());
+                existingUser.setPhone(request.getPhone());
+                existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                existingUser.setRole(request.getRole());
+                existingUser.setCompanyName(request.getCompanyName());
+                user = userRepository.save(existingUser);
+            } else {
+                throw new BadRequestException("Email address is already in use");
+            }
+        } else {
+            user = User.builder()
+                    .fullName(request.getFullName())
+                    .email(request.getEmail())
+                    .phone(request.getPhone())
+                    .passwordHash(passwordEncoder.encode(request.getPassword()))
+                    .role(request.getRole())
+                    .status(UserStatus.PENDING) // New accounts are created as PENDING
+                    .companyName(request.getCompanyName())
+                    .build();
+            user = userRepository.save(user);
         }
 
-        User user = User.builder()
-                .fullName(request.getFullName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
-                .status(UserStatus.ACTIVE) // Default status as active based on API sample
-                .companyName(request.getCompanyName())
+        // Delete any existing verification codes for this email
+        verificationCodeRepository.deleteByEmail(user.getEmail());
+
+        // Generate 6-digit OTP code
+        String code = String.format("%06d", new java.util.Random().nextInt(1000000));
+        VerificationCode verificationCode = VerificationCode.builder()
+                .email(user.getEmail())
+                .code(code)
+                .expiryTime(java.time.LocalDateTime.now().plusMinutes(5)) // 5 minutes validity
                 .build();
+        verificationCodeRepository.save(verificationCode);
 
-        User savedUser = userRepository.save(user);
+        // Send email
+        emailService.sendVerificationEmail(user.getEmail(), code);
 
-        return convertToUserDto(savedUser);
+        return convertToUserDto(user);
     }
 
     @Transactional(readOnly = true)
@@ -132,6 +169,11 @@ public class AuthService {
                         return userRepository.save(newUser);
                     });
 
+            if (user.getStatus() == UserStatus.PENDING) {
+                user.setStatus(UserStatus.ACTIVE);
+                user = userRepository.save(user);
+            }
+
             if (user.getStatus() == UserStatus.BLOCKED) {
                 throw new BadRequestException("User account is blocked");
             }
@@ -161,6 +203,64 @@ public class AuthService {
         } catch (Exception e) {
             throw new BadRequestException("Google authentication failed: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    public void verifyEmail(VerifyEmailRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new BadRequestException("Email is already verified and active");
+        }
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new BadRequestException("User account is blocked");
+        }
+
+        VerificationCode verificationCode = verificationCodeRepository.findByEmailAndCode(request.getEmail(), request.getCode())
+                .orElseThrow(() -> new BadRequestException("Invalid verification code"));
+
+        if (verificationCode.getExpiryTime().isBefore(java.time.LocalDateTime.now())) {
+            throw new BadRequestException("Verification code has expired");
+        }
+
+        // Activate user
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+
+        // Delete verification code
+        verificationCodeRepository.delete(verificationCode);
+    }
+
+    @Transactional
+    public void resendVerificationCode(ResendCodeRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new BadRequestException("Email is already verified and active");
+        }
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new BadRequestException("User account is blocked");
+        }
+
+        // Delete any existing codes
+        verificationCodeRepository.deleteByEmail(request.getEmail());
+
+        // Generate new code
+        String code = String.format("%06d", new java.util.Random().nextInt(1000000));
+        VerificationCode verificationCode = VerificationCode.builder()
+                .email(request.getEmail())
+                .code(code)
+                .expiryTime(java.time.LocalDateTime.now().plusMinutes(5))
+                .build();
+
+        verificationCodeRepository.save(verificationCode);
+
+        // Send email
+        emailService.sendVerificationEmail(request.getEmail(), code);
     }
 
     private UserDto convertToUserDto(User user) {

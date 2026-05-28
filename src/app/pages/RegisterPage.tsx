@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Megaphone, Monitor, ArrowRight, Mail, Lock, Building2, User, Phone } from "lucide-react";
+import { Megaphone, Monitor, ArrowRight, Mail, Lock, Building2, User, Phone, KeyRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import authApi from "../../api/authApi";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -20,6 +21,20 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Verification states
+  const [verificationCode, setVerificationCode] = useState("");
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  useEffect(() => {
+    let timer: any;
+    if (resendCountdown > 0) {
+      timer = setTimeout(() => {
+        setResendCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +64,29 @@ export default function RegisterPage() {
         role: mappedRole,
         companyName: companyName || undefined,
       });
+      // Move to Verification Step
+      setStep(3);
+      setResendCountdown(60);
+      setError(null);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verificationCode || verificationCode.length !== 6) {
+      setError("Vui lòng nhập đúng mã xác thực 6 chữ số");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await authApi.verifyEmail({ email, code: verificationCode });
       setSuccess(true);
       setError(null);
       setTimeout(() => {
@@ -56,7 +94,23 @@ export default function RegisterPage() {
       }, 2000);
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.");
+      setError(err?.message || "Xác thực thất bại. Vui lòng kiểm tra lại mã OTP.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCountdown > 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await authApi.resendCode({ email });
+      setResendCountdown(60);
+      setError(null);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Gửi lại mã xác thực thất bại. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -96,7 +150,11 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <button onClick={() => navigate("/")} className="text-xl text-[#1D4ED8] mb-8 block lg:hidden cursor-pointer" style={{ fontWeight: 800 }}>ADORA</button>
           <h2 className="text-2xl text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>Tạo tài khoản</h2>
-          <p className="text-sm text-[#6B7A8D] mb-8">Bước {step}/2 — {step === 1 ? "Chọn vai trò" : "Thông tin doanh nghiệp"}</p>
+          <p className="text-sm text-[#6B7A8D] mb-8">
+            {step === 3 
+              ? "Bước 3/3 — Xác thực email" 
+              : `Bước ${step}/3 — ${step === 1 ? "Chọn vai trò" : "Thông tin doanh nghiệp"}`}
+          </p>
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
@@ -106,11 +164,13 @@ export default function RegisterPage() {
 
           {success && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm">
-              Đăng ký thành công! Đang chuyển hướng sang trang đăng nhập...
+              {step === 3 
+                ? "Xác thực email thành công! Đang chuyển hướng sang trang đăng nhập..." 
+                : "Đăng ký thành công! Đang chuẩn bị chuyển bước xác thực..."}
             </div>
           )}
 
-          {step === 1 ? (
+          {step === 1 && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <button
@@ -153,7 +213,9 @@ export default function RegisterPage() {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-          ) : (
+          )}
+
+          {step === 2 && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -260,6 +322,69 @@ export default function RegisterPage() {
                   className="flex-1 bg-[#1D4ED8] text-white py-3 rounded-lg text-sm hover:bg-[#3B82F6] transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {loading ? "Đang xử lý..." : "Tạo Tài Khoản"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {step === 3 && (
+            <form onSubmit={handleVerify} className="space-y-4">
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 bg-[#06B6D4]/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <KeyRound className="w-6 h-6 text-[#06B6D4]" />
+                </div>
+                <p className="text-sm text-[#6B7A8D] leading-relaxed">
+                  Chúng tôi đã gửi mã xác thực gồm 6 chữ số đến email <strong className="text-[#1D4ED8]">{email}</strong>. Vui lòng nhập mã để hoàn tất đăng ký.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Mã Xác Thực (OTP)</label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="123456"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm tracking-[0.5em] font-mono text-center outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all font-bold"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#1D4ED8] text-white py-3 rounded-lg text-sm hover:bg-[#3B82F6] transition-colors cursor-pointer disabled:opacity-50 font-semibold"
+                >
+                  {loading ? "Đang xác thực..." : "Xác Thực Email"}
+                </button>
+                
+                <div className="text-center text-xs text-[#6B7A8D] mt-2">
+                  Chưa nhận được mã?{" "}
+                  {resendCountdown > 0 ? (
+                    <span className="text-[#6B7A8D]">Gửi lại sau {resendCountdown} giây</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={loading}
+                      className="text-[#06B6D4] hover:underline font-semibold cursor-pointer disabled:opacity-50"
+                    >
+                      Gửi lại mã
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="w-full py-3 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+                >
+                  Quay Lại Thông Tin
                 </button>
               </div>
             </form>
