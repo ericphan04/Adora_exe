@@ -8,6 +8,8 @@ import com.adora.exception.BadRequestException;
 import com.adora.exception.ResourceNotFoundException;
 import com.adora.repository.BookingRepository;
 import com.adora.repository.PaymentRepository;
+import com.adora.service.NotificationService;
+import com.adora.entity.NotificationType;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +30,16 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final VnPayConfig vnPayConfig;
+    private final NotificationService notificationService;
 
     public PaymentService(PaymentRepository paymentRepository,
                           BookingRepository bookingRepository,
-                          VnPayConfig vnPayConfig) {
+                          VnPayConfig vnPayConfig,
+                          NotificationService notificationService) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.vnPayConfig = vnPayConfig;
+        this.notificationService = notificationService;
     }
 
     public String createPaymentUrl(CreatePaymentRequest request, Long renterId, HttpServletRequest httpServletRequest) {
@@ -189,10 +194,38 @@ public class PaymentService {
             
             booking.setStatus(BookingStatus.PAID);
             bookingRepository.save(booking);
+
+            // 1. Send PAYMENT_SUCCESS to renter
+            notificationService.createNotification(
+                    booking.getRenter(),
+                    "Thanh toán thành công",
+                    "Giao dịch thanh toán thành công cho đơn đặt màn hình LED #" + booking.getId() + " (" + booking.getBillboard().getTitle() + ")",
+                    NotificationType.PAYMENT_SUCCESS,
+                    booking,
+                    payment
+            );
+
+            // 2. Send BOOKING_PAID to billboard owner
+            notificationService.createNotification(
+                    booking.getBillboard().getOwner(),
+                    "Đơn đặt bảng đã thanh toán",
+                    "Đơn thuê màn hình LED #" + booking.getId() + " (" + booking.getBillboard().getTitle() + ") của bạn đã được thanh toán thành công bởi " + booking.getRenter().getFullName(),
+                    NotificationType.BOOKING_PAID,
+                    booking,
+                    payment
+            );
         } else {
             payment.setPaymentStatus(PaymentStatus.FAILED);
-            // Optionally, we could revert availability if needed, but since it's already BOOKED, 
-            // the user might want to retry payment. If they cancel, then dates will be released.
+            
+            // Send PAYMENT_FAILED to renter
+            notificationService.createNotification(
+                    booking.getRenter(),
+                    "Thanh toán thất bại",
+                    "Thanh toán cho đơn đặt màn hình LED #" + booking.getId() + " (" + booking.getBillboard().getTitle() + ") đã thất bại hoặc bị hủy bỏ.",
+                    NotificationType.PAYMENT_FAILED,
+                    booking,
+                    payment
+            );
         }
 
         Payment saved = paymentRepository.save(payment);
