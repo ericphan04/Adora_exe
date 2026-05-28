@@ -16,11 +16,22 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.adora.dto.GoogleLoginRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Collections;
 
 @Service
 public class AuthService {
+
+    @Value("${adora.google.client-id}")
+    private String googleClientId;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -85,6 +96,71 @@ public class AuthService {
                 .token(jwt)
                 .user(userSummary)
                 .build();
+    }
+
+    @Transactional
+    public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    new NetHttpTransport(),
+                    new GsonFactory()
+            )
+            .setAudience(Collections.singletonList(googleClientId))
+            .build();
+
+            GoogleIdToken idToken = verifier.verify(request.getIdToken());
+            if (idToken == null) {
+                throw new BadRequestException("Invalid Google ID Token");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String pictureUrl = (String) payload.get("picture");
+
+            User user = userRepository.findByEmail(email)
+                    .orElseGet(() -> {
+                        User newUser = User.builder()
+                                .fullName(name != null ? name : "Google User")
+                                .email(email)
+                                .phone("")
+                                .passwordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                                .role(com.adora.entity.Role.RENTER)
+                                .status(UserStatus.ACTIVE)
+                                .avatarUrl(pictureUrl)
+                                .build();
+                        return userRepository.save(newUser);
+                    });
+
+            if (user.getStatus() == UserStatus.BLOCKED) {
+                throw new BadRequestException("User account is blocked");
+            }
+
+            UserPrincipal userPrincipal = new UserPrincipal(user);
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    userPrincipal,
+                    null,
+                    userPrincipal.getAuthorities()
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = tokenProvider.generateToken(authentication);
+
+            LoginResponse.UserSummary userSummary = LoginResponse.UserSummary.builder()
+                    .id(user.getId())
+                    .fullName(user.getFullName())
+                    .email(user.getEmail())
+                    .role(user.getRole())
+                    .build();
+
+            return LoginResponse.builder()
+                    .token(jwt)
+                    .user(userSummary)
+                    .build();
+
+        } catch (Exception e) {
+            throw new BadRequestException("Google authentication failed: " + e.getMessage());
+        }
     }
 
     private UserDto convertToUserDto(User user) {

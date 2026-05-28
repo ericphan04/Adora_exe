@@ -8,6 +8,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (data: LoginRequest) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -68,6 +69,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = async (idToken: string) => {
+    setLoading(true);
+    try {
+      const response = await authApi.loginWithGoogle(idToken);
+      if (response.success && response.data) {
+        const { token: jwtToken, user: authUser } = response.data;
+        localStorage.setItem('token', jwtToken);
+        setToken(jwtToken);
+        // Call refreshUser to fetch full details
+        await refreshUser();
+      } else {
+        throw new Error(response.message || 'Google Login failed');
+      }
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    }
+  };
+
   const register = async (data: RegisterRequest) => {
     setLoading(true);
     try {
@@ -89,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, loading, login, loginWithGoogle, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
