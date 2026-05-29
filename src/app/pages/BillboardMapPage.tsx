@@ -22,6 +22,21 @@ const DISTRICTS = [
 
 const CITIES = ["Đà Nẵng", "Hồ Chí Minh", "Hà Nội"];
 
+// Helper to compute geographic distance in kilometers (Haversine formula)
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export default function BillboardMapPage() {
   const navigate = useNavigate();
   const [billboards, setBillboards] = useState<BillboardDto[]>([]);
@@ -79,17 +94,93 @@ export default function BillboardMapPage() {
 
       // 4. Chip category filter
       if (chipFilter !== "Tất cả") {
+        const lat = b.latitude;
+        const lng = b.longitude;
+        const currentCityLower = city.toLowerCase();
+
         if (chipFilter === "Sân bay") {
+          // 1. Text keyword search
           const text = `${b.title} ${b.address} ${b.description}`.toLowerCase();
-          if (!text.includes("sân bay") && !text.includes("airport")) return false;
+          const hasKeyword =
+            text.includes("sân bay") ||
+            text.includes("airport") ||
+            text.includes("cảng hàng không") ||
+            text.includes("nhà ga");
+
+          if (hasKeyword) {
+            // Found via text
+          } else if (lat != null && lng != null) {
+            // 2. Geographic distance checks
+            let isNearAirport = false;
+            if (currentCityLower.includes("đà nẵng")) {
+              // Da Nang International Airport: 16.0544, 108.1995
+              isNearAirport = getDistanceKm(lat, lng, 16.0544, 108.1995) <= 3.0;
+            } else if (currentCityLower.includes("hồ chí minh") || currentCityLower.includes("hcm")) {
+              // Tan Son Nhat Airport: 10.8185, 106.6601
+              isNearAirport = getDistanceKm(lat, lng, 10.8185, 106.6601) <= 3.5;
+            } else if (currentCityLower.includes("hà nội")) {
+              // Noi Bai Airport: 21.2187, 105.8057
+              isNearAirport = getDistanceKm(lat, lng, 21.2187, 105.8057) <= 5.0;
+            }
+            if (!isNearAirport) return false;
+          } else {
+            return false;
+          }
         }
+
         if (chipFilter === "Trung tâm TM") {
           const text = `${b.title} ${b.address} ${b.description} ${b.screenType}`.toLowerCase();
-          if (!text.includes("tttm") && !text.includes("mall") && !text.includes("vincom") && !text.includes("lotte")) return false;
+          const hasTttm =
+            text.includes("tttm") ||
+            text.includes("mall") ||
+            text.includes("vincom") ||
+            text.includes("lotte") ||
+            text.includes("coop") ||
+            text.includes("aeon") ||
+            text.includes("megamall") ||
+            text.includes("plaza");
+          if (!hasTttm) return false;
         }
+
         if (chipFilter === "Trung tâm thành phố") {
-          // Typically center districts like Hải Châu in Đà Nẵng or Quận 1 in HCM
-          if (b.district !== "Hải Châu" && b.district !== "Quận 1") return false;
+          const dist = (b.district || "").toLowerCase();
+          let isCenter = false;
+
+          // 1. Check central districts depending on current city
+          if (currentCityLower.includes("đà nẵng")) {
+            isCenter = dist.includes("hải châu") || dist.includes("thanh khê");
+          } else if (currentCityLower.includes("hồ chí minh") || currentCityLower.includes("hcm")) {
+            isCenter =
+              dist.includes("quận 1") ||
+              dist.includes("quận 3") ||
+              dist.includes("quận 5") ||
+              dist.includes("quận 10") ||
+              dist.includes("bình thạnh") ||
+              dist.includes("phú nhuận");
+          } else if (currentCityLower.includes("hà nội")) {
+            isCenter =
+              dist.includes("hoàn kiếm") ||
+              dist.includes("ba đình") ||
+              dist.includes("đống đa") ||
+              dist.includes("hai bà trưng") ||
+              dist.includes("tây hồ");
+          }
+
+          // 2. Geographic distance from city center coordinates
+          if (!isCenter && lat != null && lng != null) {
+            if (currentCityLower.includes("đà nẵng")) {
+              // Dragon Bridge area: 16.061, 108.224
+              isCenter = getDistanceKm(lat, lng, 16.061, 108.224) <= 4.0;
+            } else if (currentCityLower.includes("hồ chí minh") || currentCityLower.includes("hcm")) {
+              // Notre Dame Cathedral area: 10.780, 106.700
+              isCenter = getDistanceKm(lat, lng, 10.780, 106.700) <= 5.0;
+            } else if (currentCityLower.includes("hà nội")) {
+              // Hoan Kiem Lake: 21.028, 105.852
+              isCenter = getDistanceKm(lat, lng, 21.028, 105.852) <= 5.0;
+            }
+          }
+
+          if (!isCenter) return false;
         }
       }
 

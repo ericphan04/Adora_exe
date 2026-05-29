@@ -285,13 +285,13 @@ public class DatabaseInitializer implements ApplicationRunner {
             Billboard b6 = Billboard.builder()
                     .owner(owner)
                     .category(streetCat)
-                    .title("Trần Phú LED")
+                    .title("01 Trần Phú, Hải Châu")
                     .description("Bảng quảng cáo LED ngoài trời nằm trên đường Trần Phú - một trong những trục đường chính sầm uất nhất trung tâm Hải Châu.")
-                    .address("Đường Trần Phú, Hải Châu")
+                    .address("01 Trần Phú, Hải Châu")
                     .city("Đà Nẵng")
                     .district("Hải Châu")
-                    .latitude(16.0665)
-                    .longitude(108.2220)
+                    .latitude(16.0805)
+                    .longitude(108.2230)
                     .width(10.0)
                     .height(4.0)
                     .resolution("1920x1080")
@@ -386,7 +386,13 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .build();
             b9.addImage(BillboardImage.builder().imageUrl("https://images.unsplash.com/photo-1745725427643-8994370391e6?w=1080").isThumbnail(true).build());
 
-            billboardRepository.saveAll(List.of(b1, b2, b3, b4, b5, b6, b7, b8, b9));
+            List<Billboard> billboardsToSave = List.of(b1, b2, b3, b4, b5, b6, b7, b8, b9);
+            for (Billboard b : billboardsToSave) {
+                b.setFormattedAddress(b.getAddress() + ", " + b.getCity());
+                b.setAddressDetail("");
+                b.setWard("");
+            }
+            billboardRepository.saveAll(billboardsToSave);
         }
 
         // 4. Seed Bookings
@@ -544,11 +550,18 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Cầu Rồng", new MapPatch(16.0614, 108.2275, "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"),
                 "Bạch Đằng", new MapPatch(16.0708, 108.2483, "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"),
                 "Nguyễn Văn Linh", new MapPatch(16.0545, 108.2020, null),
-                "Vincom", new MapPatch(16.0678, 108.2208, "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+                "Vincom", new MapPatch(16.0678, 108.2208, "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"),
+                "Trần Phú", new MapPatch(16.0805, 108.2230, null)
         );
 
         for (Billboard b : billboardRepository.findAll()) {
             boolean changed = false;
+            if (b.getFormattedAddress() == null) {
+                b.setFormattedAddress(b.getAddress() + ", " + b.getCity());
+                b.setAddressDetail("");
+                b.setWard("");
+                changed = true;
+            }
             if (b.getLatitude() == null || b.getLongitude() == null) {
                 for (var entry : patches.entrySet()) {
                     if (b.getTitle().contains(entry.getKey())) {
@@ -603,7 +616,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         createIfNotExist(existing, owner, buildingCat, "Vòng xoay Phạm Văn Đồng LED",
                 "Màn hình LED lớn tại vòng xoay Phạm Văn Đồng - Ngô Quyền, đón đầu lượng giao thông từ cầu Sông Hàn ra bãi biển Mỹ Khê.",
                 "Vòng xoay Phạm Văn Đồng - Ngô Quyền, An Hải Bắc, Sơn Trà, Đà Nẵng", "Sơn Trà",
-                16.0722, 108.2340, 12.0, 6.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
+                16.0740, 108.2445, 12.0, 6.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
                 "16h/ngày", 3200000, 95000000, 1.1, 110000,
                 "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
@@ -627,7 +640,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         createIfNotExist(existing, owner, streetCat, "Nguyễn Tất Thành Street Screen",
                 "Màn hình LED dọc tuyến đường ven biển Nguyễn Tất Thành, phù hợp cho các chiến dịch quảng bá địa phương.",
                 "Đường Nguyễn Tất Thành, Xuân Hà, Thanh Khê, Đà Nẵng", "Thanh Khê",
-                16.0745, 108.1925, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
+                16.0758, 108.1835, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
                 "16h/ngày", 1300000, 38000000, 1.0, 35000,
                 "https://images.unsplash.com/photo-1506744038136-46273834b3fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
@@ -635,7 +648,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         createIfNotExist(existing, owner, highwayCat, "Võ Nguyên Giáp Beachfront LED",
                 "Vị trí đắc địa mặt tiền biển Võ Nguyên Giáp, tiếp cận lượng lớn khách du lịch trong nước và quốc tế.",
                 "Đường Võ Nguyên Giáp, Khuê Mỹ, Ngũ Hành Sơn, Đà Nẵng", "Ngũ Hành Sơn",
-                16.0355, 108.2520, 12.0, 6.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
+                16.0544, 108.2477, 12.0, 6.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
                 "16h/ngày", 3100000, 90000000, 1.1, 95000,
                 "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
@@ -675,7 +688,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         createIfNotExist(existing, owner, streetCat, "Cách Mạng Tháng Tám Highway Screen",
                 "Bảng quảng cáo LED tầm trung trên quốc lộ Cách Mạng Tháng Tám hướng đi cầu vượt Hòa Cầm.",
                 "Đường Cách Mạng Tháng Tám, Hòa Thọ Đông, Cẩm Lệ, Đà Nẵng", "Cẩm Lệ",
-                16.0125, 108.2045, 10.0, 5.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
+                16.0290, 108.2160, 10.0, 5.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
                 "16h/ngày", 1000000, 30000000, 1.0, 40000,
                 "https://images.unsplash.com/photo-1469474968028-56623f02e42e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
     }
@@ -694,6 +707,9 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .title(title)
                     .description(description)
                     .address(address)
+                    .formattedAddress(address)
+                    .addressDetail("")
+                    .ward("")
                     .city("Đà Nẵng")
                     .district(district)
                     .latitude(latitude)

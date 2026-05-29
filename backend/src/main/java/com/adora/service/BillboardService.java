@@ -98,6 +98,9 @@ public class BillboardService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .address(request.getAddress())
+                .formattedAddress(request.getFormattedAddress())
+                .addressDetail(request.getAddressDetail())
+                .ward(request.getWard())
                 .city(request.getCity())
                 .district(request.getDistrict())
                 .latitude(request.getLatitude())
@@ -152,6 +155,9 @@ public class BillboardService {
         billboard.setTitle(request.getTitle());
         billboard.setDescription(request.getDescription());
         billboard.setAddress(request.getAddress());
+        billboard.setFormattedAddress(request.getFormattedAddress());
+        billboard.setAddressDetail(request.getAddressDetail());
+        billboard.setWard(request.getWard());
         billboard.setCity(request.getCity());
         billboard.setDistrict(request.getDistrict());
         billboard.setLatitude(request.getLatitude());
@@ -333,6 +339,9 @@ public class BillboardService {
                 .title(entity.getTitle())
                 .description(entity.getDescription())
                 .address(entity.getAddress())
+                .formattedAddress(entity.getFormattedAddress())
+                .addressDetail(entity.getAddressDetail())
+                .ward(entity.getWard())
                 .city(entity.getCity())
                 .district(entity.getDistrict())
                 .latitude(entity.getLatitude())

@@ -18,7 +18,7 @@ interface BillboardCardProps {
 
 const trafficLabels: Record<string, string> = { High: "Cao", Medium: "TB", Low: "Thấp" };
 
-export function BillboardCard({ image, name, location, size, trafficIndex, price, availability, onViewDetails }: BillboardCardProps) {
+export function BillboardCard({ image, name, location, size, trafficIndex, price, availability, saved, onViewDetails, onToggleSave }: BillboardCardProps) {
   return (
     <div className="bg-card text-card-foreground rounded-xl border border-border overflow-hidden hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:border-accent/40 transition-all duration-300 group flex flex-col justify-between h-full">
       <div>

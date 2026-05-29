@@ -20,6 +20,7 @@ import { notify, apiErrorMessage } from "../utils/notify";
 import { getBookingMonthEvents } from "../utils/bookingEvents";
 import { getTodayParts } from "../utils/calendar";
 import { MessagesView } from "../components/messages/MessagesView";
+import LocationPicker from "../components/map/LocationPicker";
 
 type BadgeVariant = "active" | "pending" | "booked" | "expired" | "available" | "unavailable";
 
@@ -148,8 +149,13 @@ export default function OwnerDashboard() {
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formAddress, setFormAddress] = useState("");
-  const [formCity, setFormCity] = useState("Da Nang");
-  const [formDistrict, setFormDistrict] = useState("Hai Chau");
+  const [formFormattedAddress, setFormFormattedAddress] = useState("");
+  const [formAddressDetail, setFormAddressDetail] = useState("");
+  const [formWard, setFormWard] = useState("");
+  const [formCity, setFormCity] = useState("Đà Nẵng");
+  const [formDistrict, setFormDistrict] = useState("Hải Châu");
+  const [formLatitude, setFormLatitude] = useState<number | undefined>(undefined);
+  const [formLongitude, setFormLongitude] = useState<number | undefined>(undefined);
   const [formWidth, setFormWidth] = useState(10);
   const [formHeight, setFormHeight] = useState(5);
   const [formResolution, setFormResolution] = useState("1920x1080");
@@ -324,8 +330,13 @@ export default function OwnerDashboard() {
     setFormTitle("");
     setFormDescription("");
     setFormAddress("");
-    setFormCity("Da Nang");
-    setFormDistrict("Hai Chau");
+    setFormFormattedAddress("");
+    setFormAddressDetail("");
+    setFormWard("");
+    setFormCity("Đà Nẵng");
+    setFormDistrict("Hải Châu");
+    setFormLatitude(undefined);
+    setFormLongitude(undefined);
     setFormWidth(12);
     setFormHeight(6);
     setFormResolution("4K UHD");
@@ -347,8 +358,13 @@ export default function OwnerDashboard() {
     setFormTitle(bb.title);
     setFormDescription(bb.description || "");
     setFormAddress(bb.address);
+    setFormFormattedAddress(bb.formattedAddress || `${bb.address}, ${bb.city}`);
+    setFormAddressDetail(bb.addressDetail || "");
+    setFormWard(bb.ward || "");
     setFormCity(bb.city);
     setFormDistrict(bb.district);
+    setFormLatitude(bb.latitude);
+    setFormLongitude(bb.longitude);
     setFormWidth(bb.width);
     setFormHeight(bb.height);
     setFormResolution(bb.resolution);
@@ -367,6 +383,12 @@ export default function OwnerDashboard() {
   // Form Submit Handler
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formLatitude == null || formLongitude == null) {
+      notify.error("Vui lòng chọn vị trí chính xác trên bản đồ.");
+      return;
+    }
+
     setSubmitting(true);
 
     const featureList = formFeatures
@@ -377,9 +399,14 @@ export default function OwnerDashboard() {
     const payload: CreateBillboardRequest = {
       title: formTitle,
       description: formDescription,
-      address: formAddress,
+      address: formAddress || formFormattedAddress,
+      formattedAddress: formFormattedAddress,
+      addressDetail: formAddressDetail,
+      ward: formWard,
       city: formCity,
       district: formDistrict,
+      latitude: formLatitude,
+      longitude: formLongitude,
       width: Number(formWidth),
       height: Number(formHeight),
       resolution: formResolution,
@@ -822,54 +849,48 @@ export default function OwnerDashboard() {
             </div>
 
             <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-medium text-[#6B7A8D] mb-1">Tên bảng quảng cáo *</label>
-                  <input
-                    required
-                    type="text"
-                    value={formTitle}
-                    onChange={e => setFormTitle(e.target.value)}
-                    placeholder="VD: LED Cầu Rồng"
-                    className="w-full border border-[#E3E8EF] rounded-lg p-2 focus:outline-none focus:border-[#1D4ED8]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium text-[#6B7A8D] mb-1">Địa chỉ cụ thể *</label>
-                  <input
-                    required
-                    type="text"
-                    value={formAddress}
-                    onChange={e => setFormAddress(e.target.value)}
-                    placeholder="VD: 15 Bach Dang"
-                    className="w-full border border-[#E3E8EF] rounded-lg p-2 focus:outline-none focus:border-[#1D4ED8]"
-                  />
-                </div>
+              <div>
+                <label className="block font-medium text-[#6B7A8D] mb-1">Tên bảng quảng cáo *</label>
+                <input
+                  required
+                  type="text"
+                  value={formTitle}
+                  onChange={e => setFormTitle(e.target.value)}
+                  placeholder="VD: LED Cầu Rồng"
+                  className="w-full border border-[#E3E8EF] rounded-lg p-2 focus:outline-none focus:border-[#1D4ED8]"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-medium text-[#6B7A8D] mb-1">Quận/Huyện *</label>
-                  <input
-                    required
-                    type="text"
-                    value={formDistrict}
-                    onChange={e => setFormDistrict(e.target.value)}
-                    placeholder="VD: Hai Chau"
-                    className="w-full border border-[#E3E8EF] rounded-lg p-2 focus:outline-none focus:border-[#1D4ED8]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium text-[#6B7A8D] mb-1">Thành phố *</label>
-                  <input
-                    required
-                    type="text"
-                    value={formCity}
-                    onChange={e => setFormCity(e.target.value)}
-                    placeholder="VD: Da Nang"
-                    className="w-full border border-[#E3E8EF] rounded-lg p-2 focus:outline-none focus:border-[#1D4ED8]"
-                  />
-                </div>
+              <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100/80 space-y-4">
+                <h4 className="font-bold text-sm text-[#1D4ED8] pb-1 border-b border-[#E3E8EF]">
+                  Vị trí bảng quảng cáo
+                </h4>
+                <LocationPicker
+                  value={{
+                    formattedAddress: formFormattedAddress,
+                    addressDetail: formAddressDetail,
+                    ward: formWard,
+                    district: formDistrict,
+                    city: formCity,
+                    latitude: formLatitude,
+                    longitude: formLongitude,
+                  }}
+                  onChange={(val) => {
+                    setFormFormattedAddress(val.formattedAddress || "");
+                    setFormAddress(val.addressDetail ? `${val.addressDetail}, ${val.formattedAddress}` : (val.formattedAddress || ""));
+                    setFormAddressDetail(val.addressDetail || "");
+                    setFormWard(val.ward || "");
+                    setFormDistrict(val.district || "");
+                    setFormCity(val.city || "");
+                    setFormLatitude(val.latitude);
+                    setFormLongitude(val.longitude);
+                  }}
+                />
+                {(formLatitude == null || formLongitude == null) && (
+                  <p className="text-red-500 font-semibold text-xs mt-1">
+                    * Vui lòng chọn vị trí chính xác trên bản đồ.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-4">
@@ -1031,7 +1052,7 @@ export default function OwnerDashboard() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || formLatitude == null || formLongitude == null}
                   className="px-5 py-2 bg-[#1D4ED8] text-white rounded-lg text-sm hover:bg-[#3B82F6] transition-colors cursor-pointer font-bold disabled:opacity-50"
                 >
                   {submitting ? "Đang gửi..." : "Đăng Ký"}

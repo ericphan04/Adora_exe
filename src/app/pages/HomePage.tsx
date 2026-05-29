@@ -125,8 +125,8 @@ const fallbackBillboards: BillboardDto[] = [
     address: "Vòng xoay Phạm Văn Đồng - Ngô Quyền",
     city: "Đà Nẵng",
     district: "Sơn Trà",
-    latitude: 16.0722,
-    longitude: 108.2340,
+    latitude: 16.0740,
+    longitude: 108.2445,
     width: 12,
     height: 6,
     resolution: "P10",
@@ -151,8 +151,8 @@ const fallbackBillboards: BillboardDto[] = [
     address: "Đường Võ Nguyên Giáp",
     city: "Đà Nẵng",
     district: "Ngũ Hành Sơn",
-    latitude: 16.0355,
-    longitude: 108.2520,
+    latitude: 16.0544,
+    longitude: 108.2477,
     width: 12,
     height: 6,
     resolution: "P10",
@@ -262,7 +262,12 @@ export default function HomePage() {
       } catch (err) {
         console.warn("Backend API not running, using fallback mock data:", err);
         if (active) {
-          setBillboards(fallbackBillboards);
+          setBillboards(fallbackBillboards.map(b => ({
+            ...b,
+            formattedAddress: (b as any).formattedAddress || `${b.address}, ${b.city}`,
+            addressDetail: (b as any).addressDetail || "",
+            ward: (b as any).ward || ""
+          })));
         }
       } finally {
         if (active) setLoading(false);

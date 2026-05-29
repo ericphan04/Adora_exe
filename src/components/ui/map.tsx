@@ -11,10 +11,13 @@ import React, {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+// @ts-ignore – alias in vite.config.ts points to dist/vietmap-gl.js
+import vietmapgl from "@vietmap/vietmap-gl-js";
+// Use VietmapGL's own CSS to ensure correct marker positioning and map controls.
+// We use a relative path here to bypass Vite's alias resolution.
+import "../../../node_modules/@vietmap/vietmap-gl-js/dist/vietmap-gl.css";
 
-export type MapRef = maplibregl.Map;
+export type MapRef = any;
 
 export type MapViewport = {
   center: [number, number];
@@ -23,36 +26,28 @@ export type MapViewport = {
   pitch: number;
 };
 
-const defaultStyles = {
-  light: "https://tiles.openfreemap.org/styles/bright",
-  dark: "https://tiles.openfreemap.org/styles/bright", // fallback to bright if no dark
-};
-
 type MapProps = {
   children?: ReactNode;
   className?: string;
   center?: [number, number]; // [lng, lat]
   zoom?: number;
-  styles?: {
-    light?: string;
-    dark?: string;
-  };
+  styles?: { light?: string; dark?: string };
   pitch?: number;
   bearing?: number;
-} & Omit<maplibregl.MapOptions, "container" | "style">;
+  [key: string]: any;
+};
 
-const MapContext = createContext<maplibregl.Map | null>(null);
+const MapContext = createContext<any>(null);
 
 export function useMap() {
-  const context = useContext(MapContext);
-  return context;
+  return useContext(MapContext);
 }
 
 export const Map = forwardRef<MapRef, MapProps>(function Map(
   {
     children,
     className,
-    center = [108.2022, 16.0544], // Default: Danang Center [lng, lat]
+    center = [108.2022, 16.0544],
     zoom = 13,
     styles,
     pitch = 0,
@@ -62,32 +57,51 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
+  const [mapInstance, setMapInstance] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [styleToUse, setStyleToUse] = useState<any>(null);
 
-  const activeStyle = styles?.light ?? defaultStyles.light;
+  useImperativeHandle(ref, () => mapInstance, [mapInstance]);
 
-  // Expose the map instance to parent via ref
-  useImperativeHandle(ref, () => mapInstance as maplibregl.Map, [mapInstance]);
+  // Get Vietmap style URL directly. No proxy is needed because Vietmap's CDN
+  // has CORS enabled (*) for both style JSON and vector pbf tiles.
+  // Using direct URLs prevents proxy-induced corruption of vector tiles.
+  const getStyleUrl = (): string => {
+    if (styles?.light) return styles.light;
 
-  // Initialize Map
+    const key = (import.meta.env.VITE_VIETMAP_TILEMAP_API_KEY ?? "").trim();
+    const validKey =
+      key &&
+      key !== "your_vietmap_tilemap_api_key_here" &&
+      !key.toUpperCase().includes("YOUR_");
+
+    if (validKey) {
+      return `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${key}`;
+    }
+    // Fallback when no tile key is configured
+    return "https://tiles.openfreemap.org/styles/bright";
+  };
+
+  // ── Initialize Map ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const map = new maplibregl.Map({
+    const style = getStyleUrl();
+    const map = new vietmapgl.Map({
       container: containerRef.current,
-      style: activeStyle,
-      center: center,
-      zoom: zoom,
-      pitch: pitch,
-      bearing: bearing,
+      style: style,
+      center,
+      zoom,
+      pitch,
+      bearing,
       attributionControl: true,
       ...props,
     });
 
-    map.on("load", () => {
-      setIsLoaded(true);
-    });
+    map.on("load", () => setIsLoaded(true));
+    map.on("error", (e: any) =>
+      console.warn("[VietmapGL] Error:", e?.error?.message ?? e)
+    );
 
     setMapInstance(map);
 
@@ -96,17 +110,10 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       setMapInstance(null);
       setIsLoaded(false);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync style changes
-  const styleRef = useRef(activeStyle);
-  useEffect(() => {
-    if (!mapInstance || styleRef.current === activeStyle) return;
-    styleRef.current = activeStyle;
-    mapInstance.setStyle(activeStyle);
-  }, [mapInstance, activeStyle]);
-
-  // Sync center/zoom/pitch/bearing when changed from props
+  // ── Sync viewport props ────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapInstance || mapInstance.isMoving()) return;
     mapInstance.setCenter(center);
@@ -130,12 +137,23 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   );
 });
 
+// ── MapMarker ─────────────────────────────────────────────────────────────────
+
 type MapMarkerProps = {
   longitude: number;
   latitude: number;
   children?: ReactNode;
   onClick?: (e: MouseEvent) => void;
-  anchor?: "center" | "top" | "bottom" | "left" | "right" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  anchor?:
+    | "center"
+    | "top"
+    | "bottom"
+    | "left"
+    | "right"
+    | "top-left"
+    | "top-right"
+    | "bottom-left"
+    | "bottom-right";
 };
 
 export function MapMarker({
@@ -147,7 +165,7 @@ export function MapMarker({
 }: MapMarkerProps) {
   const map = useMap();
   const [element, setElement] = useState<HTMLDivElement | null>(null);
-  const markerRef = useRef<maplibregl.Marker | null>(null);
+  const markerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!map) return;
@@ -155,7 +173,7 @@ export function MapMarker({
     const el = document.createElement("div");
     el.style.cursor = "pointer";
 
-    const markerInstance = new maplibregl.Marker({
+    const markerInstance = new vietmapgl.Marker({
       element: children ? el : undefined,
       anchor,
     })
@@ -180,14 +198,13 @@ export function MapMarker({
       if (children) {
         el.removeEventListener("click", handleClick);
       } else {
-        markerInstance.getElement().removeEventListener("click", handleClick);
+        markerInstance.getElement()?.removeEventListener("click", handleClick);
       }
       markerInstance.remove();
       setElement(null);
     };
   }, [map, children !== undefined]);
 
-  // Sync position changes
   useEffect(() => {
     if (markerRef.current) {
       markerRef.current.setLngLat([longitude, latitude]);
@@ -197,9 +214,7 @@ export function MapMarker({
   if (children && element) {
     return createPortal(children, element);
   }
-
   return null;
 }
 
-// Export as Marker too for convenience
 export { MapMarker as Marker };

@@ -30,20 +30,11 @@ export function getBillboardRentalStatus(b: BillboardDto): RentalStatus {
 }
 
 export function resolveBillboardPosition(
-  b: BillboardDto,
-  index = 0
+  b: BillboardDto
 ): { lat: number; lng: number } {
-  if (b.latitude != null && b.longitude != null) {
-    return { lat: b.latitude, lng: b.longitude };
-  }
-  const base = DISTRICT_COORDS[b.district] ?? DANANG_CENTER;
-  // Use stable ID instead of dynamic index to ensure position compatibility across pages
-  const stableKey = b.id || index || 0;
-  const angle = stableKey * 0.9;
-  const offset = 0.004 + (stableKey % 3) * 0.002;
   return {
-    lat: base.lat + Math.sin(angle) * offset,
-    lng: base.lng + Math.cos(angle) * offset,
+    lat: b.latitude || DANANG_CENTER.lat,
+    lng: b.longitude || DANANG_CENTER.lng,
   };
 }
 
@@ -68,7 +59,7 @@ export function getGoogleMapsApiKey(): string {
   return key;
 }
 
-export const MAP_BILLBOARD_MOCKS: BillboardDto[] = [
+const RAW_BILLBOARD_MOCKS = [
   {
     id: 1,
     title: "Cầu Rồng LED",
@@ -204,13 +195,13 @@ export const MAP_BILLBOARD_MOCKS: BillboardDto[] = [
   },
   {
     id: 6,
-    title: "Trần Phú LED",
+    title: "01 Trần Phú, Hải Châu",
     description: "Bảng quảng cáo LED ngoài trời nằm trên đường Trần Phú - một trong những trục đường chính sầm uất nhất trung tâm Hải Châu.",
-    address: "Đường Trần Phú, Hải Châu",
+    address: "01 Trần Phú, Hải Châu",
     city: "Đà Nẵng",
     district: "Hải Châu",
-    latitude: 16.0665,
-    longitude: 108.2220,
+    latitude: 16.0805,
+    longitude: 108.2230,
     width: 10,
     height: 4,
     resolution: "1920x1080",
@@ -313,8 +304,8 @@ export const MAP_BILLBOARD_MOCKS: BillboardDto[] = [
     address: "Vòng xoay Phạm Văn Đồng - Ngô Quyền, An Hải Bắc, Sơn Trà",
     city: "Đà Nẵng",
     district: "Sơn Trà",
-    latitude: 16.0722,
-    longitude: 108.2340,
+    latitude: 16.0740,
+    longitude: 108.2445,
     width: 12,
     height: 6,
     resolution: "1920x1080",
@@ -391,8 +382,8 @@ export const MAP_BILLBOARD_MOCKS: BillboardDto[] = [
     address: "Đường Nguyễn Tất Thành, Xuân Hà, Thanh Khê",
     city: "Đà Nẵng",
     district: "Thanh Khê",
-    latitude: 16.0745,
-    longitude: 108.1925,
+    latitude: 16.0758,
+    longitude: 108.1835,
     width: 8,
     height: 4,
     resolution: "1280x720",
@@ -417,8 +408,8 @@ export const MAP_BILLBOARD_MOCKS: BillboardDto[] = [
     address: "Đường Võ Nguyên Giáp, Khuê Mỹ, Ngũ Hành Sơn",
     city: "Đà Nẵng",
     district: "Ngũ Hành Sơn",
-    latitude: 16.0355,
-    longitude: 108.2520,
+    latitude: 16.0544,
+    longitude: 108.2477,
     width: 12,
     height: 6,
     resolution: "1920x1080",
@@ -547,8 +538,8 @@ export const MAP_BILLBOARD_MOCKS: BillboardDto[] = [
     address: "Đường Cách Mạng Tháng Tám, Hòa Thọ Đông, Cẩm Lệ",
     city: "Đà Nẵng",
     district: "Cẩm Lệ",
-    latitude: 16.0125,
-    longitude: 108.2045,
+    latitude: 16.0290,
+    longitude: 108.2160,
     width: 10,
     height: 5,
     resolution: "1280x720",
@@ -567,3 +558,10 @@ export const MAP_BILLBOARD_MOCKS: BillboardDto[] = [
     availabilities: [],
   },
 ];
+
+export const MAP_BILLBOARD_MOCKS: BillboardDto[] = RAW_BILLBOARD_MOCKS.map((b) => ({
+  ...b,
+  formattedAddress: (b as any).formattedAddress || `${b.address}, ${b.city}`,
+  addressDetail: (b as any).addressDetail || "",
+  ward: (b as any).ward || "",
+})) as BillboardDto[];

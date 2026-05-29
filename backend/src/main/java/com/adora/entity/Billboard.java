@@ -49,6 +49,14 @@ public class Billboard {
     private Double latitude;
     private Double longitude;
 
+    @Column(name = "formatted_address")
+    private String formattedAddress;
+
+    @Column(name = "address_detail")
+    private String addressDetail;
+
+    private String ward;
+
     @Column(name = "demo_video_url")
     private String demoVideoUrl;
 

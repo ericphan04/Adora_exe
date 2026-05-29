@@ -33,6 +33,9 @@ export interface BillboardDto {
   title: string;
   description: string;
   address: string;
+  formattedAddress: string;
+  addressDetail?: string;
+  ward?: string;
   city: string;
   district: string;
   latitude?: number;

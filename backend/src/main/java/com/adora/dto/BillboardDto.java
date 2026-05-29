@@ -19,6 +19,9 @@ public class BillboardDto {
     private String title;
     private String description;
     private String address;
+    private String formattedAddress;
+    private String addressDetail;
+    private String ward;
     private String city;
     private String district;
     private Double latitude;

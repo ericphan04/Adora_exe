@@ -6,7 +6,8 @@ import {
   getBillboardRentalStatus,
   resolveBillboardPosition,
 } from "../../utils/billboardMap";
-import maplibregl from "maplibre-gl";
+// @ts-ignore
+import vietmapgl from "@vietmap/vietmap-gl-js";
 
 export interface MapMarkerBillboard {
   billboard: BillboardDto;
@@ -66,7 +67,7 @@ export function BillboardGoogleMap({
     const map = mapRef.current;
     if (!map || !fitBounds || markers.length === 0 || singleMarker) return;
 
-    const bounds = new maplibregl.LngLatBounds();
+    const bounds = new vietmapgl.LngLatBounds();
     markers.forEach((m) => bounds.extend([m.position.lng, m.position.lat]));
 
     map.fitBounds(bounds, { padding: 80, duration: 800 });
@@ -90,9 +91,6 @@ export function BillboardGoogleMap({
         ref={mapRef}
         center={[center.lng, center.lat]} // [lng, lat]
         zoom={zoom}
-        styles={{
-          light: "https://tiles.openfreemap.org/styles/bright",
-        }}
       >
         {markers.map((m) => (
           <MapMarker
