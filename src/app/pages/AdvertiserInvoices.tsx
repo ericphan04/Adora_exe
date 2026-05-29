@@ -16,6 +16,7 @@ import { DashboardSidebar } from "../components/DashboardSidebar";
 import { KpiCard } from "../components/KpiCard";
 import { DataTable } from "../components/DataTable";
 import { StatusBadge } from "../components/StatusBadge";
+import { notify } from "../utils/notify";
 
 const invoices = [
   {
@@ -56,88 +57,349 @@ const invoices = [
   },
 ];
 
-const columns = [
-  {
-    key: "id",
-    label: "Mã Hóa Đơn",
-    render: (v: string, row: any) => (
-      <div>
-        <div className="flex items-center gap-2">
-          <span
-            className="text-sm text-[#1A2332]"
-            style={{ fontWeight: 500 }}
-          >
-            {v}
-          </span>
-        </div>
-        <p className="text-xs text-[#6B7A8D] mt-0.5">{row.customer}</p>
-      </div>
-    ),
-  },
-  {
-    key: "campaign",
-    label: "Chiến Dịch",
-    render: (v: string) => (
-      <span className="text-sm text-[#1A2332]">{v}</span>
-    ),
-  },
-  {
-    key: "createdAt",
-    label: "Ngày Tạo",
-  },
-  {
-    key: "dueAt",
-    label: "Hạn Thanh Toán",
-  },
-  {
-    key: "total",
-    label: "Tổng Tiền",
-    render: (v: string) => (
-      <span className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>
-        {v}
-      </span>
-    ),
-  },
-  {
-    key: "status",
-    label: "Trạng Thái",
-    render: (_: any, row: any) => {
-      const map: Record<
-        string,
-        { variant: any; label: string }
-      > = {
-        paid: { variant: "active", label: "Đã thanh toán" },
-        pending: { variant: "pending", label: "Chưa thanh toán" },
-        overdue: { variant: "expired", label: "Quá hạn" },
-      };
-      const conf = map[row.status] || map.pending;
-      return <StatusBadge variant={conf.variant} label={conf.label} />;
-    },
-  },
-  {
-    key: "actions",
-    label: "Thao Tác",
-    render: () => (
-      <div className="flex items-center gap-2">
-        <button className="w-8 h-8 rounded-lg hover:bg-[#F0F9FF] flex items-center justify-center text-[#6B7A8D] cursor-pointer">
-          <FileText className="w-4 h-4" />
-        </button>
-        <button className="w-8 h-8 rounded-lg hover:bg-[#F0F9FF] flex items-center justify-center text-[#6B7A8D] cursor-pointer">
-          <Download className="w-4 h-4" />
-        </button>
-        <button className="w-8 h-8 rounded-lg hover:bg-[#F0F9FF] flex items-center justify-center text-[#1D4ED8] cursor-pointer">
-          <Send className="w-4 h-4" />
-        </button>
-      </div>
-    ),
-  },
-];
-
 export default function AdvertiserInvoices() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [customerFilter, setCustomerFilter] = useState("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const handleDownloadPdf = (inv: any) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      notify.error("Không thể mở cửa sổ in. Vui lòng cho phép popup trình duyệt.");
+      return;
+    }
+
+    const isPaid = inv.status === "paid";
+    const statusText = isPaid ? "ĐÃ THANH TOÁN" : inv.status === "pending" ? "CHỜ THANH TOÁN" : "QUÁ HẠN / THẤT BẠI";
+    const statusColor = isPaid ? "#16A34A" : inv.status === "pending" ? "#D97706" : "#DC2626";
+    const totalVal = inv.totalLabel ?? inv.total ?? "";
+    const billboardText = inv.billboard ?? "Màn hình LED quảng cáo";
+    const customerText = inv.customer ?? "Khách hàng ADORA";
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Hóa đơn ${inv.id}</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+              color: #334155;
+              margin: 0;
+              padding: 40px;
+              line-height: 1.5;
+            }
+            .invoice-box {
+              max-width: 800px;
+              margin: auto;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              padding: 40px;
+              box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+              background: #fff;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #3b82f6;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: 800;
+              color: #1d4ed8;
+              letter-spacing: 1px;
+            }
+            .logo span {
+              color: #06b6d4;
+            }
+            .title {
+              text-align: right;
+            }
+            .title h1 {
+              margin: 0;
+              font-size: 24px;
+              color: #1e293b;
+            }
+            .title p {
+              margin: 5px 0 0 0;
+              font-family: monospace;
+              font-size: 14px;
+              color: #64748b;
+            }
+            .details-grid {
+              display: grid;
+              grid-template-cols: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 40px;
+            }
+            .detail-card {
+              background: #f8fafc;
+              border: 1px solid #f1f5f9;
+              border-radius: 8px;
+              padding: 20px;
+            }
+            .detail-card h3 {
+              margin: 0 0 10px 0;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: #64748b;
+            }
+            .detail-card p {
+              margin: 5px 0;
+              font-size: 14px;
+            }
+            .status-badge {
+              display: inline-block;
+              padding: 4px 12px;
+              border-radius: 9999px;
+              font-size: 11px;
+              font-weight: 700;
+              color: white;
+              background-color: ${statusColor};
+              margin-top: 5px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 40px;
+            }
+            th {
+              background: #f1f5f9;
+              color: #475569;
+              font-size: 12px;
+              text-transform: uppercase;
+              font-weight: 700;
+              padding: 12px;
+              text-align: left;
+              border-bottom: 2px solid #e2e8f0;
+            }
+            td {
+              padding: 16px 12px;
+              border-bottom: 1px solid #e2e8f0;
+              font-size: 14px;
+            }
+            .text-right {
+              text-align: right;
+            }
+            .total-section {
+              display: flex;
+              justify-content: flex-end;
+              margin-top: 20px;
+            }
+            .total-box {
+              width: 300px;
+              background: #f8fafc;
+              border-radius: 8px;
+              padding: 15px;
+            }
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+              font-size: 14px;
+            }
+            .total-row.grand-total {
+              border-top: 1px solid #e2e8f0;
+              padding-top: 8px;
+              margin-top: 8px;
+              font-size: 18px;
+              font-weight: 800;
+              color: #1d4ed8;
+            }
+            .footer {
+              margin-top: 50px;
+              text-align: center;
+              font-size: 12px;
+              color: #94a3b8;
+              border-top: 1px solid #f1f5f9;
+              padding-top: 20px;
+            }
+            @media print {
+              body {
+                padding: 0;
+              }
+              .invoice-box {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-box">
+            <div class="header">
+              <div class="logo">ADORA<span>.</span></div>
+              <div class="title">
+                <h1>HÓA ĐƠN</h1>
+                <p>Mã: ${inv.id}</p>
+              </div>
+            </div>
+            
+            <div class="details-grid">
+              <div class="detail-card">
+                <h3>Đơn vị cung cấp</h3>
+                <p><strong>ADORA LED Billboard Marketplace</strong></p>
+                <p>Email: support@adora.com</p>
+                <p>Website: adora-billboard.vn</p>
+              </div>
+              <div class="detail-card">
+                <h3>Thông tin hóa đơn</h3>
+                <p>Khách hàng: <strong>${customerText}</strong></p>
+                <p>Ngày tạo: ${inv.createdAt}</p>
+                <p>Hạn thanh toán: ${inv.dueAt}</p>
+                ${inv.transactionCode ? `<p>Mã giao dịch: <strong>${inv.transactionCode}</strong></p>` : ""}
+                <div>Trạng thái: <span class="status-badge">${statusText}</span></div>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Mô tả dịch vụ</th>
+                  <th>Vị trí (Bảng QC)</th>
+                  <th class="text-right">Tổng tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <strong>Thuê màn hình LED quảng cáo</strong><br/>
+                    <span style="font-size: 12px; color: #64748b;">Chiến dịch: ${inv.campaign}</span>
+                  </td>
+                  <td>${billboardText}</td>
+                  <td class="text-right font-semibold" style="color: #1e293b;">${totalVal}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="total-section">
+              <div class="total-box">
+                <div class="total-row">
+                  <span>Tạm tính:</span>
+                  <span>${totalVal}</span>
+                </div>
+                <div class="total-row">
+                  <span>VAT (10%):</span>
+                  <span>Đã bao gồm</span>
+                </div>
+                <div class="total-row grand-total">
+                  <span>Tổng cộng:</span>
+                  <span>${totalVal}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>Cảm ơn quý khách đã sử dụng dịch vụ của ADORA LED Billboard Rental Marketplace!</p>
+              <p>© 2026 ADORA. All rights reserved.</p>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const columns = [
+    {
+      key: "id",
+      label: "Mã Hóa Đơn",
+      render: (v: string, row: any) => (
+        <div>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-sm text-[#1A2332]"
+              style={{ fontWeight: 500 }}
+            >
+              {v}
+            </span>
+          </div>
+          <p className="text-xs text-[#6B7A8D] mt-0.5">{row.customer}</p>
+        </div>
+      ),
+    },
+    {
+      key: "campaign",
+      label: "Chiến Dịch",
+      render: (v: string) => (
+        <span className="text-sm text-[#1A2332]">{v}</span>
+      ),
+    },
+    {
+      key: "createdAt",
+      label: "Ngày Tạo",
+    },
+    {
+      key: "dueAt",
+      label: "Hạn Thanh Toán",
+    },
+    {
+      key: "total",
+      label: "Tổng Tiền",
+      render: (v: string) => (
+        <span className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>
+          {v}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      label: "Trạng Thái",
+      render: (_: any, row: any) => {
+        const map: Record<
+          string,
+          { variant: any; label: string }
+        > = {
+          paid: { variant: "active", label: "Đã thanh toán" },
+          pending: { variant: "pending", label: "Chưa thanh toán" },
+          overdue: { variant: "expired", label: "Quá hạn" },
+        };
+        const conf = map[row.status] || map.pending;
+        return <StatusBadge variant={conf.variant} label={conf.label} />;
+      },
+    },
+    {
+      key: "actions",
+      label: "Thao Tác",
+      render: (_: any, row: any) => (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSelectedId(row.id)}
+            title="Chi tiết"
+            className="w-8 h-8 rounded-lg hover:bg-[#F0F9FF] flex items-center justify-center text-[#6B7A8D] cursor-pointer"
+          >
+            <FileText className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleDownloadPdf(row)}
+            title="Tải PDF"
+            className="w-8 h-8 rounded-lg hover:bg-[#F0F9FF] flex items-center justify-center text-[#6B7A8D] cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => notify.success("Gửi hóa đơn thành công!", `Đã gửi hóa đơn ${row.id} qua email của ${row.customer}`)}
+            title="Gửi Email"
+            className="w-8 h-8 rounded-lg hover:bg-[#F0F9FF] flex items-center justify-center text-[#1D4ED8] cursor-pointer"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   const filteredInvoices = invoices.filter((inv) => {
     const matchesSearch =
@@ -157,7 +419,7 @@ export default function AdvertiserInvoices() {
     return matchesSearch && matchesStatus && matchesCustomer && matchesCampaign;
   });
 
-  const selectedInvoice = filteredInvoices[0] || invoices[0];
+  const selectedInvoice = filteredInvoices.find(inv => inv.id === selectedId) || filteredInvoices[0] || invoices[0];
 
   return (
     <div className="flex h-screen bg-[#F0F9FF]">

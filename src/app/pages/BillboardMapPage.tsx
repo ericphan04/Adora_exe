@@ -197,34 +197,45 @@ export default function BillboardMapPage() {
       <TopNav />
 
       {/* Main split-screen panel */}
-      <main className="flex-1 flex flex-col md:flex-row min-h-0 pt-16 overflow-hidden">
+      <main className="flex-1 flex flex-col md:flex-row min-h-0 pt-0 overflow-hidden">
         
         {/* Left Column: Filter & List */}
-        <section className="w-full md:w-[400px] lg:w-[450px] bg-card border-r border-border/40 flex flex-col h-full z-10 overflow-hidden flex-shrink-0">
+        <section className="w-full md:w-[400px] lg:w-[450px] bg-white border-r border-slate-200 flex flex-col h-full z-10 overflow-hidden flex-shrink-0">
           
           {/* Header & Filters Box */}
-          <div className="p-5 space-y-4 border-b border-border/30">
+          <div className="p-5 space-y-4 border-b border-slate-100 bg-slate-50/20">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-extrabold text-primary flex items-center gap-1.5">
-                <MapPin className="w-5.5 h-5.5 text-accent animate-pulse" />
+              <h1 className="text-xl font-black text-[#1D4ED8] flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => navigate("/advertiser/dashboard")}
+                  className="mr-1 p-1 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-colors cursor-pointer flex items-center justify-center border-none bg-transparent"
+                  title="Quay lại Dashboard"
+                >
+                  <ArrowLeft className="w-5 h-5 text-[#6B7A8D]" />
+                </button>
+                <MapPin className="w-5.5 h-5.5 text-[#1D4ED8] animate-pulse" />
                 Bản đồ LED
               </h1>
-              <span className="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold">
+              <span className="text-xs bg-[#1D4ED8]/10 text-[#1D4ED8] px-2.5 py-1 rounded-full font-bold">
                 {loading ? "Đang tải..." : `${filtered.length} Bảng QC`}
               </span>
             </div>
 
             {/* Smart Keyword Search */}
-            <div className="relative flex items-center bg-background border border-border/50 rounded-xl px-3 py-2 shadow-sm">
-              <Search className="w-4 h-4 text-muted-foreground shrink-0 mr-2" />
+            <div className="relative flex items-center bg-slate-50 border border-slate-200 focus-within:border-[#1D4ED8] focus-within:bg-white rounded-xl px-3 py-2.5 transition-all shadow-sm">
+              <Search className="w-4 h-4 text-[#6B7A8D] shrink-0 mr-2" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm theo tên, địa chỉ, vị trí..."
-                className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground/60"
+                className="flex-1 bg-transparent text-sm outline-none text-slate-800 placeholder:text-slate-400 font-medium"
               />
               {search && (
-                <button onClick={() => setSearch("")} className="text-muted-foreground hover:text-foreground">
+                <button 
+                  onClick={() => setSearch("")} 
+                  className="text-slate-400 hover:text-slate-600 transition-colors border-none bg-transparent cursor-pointer"
+                >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -233,30 +244,30 @@ export default function BillboardMapPage() {
             {/* Selector Filters Grid */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Thành Phố</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Thành Phố</label>
                 <select 
                   value={city} 
                   onChange={(e) => {
                     setCity(e.target.value);
                     setDistrict("Tất cả");
                   }}
-                  className="w-full bg-background border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-1 focus:ring-accent outline-none appearance-none cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8] rounded-xl px-3 py-2.5 text-xs font-semibold outline-none cursor-pointer text-slate-700 transition-colors"
                 >
                   {CITIES.map(c => (
-                    <option key={c} value={c} className="bg-card">{c}</option>
+                    <option key={c} value={c} className="bg-white text-slate-800">{c}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Quận / Huyện</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quận / Huyện</label>
                 <select 
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
-                  className="w-full bg-background border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-1 focus:ring-accent outline-none appearance-none cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8] rounded-xl px-3 py-2.5 text-xs font-semibold outline-none cursor-pointer text-slate-700 transition-colors"
                 >
-                  <option value="Tất cả" className="bg-card">Tất cả quận</option>
+                  <option value="Tất cả" className="bg-white text-slate-800">Tất cả quận</option>
                   {DISTRICTS.filter(d => d !== "Tất cả").map((d) => (
-                    <option key={d} value={d} className="bg-card">
+                    <option key={d} value={d} className="bg-white text-slate-800">
                       {d}
                     </option>
                   ))}
@@ -266,16 +277,16 @@ export default function BillboardMapPage() {
 
             <div className="grid grid-cols-1 gap-2">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Khoảng giá thuê tháng</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Khoảng giá thuê tháng</label>
                 <select 
                   value={priceRange}
                   onChange={(e) => setPriceRange(e.target.value)}
-                  className="w-full bg-background border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-1 focus:ring-accent outline-none appearance-none cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8] rounded-xl px-3 py-2.5 text-xs font-semibold outline-none cursor-pointer text-slate-700 transition-colors"
                 >
-                  <option value="Tất cả giá" className="bg-card">Tất cả giá</option>
-                  <option value="Dưới 50tr" className="bg-card">Dưới 50 triệu / tháng</option>
-                  <option value="50tr - 150tr" className="bg-card">50 triệu – 150 triệu</option>
-                  <option value="Trên 150tr" className="bg-card">Trên 150 triệu / tháng</option>
+                  <option value="Tất cả giá" className="bg-white text-slate-800">Tất cả giá</option>
+                  <option value="Dưới 50tr" className="bg-white text-slate-800">Dưới 50 triệu / tháng</option>
+                  <option value="50tr - 150tr" className="bg-white text-slate-800">50 triệu – 150 triệu</option>
+                  <option value="Trên 150tr" className="bg-white text-slate-800">Trên 150 triệu / tháng</option>
                 </select>
               </div>
             </div>
@@ -288,8 +299,8 @@ export default function BillboardMapPage() {
                   onClick={() => setChipFilter(chip)}
                   className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                     chipFilter === chip
-                      ? "bg-accent/15 border-accent text-accent"
-                      : "border-border text-muted-foreground hover:border-muted-foreground"
+                      ? "bg-[#1D4ED8]/10 border-[#1D4ED8] text-[#1D4ED8]"
+                      : "border-slate-200 text-slate-500 hover:border-slate-400"
                   }`}
                 >
                   {chip}
@@ -318,22 +329,22 @@ export default function BillboardMapPage() {
                   <div
                     key={b.id}
                     onClick={() => setSelectedId(b.id)}
-                    className={`group bg-surface/40 border rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                    className={`group bg-white border rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
                       isSelected 
-                        ? "border-accent shadow-[0_0_12px_rgba(6,182,212,0.15)] bg-primary/5" 
-                        : "border-border/60 hover:border-accent/40"
+                        ? "border-[#1D4ED8] shadow-[0_4px_20px_rgba(29,78,216,0.08)] bg-slate-50/40" 
+                        : "border-slate-100 hover:border-slate-300 hover:shadow-md hover:bg-slate-50/20"
                     }`}
                   >
-                    <div className="aspect-video relative overflow-hidden bg-background">
+                    <div className="aspect-video relative overflow-hidden bg-slate-50">
                       <img 
                         src={thumbnail} 
                         alt={b.title} 
-                        className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500" 
+                        className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" 
                       />
-                      <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-md border border-accent/20 flex items-center gap-1.5 shadow-sm">
-                        <span className={`w-2 h-2 rounded-full ${isAvailable ? "bg-accent animate-ping" : "bg-amber-500"}`}></span>
-                        <span className={`w-2 h-2 rounded-full absolute ${isAvailable ? "bg-accent" : "bg-amber-500"}`}></span>
-                        <span className={`text-[9px] font-extrabold uppercase tracking-wider ${isAvailable ? "text-accent" : "text-amber-500"}`}>
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-md border border-slate-200/50 flex items-center gap-1.5 shadow-sm">
+                        <span className={`w-2 h-2 rounded-full ${isAvailable ? "bg-emerald-500 animate-ping" : "bg-amber-500"}`}></span>
+                        <span className={`w-2 h-2 rounded-full absolute ${isAvailable ? "bg-emerald-500" : "bg-amber-500"}`}></span>
+                        <span className={`text-[9px] font-extrabold uppercase tracking-wider ${isAvailable ? "text-emerald-600" : "text-amber-500"}`}>
                           {isAvailable ? "Đang trống" : "Đã đặt chỗ"}
                         </span>
                       </div>
@@ -341,22 +352,22 @@ export default function BillboardMapPage() {
 
                     <div className="p-4 space-y-2">
                       <div className="flex justify-between items-start gap-2">
-                        <h3 className="font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                        <h3 className="font-bold text-sm md:text-base text-slate-800 group-hover:text-[#1D4ED8] transition-colors line-clamp-1">
                           {b.title}
                         </h3>
-                        <span className="font-bold text-xs text-primary shrink-0 text-right">
+                        <span className="font-extrabold text-sm text-[#1D4ED8] shrink-0 text-right">
                           {b.pricePerMonth.toLocaleString("vi-VN")}₫/th
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{b.address}, {b.district}</p>
+                      <p className="text-xs text-slate-400 truncate">{b.address}, {b.district}</p>
                       
-                      <div className="flex items-center gap-4 pt-3 border-t border-border/30 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      <div className="flex items-center gap-4 pt-3 border-t border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         <div className="flex items-center gap-1.5">
-                          <Maximize className="w-3.5 h-3.5 text-accent" />
+                          <Maximize className="w-3.5 h-3.5 text-[#1D4ED8]" />
                           <span>{b.width}m x {b.height}m</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <Eye className="w-3.5 h-3.5 text-accent" />
+                          <Eye className="w-3.5 h-3.5 text-[#1D4ED8]" />
                           <span>{b.dailyViews ? `${(b.dailyViews / 1000).toFixed(0)}K` : "50K"} views/ngày</span>
                         </div>
                       </div>
@@ -380,34 +391,34 @@ export default function BillboardMapPage() {
 
           {/* Floating Details Preview Card over Map (Conditional Visibility) */}
           {selected && (
-            <div className="absolute bottom-8 left-8 w-80 bg-card/95 backdrop-blur-xl rounded-2xl border border-accent/40 p-5 shadow-2xl z-20 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="absolute bottom-8 left-8 w-80 bg-white/95 backdrop-blur-xl rounded-2xl border border-[#1D4ED8]/20 p-5 shadow-2xl z-20 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h4 className="text-sm font-bold text-primary truncate max-w-[210px]" title={selected.title}>
+                  <h4 className="text-sm font-bold text-slate-800 truncate max-w-[210px]" title={selected.title}>
                     {selected.title}
                   </h4>
-                  <p className="text-xs text-muted-foreground truncate max-w-[210px] mt-0.5">
+                  <p className="text-xs text-slate-400 truncate max-w-[210px] mt-0.5">
                     {selected.address}, {selected.district}
                   </p>
                 </div>
                 <button 
                   onClick={() => setSelectedId(null)}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors p-1"
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors p-1 border-none bg-transparent"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
               
-              <div className="flex justify-between items-center pt-3.5 border-t border-border">
+              <div className="flex justify-between items-center pt-3.5 border-t border-slate-100">
                 <div className="text-left">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Giá thuê tháng</span>
-                  <span className="font-extrabold text-sm text-accent">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Giá thuê tháng</span>
+                  <span className="font-extrabold text-sm text-[#1D4ED8]">
                     {selected.pricePerMonth.toLocaleString("vi-VN")}₫
                   </span>
                 </div>
                 <button 
                   onClick={() => navigate(`/billboard/${selected.id}`)}
-                  className="px-4.5 py-2.5 rounded-xl bg-primary hover:bg-primary/95 text-white font-bold text-xs tracking-wider transition-all cursor-pointer active:scale-95 shadow-md shadow-primary/20"
+                  className="px-4.5 py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-[#1E40AF] text-white font-bold text-xs tracking-wider transition-all cursor-pointer active:scale-95 shadow-md shadow-primary/20"
                 >
                   CHI TIẾT
                 </button>

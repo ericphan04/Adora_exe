@@ -77,7 +77,13 @@ export function AdminRevenueView({
     return [...map.values()].sort((a, b) => b.gmv - a.gmv).slice(0, 5);
   }, [bookings]);
 
-  const chartData = period === "6m" ? commissionTrend : commissionTrend;
+  const chartData = useMemo(() => {
+    return period === "6m" ? commissionTrend.slice(-6) : commissionTrend.slice(-12);
+  }, [period, commissionTrend]);
+
+  const bookingChartData = useMemo(() => {
+    return period === "6m" ? dashboardData.bookingChart.slice(-6) : dashboardData.bookingChart.slice(-12);
+  }, [period, dashboardData.bookingChart]);
 
   return (
     <div className="p-8 space-y-6">
@@ -278,7 +284,7 @@ export function AdminRevenueView({
             Chiến dịch theo tháng
           </h3>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={dashboardData.bookingChart}>
+            <BarChart data={bookingChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EF" />
               <XAxis
                 dataKey="month"

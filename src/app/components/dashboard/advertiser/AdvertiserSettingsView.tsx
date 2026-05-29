@@ -169,10 +169,7 @@ export function AdvertiserSettingsView() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2 text-sm text-[#6B7A8D]">
-              <Globe2 className="w-4 h-4" />
-              Ngôn ngữ: Tiếng Việt
-            </div>
+
           </div>
         )}
 

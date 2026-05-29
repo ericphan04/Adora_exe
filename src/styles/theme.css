@@ -256,11 +256,16 @@
   body {
     @apply bg-background text-foreground;
     transition: background-color 0.25s ease, color 0.25s ease;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   html {
     font-size: var(--font-size);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  input, button, select, textarea {
+    font-family: inherit;
   }
 
   h1 {

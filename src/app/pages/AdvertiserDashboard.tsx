@@ -1,9 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { AlertTriangle, Search, Moon, Sun, Bell, Menu } from "lucide-react";
+import { 
+  AlertTriangle, Search, Moon, Sun, Bell, Menu,
+  BellOff, CheckCircle2, XCircle, Calendar, CreditCard 
+} from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useAuth } from "../context/AuthContext";
 import { useConfirm } from "../context/ConfirmContext";
+import { useNotifications } from "../context/NotificationContext";
 import { notify, apiErrorMessage } from "../utils/notify";
 import { mergeBookings } from "../utils/advertiser";
 import renterDashboardApi from "../../api/renterDashboardApi";
@@ -59,6 +63,8 @@ export default function AdvertiserDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const confirm = useConfirm();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const [data, setData] = useState<RenterDashboardDto | null>(null);
   const [bookings, setBookings] = useState<BookingDto[]>([]);
@@ -97,6 +103,63 @@ export default function AdvertiserDashboard() {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
+  };
+
+  const renderNotificationIcon = (type: string) => {
+    switch (type) {
+      case "PAYMENT_SUCCESS":
+        return (
+          <div className="w-8 h-8 rounded-full bg-green-50 text-green-500 border border-green-100 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "BOOKING_PAID":
+        return (
+          <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 border border-emerald-100 flex items-center justify-center shrink-0">
+            <CreditCard className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "BOOKING_ACCEPTED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 border border-blue-100 flex items-center justify-center shrink-0">
+            <Calendar className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "PAYMENT_FAILED":
+      case "BOOKING_REJECTED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0">
+            <XCircle className="w-4.5 h-4.5" />
+          </div>
+        );
+      default:
+        return (
+          <div className="w-8 h-8 rounded-full bg-slate-50 text-slate-500 border border-slate-100 flex items-center justify-center shrink-0">
+            <Bell className="w-4.5 h-4.5" />
+          </div>
+        );
+    }
+  };
+
+  const formatRelativeTime = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Vừa xong";
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -354,10 +417,100 @@ export default function AdvertiserDashboard() {
               </button>
               
               {/* Notifications */}
-              <button className="relative text-muted-foreground hover:text-accent transition-colors cursor-pointer active:scale-95">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full animate-ping"></span>
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative text-muted-foreground hover:text-accent transition-colors cursor-pointer active:scale-95 flex items-center justify-center border-none bg-transparent"
+                  title="Thông báo"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#EF4444]"></span>
+                    </span>
+                  )}
+                </button>
+
+                {/* Glassmorphic Dropdown Panel */}
+                {showNotifications && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)} />
+                    <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-border/50 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                      {/* Header */}
+                      <div className="p-4 border-b border-border/30 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-foreground">Thông báo</span>
+                          {unreadCount > 0 && (
+                            <span className="bg-[#EF4444]/10 text-[#EF4444] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                              {unreadCount} mới
+                            </span>
+                          )}
+                        </div>
+                        {unreadCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={markAllAsRead}
+                            className="text-xs text-[#1D4ED8] dark:text-accent hover:underline font-semibold transition-colors cursor-pointer border-none bg-transparent"
+                          >
+                            Đọc tất cả
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Scrollable list */}
+                      <div className="max-h-80 overflow-y-auto divide-y divide-border/20">
+                        {notifications.length === 0 ? (
+                          <div className="p-8 text-center flex flex-col items-center justify-center text-muted-foreground">
+                            <BellOff className="w-8 h-8 mb-2 text-slate-300 dark:text-slate-700" />
+                            <p className="text-xs font-semibold">Bạn không có thông báo nào</p>
+                            <p className="text-[10px] text-muted-foreground/80 mt-0.5">Mọi cập nhật trạng thái sẽ hiển thị ở đây</p>
+                          </div>
+                        ) : (
+                          notifications.map((notif) => (
+                            <div
+                              key={notif.id}
+                              onClick={() => {
+                                markAsRead(notif.id);
+                                setShowNotifications(false);
+                                if (notif.type === "BOOKING_PAID") {
+                                  navigate("/owner/revenue");
+                                } else {
+                                  navigate("/advertiser/bookings");
+                                }
+                              }}
+                              className={`p-4 flex gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative text-left ${
+                                !notif.isRead ? "bg-[#1D4ED8]/[0.02]" : ""
+                              }`}
+                            >
+                              {renderNotificationIcon(notif.type)}
+                              <div className="flex-grow min-w-0">
+                                <div className="flex justify-between items-start gap-2">
+                                  <span className={`text-xs block truncate ${
+                                    !notif.isRead ? "font-bold text-foreground" : "font-semibold text-muted-foreground"
+                                  }`}>
+                                    {notif.title}
+                                  </span>
+                                  {!notif.isRead && (
+                                    <span className="w-1.5 h-1.5 bg-[#1D4ED8] rounded-full shrink-0 mt-1.5" />
+                                  )}
+                                </div>
+                                <span className="text-[11px] text-muted-foreground mt-0.5 block line-clamp-2 leading-relaxed">
+                                  {notif.message}
+                                </span>
+                                <span className="text-[9px] text-muted-foreground/60 mt-1.5 block">
+                                  {formatRelativeTime(notif.createdAt)}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             
             <div className="h-8 w-px bg-border/30"></div>

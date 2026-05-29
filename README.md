@@ -35,6 +35,7 @@ ADORA là nền tảng thương mại điện tử kết nối người thuê qu
 - **Styling**: Tailwind CSS v4.
 - **Biểu đồ & Icons**: Recharts & Lucide React.
 - **API Client**: Axios (giao tiếp với Backend qua cổng mặc định `8085`).
+- **Bản đồ (Map)**: Sử dụng **Vietmap GL JS** (tối ưu hóa vị trí Việt Nam), tự động tích hợp cơ chế dự phòng (fallback) sang **OpenFreeMap** & **OpenStreetMap** khi thiếu API Key để đảm bảo chạy không lỗi.
 
 ### Backend (Xử lý & Cơ sở dữ liệu)
 - **Framework**: Java 17, Spring Boot 3.3.0.
@@ -90,7 +91,32 @@ Từ thư mục gốc của dự án, chạy lệnh:
 npm install
 ```
 
-#### Bước 2: Chạy Frontend ở chế độ Developer
+#### Bước 2: Cấu hình biến môi trường (.env)
+Để bản đồ và các tính năng định vị hoạt động chính xác và không bị lỗi, bạn cần cấu hình các biến môi trường cho Frontend:
+
+1. Sao chép tệp cấu hình mẫu `.env.example` thành `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Mở tệp `.env` vừa tạo và cập nhật các khóa API của Vietmap:
+   - **`VITE_VIETMAP_API_KEY`**: Khóa API dùng cho các dịch vụ tìm kiếm địa chỉ tự động (Autocomplete), xem chi tiết địa điểm (Place Details) và tìm địa chỉ từ tọa độ (Reverse Geocoding). Bạn có thể lấy khóa này từ cổng phát triển của [Vietmap](https://maps.vietmap.vn/).
+   - **`VITE_VIETMAP_TILEMAP_API_KEY`**: Khóa API dùng để hiển thị lớp bản đồ trực quan (Tilemap styles).
+
+> [!NOTE]
+> **Cơ chế hoạt động dự phòng (Fallback):**
+> Để đảm bảo dự án chạy ổn định mà không yêu cầu người dùng cấu hình khóa API ngay lập tức, hệ thống có cơ chế tự động kiểm tra tính hợp lệ của Key:
+> - Nếu `VITE_VIETMAP_TILEMAP_API_KEY` bị thiếu hoặc ở dạng mặc định (`your_vietmap...`), bản đồ sẽ hiển thị thông qua nguồn mở **OpenFreeMap** (Bright style) mà không báo lỗi.
+> - Nếu `VITE_VIETMAP_API_KEY` bị thiếu hoặc ở dạng mặc định, việc tìm kiếm và chọn vị trí trên bản đồ sẽ tự động sử dụng **OpenStreetMap Nominatim** thay thế.
+
+> [!IMPORTANT]
+> **Cấu hình Aliases cho Vietmap trong Vite:**
+> Thư viện `@vietmap/vietmap-gl-js` không xuất ra một entry point chuẩn cho môi trường đóng gói (Vite). Do đó, tệp cấu hình [vite.config.ts](file:///d:/Ericcc/DuAN/Adora_exe/vite.config.ts) đã thiết lập sẵn một alias để chuyển tiếp import trực tiếp vào phân phối:
+> ```typescript
+> '@vietmap/vietmap-gl-js': path.resolve(__dirname, './node_modules/@vietmap/vietmap-gl-js/dist/vietmap-gl.js')
+> ```
+> Hãy đảm bảo cấu hình này không bị thay đổi hoặc xóa bỏ để tránh lỗi biên dịch khi khởi chạy frontend.
+
+#### Bước 3: Chạy Frontend ở chế độ Developer
 Chạy lệnh khởi tạo Vite server:
 
 ```bash

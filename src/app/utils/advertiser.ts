@@ -71,7 +71,7 @@ export function bookingsToCampaigns(bookings: BookingDto[]) {
         : "Đà Nẵng",
       startDate: formatAdvertiserDate(b.startDate),
       endDate: formatAdvertiserDate(b.endDate),
-      budget: formatVnd(b.finalAmount),
+      budget: formatVnd(b.finalAmount ?? b.totalPrice ?? 0),
       status,
       rawStatus: b.status,
     };
@@ -81,22 +81,25 @@ export function bookingsToCampaigns(bookings: BookingDto[]) {
 export function bookingsToInvoices(bookings: BookingDto[]) {
   return bookings
     .filter((b) => ["PAID", "COMPLETED", "ACCEPTED"].includes(b.status))
-    .map((b) => ({
-      id: `INV-${b.id}`,
-      bookingId: b.id,
-      campaign: b.note || b.billboard?.title || `Booking #${b.id}`,
-      billboard: b.billboard?.title ?? "—",
-      createdAt: formatAdvertiserDate(b.createdAt ?? b.startDate),
-      dueAt: formatAdvertiserDate(b.endDate),
-      total: b.finalAmount,
-      totalLabel: b.finalAmount.toLocaleString("vi-VN") + "₫",
-      status:
-        b.status === "PAID" || b.status === "COMPLETED"
-          ? ("paid" as const)
-          : b.status === "ACCEPTED"
-            ? ("pending" as const)
-            : ("pending" as const),
-    }));
+    .map((b) => {
+      const amountVal = b.finalAmount ?? b.totalPrice ?? 0;
+      return {
+        id: `INV-${b.id}`,
+        bookingId: b.id,
+        campaign: b.note || b.billboard?.title || `Booking #${b.id}`,
+        billboard: b.billboard?.title ?? "—",
+        createdAt: formatAdvertiserDate(b.createdAt ?? b.startDate),
+        dueAt: formatAdvertiserDate(b.endDate),
+        total: amountVal,
+        totalLabel: amountVal.toLocaleString("vi-VN") + "₫",
+        status:
+          b.status === "PAID" || b.status === "COMPLETED"
+            ? ("paid" as const)
+            : b.status === "ACCEPTED"
+              ? ("pending" as const)
+              : ("pending" as const),
+      };
+    });
 }
 
 export function billboardAvailability(

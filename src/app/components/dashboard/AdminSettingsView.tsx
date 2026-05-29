@@ -279,15 +279,7 @@ export function AdminSettingsView() {
           <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 space-y-4">
             <h3 className="text-[#1D4ED8] font-bold">Hệ thống & dữ liệu</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <label className="text-xs text-[#6B7A8D] flex items-center gap-1">
-                  <Globe2 className="w-3.5 h-3.5" /> Ngôn ngữ mặc định
-                </label>
-                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF]">
-                  <option>Tiếng Việt</option>
-                  <option>English</option>
-                </select>
-              </div>
+
               <div>
                 <label className="text-xs text-[#6B7A8D]">Múi giờ</label>
                 <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF]">

@@ -410,16 +410,7 @@ export default function AdvertiserSettings() {
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-2">
-                  <div className="space-y-1.5">
-                    <label className={subtleText}>Ngôn ngữ</label>
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-transparent">
-                      <Globe2 className="w-4 h-4 text-[#9CA3AF]" />
-                      <select className="flex-1 bg-transparent text-sm focus:outline-none">
-                        <option>Tiếng Việt</option>
-                        <option>English</option>
-                      </select>
-                    </div>
-                  </div>
+
                   <div className="space-y-1.5">
                     <label className={subtleText}>Múi giờ</label>
                     <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-transparent">
