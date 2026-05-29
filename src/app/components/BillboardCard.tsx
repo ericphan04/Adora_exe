@@ -1,5 +1,5 @@
 import React from "react";
-import { MapPin, Eye } from "lucide-react";
+import { MapPin, Eye, Heart } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
@@ -11,7 +11,9 @@ interface BillboardCardProps {
   trafficIndex: string;
   price: string;
   availability: "available" | "booked" | "unavailable";
+  saved?: boolean;
   onViewDetails?: () => void;
+  onToggleSave?: () => void;
 }
 
 const trafficLabels: Record<string, string> = { High: "Cao", Medium: "TB", Low: "Thấp" };
@@ -46,13 +48,26 @@ export function BillboardCard({ image, name, location, size, trafficIndex, price
             <span className="text-lg text-primary font-extrabold">{price}</span>
             <span className="text-xs text-muted-foreground">/tháng</span>
           </div>
-          <button
-            onClick={onViewDetails}
-            className="flex items-center gap-1.5 text-sm text-primary hover:text-accent font-semibold transition-colors cursor-pointer active:scale-95"
-          >
-            <Eye className="w-4 h-4" />
-            Xem Chi Tiết
-          </button>
+          <div className="flex items-center gap-3">
+            {onToggleSave && (
+              <button
+                type="button"
+                onClick={onToggleSave}
+                className={`w-10 h-10 rounded-full transition-colors duration-200 border border-[#E3E8EF] flex items-center justify-center ${saved ? "bg-red-500 text-white border-red-500" : "bg-white text-[#0B3C5D] hover:bg-[#F8FAFC]"}`}
+                title={saved ? "Bỏ lưu bảng quảng cáo" : "Lưu bảng quảng cáo"}
+              >
+                <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onViewDetails}
+              className="flex items-center gap-1.5 text-sm text-primary hover:text-accent font-semibold transition-colors cursor-pointer active:scale-95"
+            >
+              <Eye className="w-4 h-4" />
+              Xem Chi Tiết
+            </button>
+          </div>
         </div>
       </div>
     </div>

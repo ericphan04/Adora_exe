@@ -7,6 +7,7 @@ import { useConfirm } from "../context/ConfirmContext";
 import { notify, apiErrorMessage } from "../utils/notify";
 import { mergeBookings } from "../utils/advertiser";
 import renterDashboardApi from "../../api/renterDashboardApi";
+import { mergeSavedBillboards, removeSavedBillboard } from "../utils/savedBillboards";
 import bookingApi from "../../api/bookingApi";
 import paymentApi from "../../api/paymentApi";
 import reviewApi from "../../api/reviewApi";
@@ -124,7 +125,7 @@ export default function AdvertiserDashboard() {
       if (!dashRes.success || !bookRes.success) {
         throw new Error("API failed");
       }
-      setData(dashRes.data!);
+      setData({ ...dashRes.data!, savedBillboards: mergeSavedBillboards(dashRes.data?.savedBillboards ?? []) });
       const merged = mergeBookings(
         bookRes.data ?? [],
         dashRes.data?.recentBookings ?? [],
@@ -134,7 +135,7 @@ export default function AdvertiserDashboard() {
       setPayments(payRes.success && payRes.data ? payRes.data : []);
       setIsUsingFallback(false);
     } catch {
-      setData(mockRenterDashboard);
+      setData({ ...mockRenterDashboard, savedBillboards: mergeSavedBillboards(mockRenterDashboard.savedBillboards) });
       setBookings(
         mergeBookings(
           mockRenterDashboard.recentBookings,
@@ -258,6 +259,7 @@ export default function AdvertiserDashboard() {
   };
 
   const handleRemoveSaved = (id: number) => {
+    removeSavedBillboard(id);
     setData((prev) => {
       if (!prev) return prev;
       return {

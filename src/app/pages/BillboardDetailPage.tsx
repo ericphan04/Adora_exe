@@ -11,6 +11,7 @@ import { BookingCalendar } from "../components/BookingCalendar";
 import billboardApi from "../../api/billboardApi";
 import bookingApi from "../../api/bookingApi";
 import { BillboardDto } from "../../types/billboard";
+import { addSavedBillboard, removeSavedBillboard, isBillboardSaved } from "../utils/savedBillboards";
 import { ReviewDto } from "../../types/review";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -59,6 +60,7 @@ export default function BillboardDetailPage() {
   const [loading, setLoading] = useState(true);
   
   const [activeImage, setActiveImage] = useState(0);
+  const [saved, setSaved] = useState(() => isBillboardSaved(billboardId));
 
   const today = getTodayParts();
   const [calendarYear, setCalendarYear] = useState(today.year);
@@ -77,6 +79,19 @@ export default function BillboardDetailPage() {
     setSelectedEndDay(null);
     setBookingError(null);
   }, []);
+
+  const handleToggleSaved = useCallback(() => {
+    if (!billboard) return;
+    if (saved) {
+      removeSavedBillboard(billboard.id);
+      setSaved(false);
+      notify.success("Đã bỏ lưu bảng quảng cáo");
+      return;
+    }
+    addSavedBillboard(billboard);
+    setSaved(true);
+    notify.success("Đã lưu bảng quảng cáo");
+  }, [billboard, saved]);
 
   const bookedDaysSet = useMemo(
     () => getBookedDaysForMonth(billboard?.availabilities, calendarYear, calendarMonth),
@@ -322,6 +337,16 @@ export default function BillboardDetailPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-80" />
           
+          <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+            <button
+              onClick={handleToggleSaved}
+              className={`flex items-center justify-center w-12 h-12 rounded-full transition-colors duration-200 shadow-lg ${saved ? "bg-red-500 text-white" : "bg-white/90 text-[#0B3C5D] hover:bg-white"}`}
+              title={saved ? "Bỏ lưu bảng quảng cáo" : "Lưu bảng quảng cáo"}
+            >
+              <Heart className={`w-5 h-5 ${saved ? "fill-current" : ""}`} />
+            </button>
+          </div>
+
           <div className="absolute bottom-12 left-6 right-6 md:left-10 md:right-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 z-10 max-w-7xl mx-auto">
             <div className="max-w-2xl text-white">
               <div className="flex flex-wrap gap-2 mb-4">
