@@ -59,7 +59,8 @@ export default function BillboardDetailPage() {
   const [reviews, setReviews] = useState<ReviewDto[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [activeImage, setActiveImage] = useState(0);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [saved, setSaved] = useState(() => isBillboardSaved(billboardId));
 
   const today = getTodayParts();
@@ -294,7 +295,10 @@ export default function BillboardDetailPage() {
     );
   }
 
-  const imagesList = billboard.images?.map(img => img.imageUrl) || fallbackImages;
+  const imagesList = useMemo(() => {
+    if (!billboard.images || billboard.images.length === 0) return [];
+    return billboard.images.map((img: any) => typeof img === "string" ? img : img.imageUrl);
+  }, [billboard.images]);
 
   const selectedDaysCount =
     selectedStartDay != null && selectedEndDay != null
@@ -309,6 +313,27 @@ export default function BillboardDetailPage() {
           billboard.locationSurcharge || 0,
         )
       : null;
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (imagesList.length === 0) return;
+    setSelectedImageIndex((prev) => (prev - 1 + imagesList.length) % imagesList.length);
+  };
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (imagesList.length === 0) return;
+    setSelectedImageIndex((prev) => (prev + 1) % imagesList.length);
+  };
+
+  const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    if (container.clientWidth === 0) return;
+    const index = Math.round(container.scrollLeft / container.clientWidth);
+    if (index !== selectedImageIndex && index >= 0 && index < imagesList.length) {
+      setSelectedImageIndex(index);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
@@ -327,64 +352,200 @@ export default function BillboardDetailPage() {
         </div>
       </div>
 
-      <main className="flex-grow">
-        {/* Gallery Slider Section */}
-        <section className="relative w-full h-[500px] md:h-[614px] overflow-hidden group">
-          <img 
-            alt="Main LED View" 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102" 
-            src={imagesList[activeImage] || fallbackImages[0]} 
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-80" />
-          
-          <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
-            <button
-              onClick={handleToggleSaved}
-              className={`flex items-center justify-center w-12 h-12 rounded-full transition-colors duration-200 shadow-lg ${saved ? "bg-red-500 text-white" : "bg-white/90 text-[#0B3C5D] hover:bg-white"}`}
-              title={saved ? "Bỏ lưu bảng quảng cáo" : "Lưu bảng quảng cáo"}
-            >
-              <Heart className={`w-5 h-5 ${saved ? "fill-current" : ""}`} />
-            </button>
-          </div>
+      <main className="flex-grow max-w-7xl mx-auto px-6 py-8 space-y-10">
+        
+        {/* ── IMAGE GALLERY SECTION ───────────────────────────────────────────── */}
+        <section className="w-full">
+          {imagesList.length === 0 ? (
+            /* Empty/No Images Placeholder state */
+            <div className="w-full h-[300px] md:h-[450px] bg-slate-50 border border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-3 text-slate-400">
+              <Monitor className="w-12 h-12 text-slate-300 animate-pulse" />
+              <span className="font-medium text-sm">Không có hình ảnh màn hình khả dụng</span>
+            </div>
+          ) : (
+            <>
+              {/* 1. Mobile view: horizontal swipeable image carousel */}
+              <div 
+                onScroll={handleMobileScroll}
+                className="md:hidden relative w-full h-[260px] overflow-hidden rounded-2xl shadow-sm border border-border/30"
+              >
+                <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none h-full w-full">
+                  {imagesList.map((img, idx) => (
+                    <div key={idx} className="w-full h-full shrink-0 snap-center relative">
+                      <img
+                        src={img}
+                        alt={`Billboard View ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {/* Mobile indicators & buttons */}
+                <div className="absolute bottom-4 right-4 bg-black/60 text-white text-[10px] px-2.5 py-1 rounded-full font-medium z-10">
+                  {selectedImageIndex + 1} / {imagesList.length}
+                </div>
+                <div className="absolute top-4 right-4 z-10">
+                  <button
+                    onClick={handleToggleSaved}
+                    className={`flex items-center justify-center w-9 h-9 rounded-full shadow-md transition-colors ${saved ? "bg-red-500 text-white" : "bg-white/90 text-primary hover:bg-white"}`}
+                  >
+                    <Heart className={`w-4.5 h-4.5 ${saved ? "fill-current" : ""}`} />
+                  </button>
+                </div>
+              </div>
 
-          <div className="absolute bottom-12 left-6 right-6 md:left-10 md:right-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 z-10 max-w-7xl mx-auto">
-            <div className="max-w-2xl text-white">
-              <div className="flex flex-wrap gap-2 mb-4">
+              {/* 2. Tablet view: main image on top, thumbnails below */}
+              <div className="hidden md:block lg:hidden space-y-3">
+                <div className="relative w-full h-[380px] rounded-2xl overflow-hidden shadow-sm border border-border/30 group">
+                  <img
+                    src={imagesList[selectedImageIndex] || fallbackImages[0]}
+                    alt="Main Billboard View"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                  
+                  {/* Arrows */}
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 text-primary hover:bg-white shadow-md transition-all opacity-0 group-hover:opacity-100 active:scale-95 z-10"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 text-primary hover:bg-white shadow-md transition-all opacity-0 group-hover:opacity-100 active:scale-95 z-10"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                  <div className="absolute bottom-4 right-4 bg-black/60 text-white text-[11px] px-2.5 py-1 rounded-full font-medium z-10">
+                    {selectedImageIndex + 1} / {imagesList.length}
+                  </div>
+
+                  <div className="absolute top-4 right-4 z-10">
+                    <button
+                      onClick={handleToggleSaved}
+                      className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md transition-colors ${saved ? "bg-red-500 text-white" : "bg-white/90 text-primary hover:bg-white"}`}
+                    >
+                      <Heart className={`w-5 h-5 ${saved ? "fill-current" : ""}`} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Thumbnails row below */}
+                <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin">
+                  {imagesList.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={`relative w-20 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${selectedImageIndex === idx ? "border-accent opacity-100 scale-95" : "border-transparent opacity-70 hover:opacity-90"}`}
+                    >
+                      <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setIsLightboxOpen(true)}
+                    className="w-20 h-14 rounded-lg bg-slate-100 hover:bg-slate-200 border border-dashed border-slate-300 flex flex-col items-center justify-center gap-0.5 text-slate-500 text-[10px] font-bold shrink-0 transition-colors"
+                  >
+                    <Grid className="w-4 h-4 text-slate-400" />
+                    Tất cả ảnh
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Desktop view: large image left + thumbnail grid right */}
+              <div className="hidden lg:grid grid-cols-12 gap-3 h-[460px] lg:h-[500px]">
+                {/* Large Main Image */}
+                <div className="col-span-8 relative rounded-2xl overflow-hidden shadow-sm border border-border/30 group">
+                  <img
+                    src={imagesList[selectedImageIndex] || fallbackImages[0]}
+                    alt="Main Billboard View"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-101"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                  
+                  {/* Left/Right navigation */}
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/95 text-primary hover:bg-white shadow-lg transition-all opacity-0 group-hover:opacity-100 active:scale-95 z-10"
+                  >
+                    <ChevronLeft className="w-5.5 h-5.5" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/95 text-primary hover:bg-white shadow-lg transition-all opacity-0 group-hover:opacity-100 active:scale-95 z-10"
+                  >
+                    <ChevronRight className="w-5.5 h-5.5" />
+                  </button>
+
+                  <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full font-medium z-10">
+                    {selectedImageIndex + 1} / {imagesList.length}
+                  </div>
+
+                  <div className="absolute top-4 right-4 z-10">
+                    <button
+                      onClick={handleToggleSaved}
+                      className={`flex items-center justify-center w-11 h-11 rounded-full shadow-lg transition-all ${saved ? "bg-red-500 text-white" : "bg-white/90 text-primary hover:bg-white"}`}
+                    >
+                      <Heart className={`w-5 h-5 ${saved ? "fill-current" : ""}`} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Smaller Thumbnails Grid */}
+                <div className="col-span-4 grid grid-cols-2 gap-3 h-full relative">
+                  {imagesList.slice(0, 4).map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={`relative w-full h-full rounded-xl overflow-hidden border-2 transition-all group ${selectedImageIndex === idx ? "border-accent opacity-100" : "border-transparent opacity-85 hover:opacity-100"}`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Billboard View ${idx + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-103"
+                      />
+                    </button>
+                  ))}
+
+                  {/* "View all photos" button overlay */}
+                  <button
+                    onClick={() => setIsLightboxOpen(true)}
+                    className="absolute bottom-3 right-3 bg-white/95 hover:bg-white text-slate-800 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-200 shadow-md flex items-center gap-1.5 transition-all active:scale-95 z-10"
+                  >
+                    <Grid className="w-4 h-4 text-slate-500" />
+                    Xem tất cả ảnh
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* ── MAIN CONTENT LAYOUT ────────────────────────────────────────────── */}
+        <div className="grid grid-cols-12 gap-8 items-start">
+          
+          {/* ── LEFT COLUMN: DETAILS & SPECS ─────────────────────────────────── */}
+          <div className="col-span-12 lg:col-span-8 space-y-8">
+            
+            {/* Billboard Title & Address */}
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
                 <span className="px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-semibold border border-accent/30 flex items-center gap-1.5 backdrop-blur-md shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span> TRỰC TUYẾN
+                  <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse"></span> TRỰC TUYẾN
                 </span>
-                <span className="px-3 py-1 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-white/10 backdrop-blur-md">
+                <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold">
                   {billboard.district}, {billboard.city}
                 </span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight drop-shadow-md">{billboard.title}</h1>
-              <p className="text-white/80 text-sm md:text-base max-w-xl font-medium leading-relaxed drop-shadow-sm">{billboard.address}</p>
+              <h1 className="text-2xl md:text-4xl font-extrabold text-slate-800 tracking-tight">{billboard.title}</h1>
+              <p className="text-slate-500 text-sm md:text-base leading-relaxed flex items-start gap-1.5">
+                <MapPin className="w-4.5 h-4.5 text-slate-400 shrink-0 mt-0.5" />
+                {billboard.address}
+              </p>
             </div>
-            
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setActiveImage((activeImage - 1 + imagesList.length) % imagesList.length)}
-                className="p-3 rounded-full glass-card hover:bg-white/10 text-white transition-colors cursor-pointer active:scale-90"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={() => setActiveImage((activeImage + 1) % imagesList.length)}
-                className="p-3 rounded-full glass-card hover:bg-white/10 text-white transition-colors cursor-pointer active:scale-90"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </section>
 
-        {/* Layout Grid */}
-        <div className="max-w-7xl mx-auto px-6 mt-12 grid grid-cols-12 gap-8 pb-24">
-          
-          {/* Left Column: Details */}
-          <div className="col-span-12 lg:col-span-8 space-y-8">
-            
-            {/* Spec Cards Bento Grid */}
+            {/* Specification cards (Bento Grid) */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
                 <Maximize className="text-accent w-6 h-6" />
@@ -412,7 +573,7 @@ export default function BillboardDetailPage() {
               </div>
             </div>
 
-            {/* Description & Metrics Detail */}
+            {/* Location Detail & Description Card */}
             <div className="glass-card p-8 rounded-2xl space-y-6 shadow-md">
               <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
                 <Info className="text-primary w-5.5 h-5.5" /> Chi tiết vị trí
@@ -445,7 +606,7 @@ export default function BillboardDetailPage() {
               </div>
             </div>
 
-            {/* Google Interactive Map */}
+            {/* Google Interactive Map section */}
             <div className="glass-card h-80 rounded-2xl overflow-hidden relative border border-border/30 shadow-md">
               <BillboardGoogleMap
                 billboards={[billboard]}
@@ -459,6 +620,31 @@ export default function BillboardDetailPage() {
               </div>
             </div>
 
+            {/* Media Requirements Section */}
+            <div className="glass-card p-8 rounded-2xl space-y-5 shadow-md">
+              <h3 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                <Monitor className="text-primary w-5.5 h-5.5" /> Yêu cầu file quảng cáo
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="border border-border/50 rounded-xl p-4 bg-surface/20">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1">Định dạng file</span>
+                  <p className="text-sm font-bold text-foreground">MP4 (H.264), JPG, PNG</p>
+                </div>
+                <div className="border border-border/50 rounded-xl p-4 bg-surface/20">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1">Tỷ lệ khung hình</span>
+                  <p className="text-sm font-bold text-foreground">{billboard.width}:{billboard.height} (Tỉ lệ chuẩn)</p>
+                </div>
+                <div className="border border-border/50 rounded-xl p-4 bg-surface/20">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1">Thời lượng phát</span>
+                  <p className="text-sm font-bold text-foreground">15s / lượt (60 - 120 lượt/ngày)</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3.5 text-xs text-amber-800 dark:text-amber-300">
+                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>Thiết kế quảng cáo của bạn phải được gửi phê duyệt tối thiểu 3 ngày làm việc trước thời điểm bắt đầu chiến dịch phát sóng.</span>
+              </div>
+            </div>
+
             {/* Reviews Section */}
             <div className="glass-card p-8 rounded-2xl space-y-6 shadow-md">
               <div className="flex items-center justify-between border-b border-border/30 pb-4">
@@ -467,8 +653,8 @@ export default function BillboardDetailPage() {
                 </h3>
                 {reviews.length > 0 && (
                   <div className="flex items-center gap-1 text-sm font-semibold">
-                    <span className="text-accent">4.8</span>
-                    <span className="text-muted-foreground">/ 5 ★</span>
+                     <span className="text-accent">4.8</span>
+                     <span className="text-muted-foreground">/ 5 ★</span>
                   </div>
                 )}
               </div>
@@ -500,7 +686,7 @@ export default function BillboardDetailPage() {
 
           </div>
 
-          {/* Right Column: Booking & Calculator Sidebar Widget */}
+          {/* ── RIGHT COLUMN: STICKY BOOKING CARD ────────────────────────────── */}
           <div className="col-span-12 lg:col-span-4">
             <div className="sticky top-24 glass-card p-6 rounded-2xl border border-accent/20 shadow-xl space-y-6">
               
@@ -653,6 +839,59 @@ export default function BillboardDetailPage() {
           </div>
 
         </div>
+
+        {/* ── LIGHTBOX / MODAL DIALOG ────────────────────────────────────────── */}
+        {isLightboxOpen && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+            <div className="absolute top-4 right-4 z-50">
+              <button
+                onClick={() => setIsLightboxOpen(false)}
+                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="max-w-5xl w-full flex flex-col items-center gap-4">
+              {/* Large Image inside lightbox */}
+              <div className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center">
+                <img
+                  src={imagesList[selectedImageIndex]}
+                  alt={`Large Billboard View ${selectedImageIndex + 1}`}
+                  className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                />
+                
+                {/* Arrow navigation inside lightbox */}
+                <button
+                  onClick={prevImage}
+                  className="absolute left-2 md:left-4 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-2 md:right-4 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+              
+              {/* Thumbnails row inside lightbox */}
+              <div className="flex gap-2 overflow-x-auto py-2 max-w-full scrollbar-thin">
+                {imagesList.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`w-16 h-12 md:w-20 md:h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${selectedImageIndex === idx ? "border-accent opacity-100" : "border-transparent opacity-60 hover:opacity-85"}`}
+                  >
+                    <img src={img} alt={`Lightbox thumb ${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
 
       <Footer />
