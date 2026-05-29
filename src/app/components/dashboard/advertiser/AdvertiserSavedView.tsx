@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Search, Heart, MapPin, Monitor, Trash2, Calendar } from "lucide-react";
 import { BillboardDto } from "../../../../types/billboard";
@@ -19,7 +19,7 @@ export function AdvertiserSavedView({
   const [searchTerm, setSearchTerm] = useState("");
   const [localSaved, setLocalSaved] = useState<BillboardDto[]>(savedBillboards);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalSaved(savedBillboards);
   }, [savedBillboards]);
 
@@ -46,7 +46,7 @@ export function AdvertiserSavedView({
   return (
     <div className="p-8 space-y-6">
       <p className="text-xs text-[#6B7A8D] bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg px-4 py-2">
-        Danh sách từ <strong>GET /api/renter/dashboard</strong> (savedBillboards). Backend chưa có API lưu/bỏ lưu — thao tác bỏ lưu chỉ cập nhật trên phiên hiện tại.
+        Danh sách dữ liệu đã lưu được đồng bộ cục bộ trong trình duyệt. Việc lưu/bỏ lưu sẽ được giữ lại qua các lần truy cập nếu dùng cùng trình duyệt.
       </p>
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1D4ED8] to-[#06B6D4] p-6 text-white">
         <p className="text-sm text-blue-100">Danh sách yêu thích</p>

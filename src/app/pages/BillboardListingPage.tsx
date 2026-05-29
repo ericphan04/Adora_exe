@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { SlidersHorizontal, ChevronDown, Grid3X3, List, Map } from "lucide-react";
 import { TopNav } from "../components/TopNav";
@@ -7,6 +7,8 @@ import { BillboardCard } from "../components/BillboardCard";
 import billboardApi from "../../api/billboardApi";
 import { BillboardDto } from "../../types/billboard";
 import { getTodayParts, toIsoDate } from "../utils/calendar";
+import { getSavedBillboards, addSavedBillboard, removeSavedBillboard } from "../utils/savedBillboards";
+import { notify } from "../utils/notify";
 import { MAP_BILLBOARD_MOCKS } from "../utils/billboardMap";
 
 const allBillboardsMock = [
@@ -75,6 +77,7 @@ export default function BillboardListingPage() {
 
   // API Data States
   const [billboards, setBillboards] = useState<BillboardDto[]>([]);
+  const [savedBillboardIds, setSavedBillboardIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const fetchBillboards = async () => {
@@ -225,6 +228,27 @@ export default function BillboardListingPage() {
   useEffect(() => {
     fetchBillboards();
   }, []);
+
+  useEffect(() => {
+    const ids = new Set(getSavedBillboards().map((item) => item.id));
+    setSavedBillboardIds(ids);
+  }, []);
+
+  const handleToggleSaved = useCallback((billboard: BillboardDto) => {
+    if (savedBillboardIds.has(billboard.id)) {
+      removeSavedBillboard(billboard.id);
+      setSavedBillboardIds((prev) => {
+        const next = new Set(prev);
+        next.delete(billboard.id);
+        return next;
+      });
+      notify.success("Đã bỏ lưu bảng quảng cáo");
+    } else {
+      addSavedBillboard(billboard);
+      setSavedBillboardIds((prev) => new Set(prev).add(billboard.id));
+      notify.success("Đã lưu bảng quảng cáo");
+    }
+  }, [savedBillboardIds]);
 
   const handleClearFilters = () => {
     setSelectedLocation("Tất Cả Khu Vực");
@@ -429,7 +453,9 @@ export default function BillboardListingPage() {
                 <BillboardCard
                   key={b.id}
                   {...mapBillboardDtoToCardProps(b)}
+                  saved={savedBillboardIds.has(b.id)}
                   onViewDetails={() => navigate(`/billboard/${b.id}`)}
+                  onToggleSave={() => handleToggleSaved(b)}
                 />
               ))}
             </div>
