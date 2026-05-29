@@ -99,6 +99,11 @@ export default function BillboardDetailPage() {
     [billboard?.availabilities, calendarYear, calendarMonth],
   );
 
+  const imagesList = useMemo(() => {
+    if (!billboard || !billboard.images || billboard.images.length === 0) return [];
+    return billboard.images.map((img: any) => typeof img === "string" ? img : img.imageUrl);
+  }, [billboard]);
+
   useEffect(() => {
     let active = true;
     const fetchDetail = async () => {
@@ -295,10 +300,7 @@ export default function BillboardDetailPage() {
     );
   }
 
-  const imagesList = useMemo(() => {
-    if (!billboard.images || billboard.images.length === 0) return [];
-    return billboard.images.map((img: any) => typeof img === "string" ? img : img.imageUrl);
-  }, [billboard.images]);
+
 
   const selectedDaysCount =
     selectedStartDay != null && selectedEndDay != null
