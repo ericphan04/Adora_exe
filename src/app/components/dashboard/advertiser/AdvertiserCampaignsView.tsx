@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
   Plus,
@@ -26,6 +26,84 @@ export function AdvertiserCampaignsView({ bookings }: AdvertiserCampaignsViewPro
   const [statusFilter, setStatusFilter] = useState("all");
 
   const campaigns = useMemo(() => bookingsToCampaigns(bookings), [bookings]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
+  const [previewUrlInput, setPreviewUrlInput] = useState("");
+  const [previewUrlError, setPreviewUrlError] = useState("");
+  const [customPreviewMap, setCustomPreviewMap] = useState<
+    Record<number, { src: string; type: "image" | "video" }>
+  >({});
+  const objectUrlMap = useRef<Record<number, string>>({});
+
+  useEffect(() => {
+    if (selectedCampaignId === null && campaigns.length > 0) {
+      setSelectedCampaignId(campaigns[0].id);
+    }
+  }, [campaigns, selectedCampaignId]);
+
+  const getPreviewTypeFromUrl = (url: string) => {
+    const normalized = url.split("?")[0].split("#")[0].toLowerCase();
+    if (/\.(mp4|webm|ogg)$/i.test(normalized)) {
+      return "video" as const;
+    }
+    if (/\.(jpe?g|png|gif|bmp|webp|avif|svg)$/i.test(normalized)) {
+      return "image" as const;
+    }
+    return null;
+  };
+
+  const handlePreviewUrl = () => {
+    if (!previewUrlInput.trim()) {
+      setPreviewUrlError("Vui lòng nhập URL ảnh hoặc video.");
+      return;
+    }
+
+    const type = getPreviewTypeFromUrl(previewUrlInput.trim());
+    if (!type) {
+      setPreviewUrlError("URL không hợp lệ. Dùng ảnh hoặc video MP4/WebM/OGG.");
+      return;
+    }
+
+    if (selectedCampaignId !== null) {
+      setCustomPreviewMap((prev) => ({
+        ...prev,
+        [selectedCampaignId]: { src: previewUrlInput.trim(), type },
+      }));
+      setPreviewUrlError("");
+    }
+  };
+
+  const handleUploadFile = (file?: File) => {
+    if (!file || selectedCampaignId === null) return;
+
+    const type = file.type.startsWith("video/")
+      ? "video"
+      : file.type.startsWith("image/")
+      ? "image"
+      : undefined;
+
+    if (!type) {
+      setPreviewUrlError("Chỉ chấp nhận ảnh hoặc video.");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    if (objectUrlMap.current[selectedCampaignId]) {
+      URL.revokeObjectURL(objectUrlMap.current[selectedCampaignId]);
+    }
+    objectUrlMap.current[selectedCampaignId] = objectUrl;
+
+    setCustomPreviewMap((prev) => ({
+      ...prev,
+      [selectedCampaignId]: { src: objectUrl, type },
+    }));
+    setPreviewUrlError("");
+  };
+
+  useEffect(() => {
+    return () => {
+      Object.values(objectUrlMap.current).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   const filtered = campaigns.filter((c) => {
     const matchSearch =
@@ -36,10 +114,26 @@ export function AdvertiserCampaignsView({ bookings }: AdvertiserCampaignsViewPro
     return matchSearch && matchStatus;
   });
 
+  useEffect(() => {
+    if (filtered.length > 0 && !filtered.some((c) => c.id === selectedCampaignId)) {
+      setSelectedCampaignId(filtered[0].id);
+    }
+  }, [filtered, selectedCampaignId]);
+
   const running = campaigns.filter((c) => c.status === "running").length;
   const totalBudget = bookings
     .filter((b) => b.status === "PAID")
     .reduce((s, b) => s + b.finalAmount, 0);
+
+  const selectedCampaign = campaigns.find((c) => c.id === selectedCampaignId) ?? campaigns[0];
+  const selectedBooking = bookings.find((b) => b.id === selectedCampaign?.id);
+  const previewImage = selectedBooking?.billboard?.images?.find((img) => img.isThumbnail)?.imageUrl ??
+    selectedBooking?.billboard?.images?.[0]?.imageUrl;
+  const previewVideo = selectedBooking?.billboard?.demoVideoUrl;
+  const customPreview = selectedCampaignId ? customPreviewMap[selectedCampaignId] : undefined;
+  const previewSrc = customPreview?.src ?? previewVideo ?? previewImage;
+  const previewType = customPreview?.type ?? (previewVideo ? "video" : previewImage ? "image" : undefined);
+  const isCustomPreview = Boolean(customPreview);
 
   const statusMap: Record<string, { variant: "active" | "pending" | "expired" | "unavailable"; label: string }> = {
     running: { variant: "active", label: "Đang chạy" },
@@ -153,11 +247,80 @@ export function AdvertiserCampaignsView({ bookings }: AdvertiserCampaignsViewPro
 
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-[#E3E8EF] p-5">
-            <h3 className="font-semibold text-[#1D4ED8] mb-3">Xem trước creative</h3>
-            <div className="relative bg-gradient-to-r from-[#1D4ED8] to-[#7C3AED] rounded-xl h-36 flex items-center justify-center">
-              <div className="w-4/5 h-2/3 border-4 border-white/80 rounded-lg bg-black/70 flex items-center justify-center">
-                <span className="text-[10px] text-white/70">16:9 LED Preview</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div>
+                <h3 className="font-semibold text-[#1D4ED8]">Xem trước creative</h3>
+                <p className="text-xs text-[#6B7A8D] mt-1">Hiển thị nội dung chiến dịch trên mô phỏng LED.</p>
               </div>
+              {campaigns.length > 0 && (
+                <select
+                  value={selectedCampaign?.id ?? ""}
+                  onChange={(e) => setSelectedCampaignId(Number(e.target.value))}
+                  className="px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm cursor-pointer"
+                >
+                  {campaigns.map((campaign) => (
+                    <option key={campaign.id} value={campaign.id}>
+                      {campaign.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div className="rounded-3xl overflow-hidden border border-[#E3E8EF] bg-slate-950 shadow-sm">
+              <div className="relative h-52 overflow-hidden bg-slate-900 sm:h-60">
+                {previewType === "video" && previewSrc ? (
+                  <video
+                    src={previewSrc}
+                    autoPlay
+                    muted
+                    loop
+                    controls={false}
+                    className="w-full h-full object-cover"
+                  />
+                ) : previewType === "image" && previewSrc ? (
+                  <img
+                    src={previewSrc}
+                    alt={selectedCampaign?.name ?? "Creative preview"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white/70">
+                    <PlayCircle className="w-12 h-12" />
+                    <p className="mt-3 text-sm font-medium">Chưa có creative để xem trước</p>
+                    <p className="text-xs text-slate-400">Tải lên ảnh/video hoặc dán URL để xem ngay</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+                  <input
+                    type="text"
+                    placeholder="Dán URL ảnh hoặc video"
+                    className="w-full px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm focus:outline-none focus:border-[#1D4ED8]"
+                    value={previewUrlInput}
+                    onChange={(e) => setPreviewUrlInput(e.target.value)}
+                  />
+                  <label className="inline-flex items-center justify-center rounded-lg border border-[#E3E8EF] px-4 py-2 text-sm font-semibold text-[#1D4ED8] cursor-pointer hover:bg-slate-50">
+                    Ảnh/video
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      className="hidden"
+                      onChange={(e) => handleUploadFile(e.target.files?.[0])}
+                    />
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePreviewUrl}
+                  className="w-full rounded-lg bg-[#1D4ED8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2563EB]"
+                >
+                  Xem trước
+                </button>
+              </div>
+              {previewUrlError && <p className="text-sm text-red-500">{previewUrlError}</p>}
             </div>
           </div>
           <div className="bg-white rounded-xl border border-[#E3E8EF] p-5">
