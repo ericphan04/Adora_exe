@@ -19,8 +19,11 @@ import {
   KeyRound,
   Database,
   Download,
+  Building2,
 } from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import authApi from "../api/authApi";
+import { notify, apiErrorMessage } from "../utils/notify";
 
 const sections = [
   { id: "appearance", label: "Giao diện" },
@@ -39,6 +42,11 @@ export default function AdvertiserSettings() {
   const [isDark, setIsDark] = useState(false);
   const [primaryColor, setPrimaryColor] = useState("#1D4ED8");
   const [fontSize, setFontSize] = useState("medium");
+  const [showChangePasswordForm, setShowChangePasswordForm] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const baseBg = isDark ? "bg-slate-950" : "bg-[#F0F9FF]";
   const pageText = isDark ? "text-slate-100" : "text-slate-900";
@@ -256,7 +264,7 @@ export default function AdvertiserSettings() {
                     <div className="space-y-1.5">
                       <label className={subtleText}>Công ty / Thương hiệu</label>
                       <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-transparent">
-                        <Building2Icon />
+                        <Building2 className="w-4 h-4 text-[#9CA3AF]" />
                         <input
                           className="flex-1 bg-transparent text-sm focus:outline-none"
                           defaultValue="Adora Media"
@@ -290,18 +298,90 @@ export default function AdvertiserSettings() {
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-2">
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-[#4F46E5]" />
-                      Đổi mật khẩu
-                    </p>
-                    <button className="px-3 py-2 rounded-lg border border-[#4F46E5] text-xs text-[#4F46E5] cursor-pointer hover:bg-[#EEF2FF]">
-                      Thiết Lập Mật Khẩu Mới
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-medium flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-[#4F46E5]" />
+                        Đổi mật khẩu
+                      </p>
+                      <p className={`text-[11px] ${subtleText}`}>
+                        Mật khẩu nên dài ít nhất 8 ký tự, có chữ hoa, chữ thường,
+                        số và ký tự đặc biệt.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowChangePasswordForm((prev) => !prev)}
+                      className="w-full px-3 py-2 rounded-lg border border-[#4F46E5] text-xs text-[#4F46E5] cursor-pointer hover:bg-[#EEF2FF]"
+                    >
+                      {showChangePasswordForm ? "Ẩn form đổi mật khẩu" : "Đổi mật khẩu hiện tại"}
                     </button>
-                    <p className={`text-[11px] ${subtleText}`}>
-                      Mật khẩu nên dài ít nhất 8 ký tự, có chữ hoa, chữ thường,
-                      số và ký tự đặc biệt.
-                    </p>
+                    {showChangePasswordForm && (
+                      <div className="space-y-3 p-4 rounded-xl border border-[#E3E8EF] bg-slate-50">
+                        <div className="space-y-1 text-sm">
+                          <label className={subtleText}>Mật khẩu hiện tại</label>
+                          <input
+                            type="password"
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                          />
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <label className={subtleText}>Mật khẩu mới</label>
+                          <input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                          />
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <label className={subtleText}>Xác nhận mật khẩu</label>
+                          <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isChangingPassword}
+                          onClick={async () => {
+                            if (!oldPassword || !newPassword || !confirmPassword) {
+                              notify.error("Vui lòng điền đầy đủ thông tin");
+                              return;
+                            }
+                            if (newPassword !== confirmPassword) {
+                              notify.error("Mật khẩu mới và xác nhận không khớp");
+                              return;
+                            }
+                            if (newPassword.length < 8) {
+                              notify.error("Mật khẩu mới phải có ít nhất 8 ký tự");
+                              return;
+                            }
+
+                            setIsChangingPassword(true);
+                            try {
+                              await authApi.changePassword({ oldPassword, newPassword });
+                              setOldPassword("");
+                              setNewPassword("");
+                              setConfirmPassword("");
+                              setShowChangePasswordForm(false);
+                              notify.success("Đổi mật khẩu thành công");
+                            } catch (error) {
+                              notify.error(apiErrorMessage(error));
+                            } finally {
+                              setIsChangingPassword(false);
+                            }
+                          }}
+                          className="w-full px-3 py-2 rounded-lg bg-[#1D4ED8] text-white text-xs font-semibold hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {isChangingPassword ? "Đang cập nhật..." : "Lưu mật khẩu mới"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <p className="text-xs font-medium flex items-center gap-2">
@@ -533,26 +613,6 @@ export default function AdvertiserSettings() {
         </div>
       </main>
     </div>
-  );
-}
-
-function Building2Icon() {
-  return (
-    <svg
-      className="w-4 h-4 text-[#9CA3AF]"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 21V7a2 2 0 0 1 2-2h4l4 2h4a2 2 0 0 1 2 2v12" />
-      <path d="M6 21V10" />
-      <path d="M10 21v-8" />
-      <path d="M14 21v-8" />
-      <path d="M18 21V10" />
-    </svg>
   );
 }
 

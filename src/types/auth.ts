@@ -32,3 +32,8 @@ export interface VerifyEmailRequest {
 export interface ResendCodeRequest {
   email: string;
 }
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}

@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useThemeContext } from "../../context/ThemeContext";
-import { notify } from "../../utils/notify";
+import { notify, apiErrorMessage } from "../../utils/notify";
+import authApi from "../../../api/authApi";
 
 const sections = [
   { id: "profile", label: "Hồ sơ", icon: <User className="w-4 h-4" /> },
@@ -31,6 +32,11 @@ export function OwnerSettingsView() {
   const [activeSection, setActiveSection] = useState<SectionId>("profile");
   const [bookingAlerts, setBookingAlerts] = useState(true);
   const [paymentAlerts, setPaymentAlerts] = useState(true);
+  const [showChangePasswordForm, setShowChangePasswordForm] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const initials = (user?.fullName ?? "OS")
     .split(" ")
@@ -240,10 +246,77 @@ export function OwnerSettingsView() {
             <h3 className="text-[#1D4ED8] font-bold">Bảo mật</h3>
             <button
               type="button"
+              onClick={() => setShowChangePasswordForm((prev) => !prev)}
               className="w-full text-left px-4 py-3 rounded-xl border border-[#E3E8EF] hover:border-[#1D4ED8]/40 text-sm font-semibold text-[#1D4ED8] cursor-pointer"
             >
-              Đổi mật khẩu
+              {showChangePasswordForm ? "Ẩn đổi mật khẩu" : "Đổi mật khẩu"}
             </button>
+            {showChangePasswordForm && (
+              <div className="space-y-3 p-4 rounded-xl border border-[#E3E8EF] bg-slate-50">
+                <div className="space-y-1 text-sm">
+                  <label className="text-[#6B7A8D] text-xs">Mật khẩu hiện tại</label>
+                  <input
+                    type="password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                  />
+                </div>
+                <div className="space-y-1 text-sm">
+                  <label className="text-[#6B7A8D] text-xs">Mật khẩu mới</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                  />
+                </div>
+                <div className="space-y-1 text-sm">
+                  <label className="text-[#6B7A8D] text-xs">Xác nhận mật khẩu mới</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                  />
+                </div>
+                <button
+                  type="button"
+                  disabled={isChangingPassword}
+                  onClick={async () => {
+                    if (!oldPassword || !newPassword || !confirmPassword) {
+                      notify.error("Vui lòng điền đầy đủ thông tin");
+                      return;
+                    }
+                    if (newPassword !== confirmPassword) {
+                      notify.error("Mật khẩu mới và xác nhận không khớp");
+                      return;
+                    }
+                    if (newPassword.length < 8) {
+                      notify.error("Mật khẩu mới phải có ít nhất 8 ký tự");
+                      return;
+                    }
+
+                    setIsChangingPassword(true);
+                    try {
+                      await authApi.changePassword({ oldPassword, newPassword });
+                      setShowChangePasswordForm(false);
+                      setOldPassword("");
+                      setNewPassword("");
+                      setConfirmPassword("");
+                      notify.success("Đổi mật khẩu thành công");
+                    } catch (error) {
+                      notify.error(apiErrorMessage(error));
+                    } finally {
+                      setIsChangingPassword(false);
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-lg bg-[#1D4ED8] text-white text-xs font-semibold hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isChangingPassword ? "Đang cập nhật..." : "Lưu mật khẩu mới"}
+                </button>
+              </div>
+            )}
             <button
               type="button"
               className="w-full text-left px-4 py-3 rounded-xl border border-[#E3E8EF] hover:border-[#1D4ED8]/40 text-sm font-semibold cursor-pointer"

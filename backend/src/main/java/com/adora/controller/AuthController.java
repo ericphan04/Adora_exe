@@ -1,6 +1,7 @@
 package com.adora.controller;
 
 import com.adora.dto.ApiResponse;
+import com.adora.dto.ChangePasswordRequest;
 import com.adora.dto.LoginRequest;
 import com.adora.dto.GoogleLoginRequest;
 import com.adora.dto.LoginResponse;
@@ -47,6 +48,17 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> resendVerificationCode(@Valid @RequestBody ResendCodeRequest request) {
         authService.resendVerificationCode(request);
         return ResponseEntity.ok(ApiResponse.success("Verification code resent successfully", null));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        if (userPrincipal == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthorized"));
+        }
+        authService.changePassword(userPrincipal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công", null));
     }
 
     @PostMapping("/login")
