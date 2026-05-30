@@ -838,14 +838,14 @@ export default function AdminDashboard() {
           <div className="p-8 space-y-4">
             {/* Filter card */}
             <div className="bg-white border border-[#E3E8EF] rounded-xl p-5 flex flex-wrap items-center gap-4 text-xs">
-              <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-60">
+              <div className="flex basis-full sm:basis-auto items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 min-w-[280px] flex-1 max-w-[560px]">
                 <Search className="w-3.5 h-3.5 text-[#6B7A8D]" />
                 <input
                   type="text"
                   placeholder="Tìm thành viên (Họ tên, email)..."
                   value={userKeyword}
                   onChange={(e) => setUserKeyword(e.target.value)}
-                  className="bg-transparent border-none outline-none w-full"
+                  className="bg-transparent border-none outline-none w-full min-w-0"
                 />
               </div>
 

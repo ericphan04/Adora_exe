@@ -44,17 +44,13 @@ export function AdminRevenueView({
   bookings,
 }: AdminRevenueViewProps) {
   const [period, setPeriod] = useState<"6m" | "12m">("6m");
+  const periodCount = period === "6m" ? 6 : 12;
 
-  const successPayments = payments.filter((p) => p.paymentStatus === "SUCCESS");
-  const pendingPayments = payments.filter((p) => p.paymentStatus === "PENDING");
-  const totalCommission = successPayments.reduce(
-    (s, p) => s + p.platformCommission,
-    0,
-  );
-  const totalOwnerPayout = successPayments.reduce(
-    (s, p) => s + p.ownerRevenue,
-    0,
-  );
+  const periodStart = useMemo(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - periodCount);
+    return date;
+  }, [periodCount]);
 
   const commissionTrend = useMemo(() => {
     return dashboardData.gmvChart.map((row, i) => ({
@@ -65,9 +61,78 @@ export function AdminRevenueView({
     }));
   }, [dashboardData]);
 
+  const chartData = useMemo(() => {
+    return commissionTrend.slice(-periodCount);
+  }, [periodCount, commissionTrend]);
+
+  const bookingChartData = useMemo(() => {
+    return dashboardData.bookingChart.slice(-periodCount);
+  }, [periodCount, dashboardData.bookingChart]);
+
+  const periodSuccessPayments = useMemo(
+    () => payments.filter((p) => {
+      if (p.paymentStatus !== "SUCCESS") return false;
+      if (!p.paidAt) return false;
+      const paidDate = new Date(p.paidAt);
+      return !isNaN(paidDate.getTime()) && paidDate >= periodStart;
+    }),
+    [payments, periodStart],
+  );
+
+  const periodPendingPayments = useMemo(
+    () => payments.filter((p) => {
+      if (p.paymentStatus !== "PENDING") return false;
+      if (!p.paidAt) return false;
+      const pendingDate = new Date(p.paidAt);
+      return !isNaN(pendingDate.getTime()) && pendingDate >= periodStart;
+    }),
+    [payments, periodStart],
+  );
+
+  const periodPayments = useMemo(
+    () => payments.filter((p) => {
+      if (!p.paidAt) return false;
+      const paymentDate = new Date(p.paidAt);
+      return !isNaN(paymentDate.getTime()) && paymentDate >= periodStart;
+    }),
+    [payments, periodStart],
+  );
+
+  const selectedGmv = useMemo(
+    () => chartData.reduce((sum, row) => sum + row.gmv, 0),
+    [chartData],
+  );
+
+  const selectedCommission = useMemo(
+    () => chartData.reduce((sum, row) => sum + row.commission, 0),
+    [chartData],
+  );
+
+  const periodOwnerPayout = useMemo(
+    () => periodSuccessPayments.reduce((sum, p) => sum + p.ownerRevenue, 0),
+    [periodSuccessPayments],
+  );
+
+  const periodPlatformCommission = useMemo(
+    () => periodSuccessPayments.reduce((sum, p) => sum + p.platformCommission, 0),
+    [periodSuccessPayments],
+  );
+
+  const filteredBookings = useMemo(
+    () => bookings.filter((b) => {
+      const date = b.startDate
+        ? new Date(b.startDate)
+        : b.endDate
+          ? new Date(b.endDate)
+          : null;
+      return !date || isNaN(date.getTime()) ? true : date >= periodStart;
+    }),
+    [bookings, periodStart],
+  );
+
   const topOwners = useMemo(() => {
     const map = new Map<string, { name: string; gmv: number; bookings: number }>();
-    bookings.forEach((b) => {
+    filteredBookings.forEach((b) => {
       const name = b.billboard?.owner?.fullName ?? "Chủ bảng";
       const cur = map.get(name) ?? { name, gmv: 0, bookings: 0 };
       cur.gmv += b.finalAmount;
@@ -75,15 +140,13 @@ export function AdminRevenueView({
       map.set(name, cur);
     });
     return [...map.values()].sort((a, b) => b.gmv - a.gmv).slice(0, 5);
-  }, [bookings]);
+  }, [filteredBookings]);
 
-  const chartData = useMemo(() => {
-    return period === "6m" ? commissionTrend.slice(-6) : commissionTrend.slice(-12);
-  }, [period, commissionTrend]);
-
-  const bookingChartData = useMemo(() => {
-    return period === "6m" ? dashboardData.bookingChart.slice(-6) : dashboardData.bookingChart.slice(-12);
-  }, [period, dashboardData.bookingChart]);
+  const periodLabel = period === "6m" ? "6 tháng" : "12 tháng";
+  const availableMonths = chartData.length;
+  const noteText = availableMonths < periodCount
+    ? `Dữ liệu chỉ có ${availableMonths} tháng gần nhất.`
+    : `Hiển thị ${periodLabel}.`;
 
   return (
     <div className="p-8 space-y-6">
@@ -98,6 +161,9 @@ export function AdminRevenueView({
             </h2>
             <p className="text-sm text-white/70 mt-2 max-w-lg">
               Theo dõi GMV, phí sàn 5% và dòng tiền thanh toán VNPay theo thời gian thực.
+            </p>
+            <p className="text-xs text-white/75 mt-2">
+              {noteText}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -128,33 +194,32 @@ export function AdminRevenueView({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <KpiCard
-          title="Tổng GMV"
-          value={formatVnd(dashboardData.totalGMV)}
-          change="+15%"
+          title={`Tổng GMV (${periodLabel})`}
+          value={formatVnd(selectedGmv)}
+          change={`${availableMonths}/${periodCount} tháng`}
           changeType="up"
           icon={<DollarSign className="w-5 h-5" />}
         />
         <KpiCard
-          title="Hoa hồng sàn (5%)"
-          value={formatVnd(dashboardData.commissionRevenue)}
-          change="+12%"
+          title={`Hoa hồng ${periodLabel}`}
+          value={formatVnd(selectedCommission)}
           changeType="up"
           icon={<Percent className="w-5 h-5" />}
         />
         <KpiCard
           title="Đã thu (thành công)"
-          value={formatVnd(totalCommission)}
-          change={`${successPayments.length} giao dịch`}
+          value={formatVnd(periodPlatformCommission)}
+          change={`${periodSuccessPayments.length} giao dịch`}
           changeType="up"
           icon={<TrendingUp className="w-5 h-5" />}
         />
         <KpiCard
           title="Chờ đối soát"
           value={formatVnd(
-            pendingPayments.reduce((s, p) => s + p.platformCommission, 0),
+            periodPendingPayments.reduce((s, p) => s + p.platformCommission, 0),
           )}
-          change={`${pendingPayments.length} chờ`}
-          changeType={pendingPayments.length > 0 ? "up" : "down"}
+          change={`${periodPendingPayments.length} chờ`}
+          changeType={periodPendingPayments.length > 0 ? "up" : "down"}
           icon={<Wallet className="w-5 h-5" />}
         />
       </div>
@@ -232,24 +297,24 @@ export function AdminRevenueView({
             {[
               {
                 label: "Hoa hồng ADORA (5%)",
-                value: totalCommission,
+                value: periodPlatformCommission,
                 color: "bg-[#1D4ED8]",
                 pct:
-                  totalCommission + totalOwnerPayout > 0
+                  periodPlatformCommission + periodOwnerPayout > 0
                     ? Math.round(
-                        (totalCommission / (totalCommission + totalOwnerPayout)) *
+                        (periodPlatformCommission / (periodPlatformCommission + periodOwnerPayout)) *
                           100,
                       )
                     : 0,
               },
               {
                 label: "Trả cho chủ bảng",
-                value: totalOwnerPayout,
+                value: periodOwnerPayout,
                 color: "bg-emerald-500",
                 pct:
-                  totalCommission + totalOwnerPayout > 0
+                  periodPlatformCommission + periodOwnerPayout > 0
                     ? Math.round(
-                        (totalOwnerPayout / (totalCommission + totalOwnerPayout)) *
+                        (periodOwnerPayout / (periodPlatformCommission + periodOwnerPayout)) *
                           100,
                       )
                     : 0,
@@ -344,10 +409,10 @@ export function AdminRevenueView({
       <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden shadow-sm">
         <div className="px-6 py-4 border-b border-[#E3E8EF] flex justify-between items-center">
           <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>
-            Lịch sử giao dịch & hoa hồng
+            Lịch sử giao dịch & hoa hồng ({periodLabel})
           </h3>
           <span className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-semibold border border-emerald-100">
-            {successPayments.length} thành công
+            {periodSuccessPayments.length} thành công
           </span>
         </div>
         <div className="overflow-x-auto">
@@ -363,14 +428,14 @@ export function AdminRevenueView({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E3E8EF]">
-              {payments.length === 0 ? (
+              {periodPayments.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center text-[#6B7A8D]">
-                    Chưa có giao dịch.
+                    Chưa có giao dịch trong khoảng {periodLabel}.
                   </td>
                 </tr>
               ) : (
-                payments.map((p) => (
+                periodPayments.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50/80">
                     <td className="px-6 py-3 font-mono text-xs text-[#1D4ED8]">
                       {p.transactionCode}
