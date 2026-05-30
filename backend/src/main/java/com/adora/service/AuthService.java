@@ -1,5 +1,6 @@
 package com.adora.service;
 
+import com.adora.dto.ChangePasswordRequest;
 import com.adora.dto.LoginRequest;
 import com.adora.dto.LoginResponse;
 import com.adora.dto.RegisterRequest;
@@ -261,6 +262,23 @@ public class AuthService {
 
         // Send email
         emailService.sendVerificationEmail(request.getEmail(), code);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Mật khẩu hiện tại không đúng");
+        }
+
+        if (request.getOldPassword().equals(request.getNewPassword())) {
+            throw new BadRequestException("Mật khẩu mới phải khác mật khẩu hiện tại");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 
     private UserDto convertToUserDto(User user) {
