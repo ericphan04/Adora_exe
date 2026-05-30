@@ -31,6 +31,7 @@ interface AdvertiserBookingsViewProps {
   onCancelBooking: (id: number) => void;
   onPayBooking: (id: number) => void;
   onReviewBooking: (id: number) => void;
+  onReportBooking: (bookingId: number, billboardId: number | null) => void;
 }
 
 export function AdvertiserBookingsView({
@@ -38,6 +39,7 @@ export function AdvertiserBookingsView({
   onCancelBooking,
   onPayBooking,
   onReviewBooking,
+  onReportBooking,
 }: AdvertiserBookingsViewProps) {
   const navigate = useNavigate();
   const { year, month } = getTodayParts();
@@ -172,10 +174,10 @@ export function AdvertiserBookingsView({
       key: "actions",
       label: "Thao tác",
       render: (_: unknown, row: { id: number; rawStatus: string; billboardId?: number }) => (
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1">
           <button
             type="button"
-            className="w-7 h-7 rounded-md hover:bg-[#F0F9FF] flex items-center justify-center text-[#6B7A8D] cursor-pointer"
+            className="flex-shrink-0 w-7 h-7 rounded-md hover:bg-[#F0F9FF] flex items-center justify-center text-[#6B7A8D] cursor-pointer"
             title="Chi tiết bảng QC"
             onClick={() =>
               row.billboardId
@@ -189,7 +191,7 @@ export function AdvertiserBookingsView({
             <button
               type="button"
               onClick={() => onCancelBooking(row.id)}
-              className="px-2 py-1 text-[10px] font-bold text-red-600 bg-red-50 rounded cursor-pointer"
+              className="flex-shrink-0 rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-[10px] font-semibold text-red-700 hover:bg-red-100 transition-colors whitespace-nowrap"
             >
               Hủy
             </button>
@@ -198,7 +200,7 @@ export function AdvertiserBookingsView({
             <button
               type="button"
               onClick={() => onPayBooking(row.id)}
-              className="px-2 py-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 rounded cursor-pointer"
+              className="flex-shrink-0 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors whitespace-nowrap"
             >
               Thanh toán
             </button>
@@ -207,9 +209,18 @@ export function AdvertiserBookingsView({
             <button
               type="button"
               onClick={() => onReviewBooking(row.id)}
-              className="px-2 py-1 text-[10px] font-bold text-blue-600 bg-blue-50 rounded cursor-pointer"
+              className="flex-shrink-0 rounded-2xl border border-sky-100 bg-sky-50 px-3 py-2 text-[10px] font-semibold text-sky-700 hover:bg-sky-100 transition-colors whitespace-nowrap"
             >
               Đánh giá
+            </button>
+          )}
+          {row.billboardId && (
+            <button
+              type="button"
+              onClick={() => onReportBooking(row.id, row.billboardId)}
+              className="flex-shrink-0 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-semibold text-rose-700 hover:bg-rose-100 transition-colors whitespace-nowrap"
+            >
+              Khiếu nại
             </button>
           )}
         </div>

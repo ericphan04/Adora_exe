@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { 
   AlertTriangle, Search, Moon, Sun, Bell, Menu,
-  BellOff, CheckCircle2, XCircle, Calendar, CreditCard 
+  BellOff, CheckCircle2, XCircle, Calendar, CreditCard, Star 
 } from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useAuth } from "../context/AuthContext";
@@ -15,6 +15,7 @@ import { mergeSavedBillboards, removeSavedBillboard } from "../utils/savedBillbo
 import bookingApi from "../../api/bookingApi";
 import paymentApi from "../../api/paymentApi";
 import reviewApi from "../../api/reviewApi";
+import reportApi from "../../api/reportApi";
 import { RenterDashboardDto } from "../../types/dashboard";
 import { BookingDto } from "../../types/booking";
 import { PaymentDto } from "../../types/payment";
@@ -76,6 +77,11 @@ export default function AdvertiserDashboard() {
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
+  const [complaintBookingId, setComplaintBookingId] = useState<number | null>(null);
+  const [complaintBillboardId, setComplaintBillboardId] = useState<number | null>(null);
+  const [complaintReason, setComplaintReason] = useState("");
+  const [submittingComplaint, setSubmittingComplaint] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     return document.documentElement.classList.contains("dark");
@@ -289,6 +295,43 @@ export default function AdvertiserDashboard() {
     setRating(5);
     setComment("");
     setIsReviewModalOpen(true);
+  };
+
+  const handleOpenComplaint = (bookingId: number, billboardId: number | null) => {
+    setComplaintBookingId(bookingId);
+    setComplaintBillboardId(billboardId);
+    setComplaintReason("");
+    setIsComplaintModalOpen(true);
+  };
+
+  const handleSubmitComplaint = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!complaintBookingId || !complaintBillboardId) return;
+    setSubmittingComplaint(true);
+    if (isUsingFallback) {
+      notify.success("Khiếu nại đã được gửi", "Chế độ mô phỏng");
+      setIsComplaintModalOpen(false);
+      setSubmittingComplaint(false);
+      return;
+    }
+    try {
+      const response = await reportApi.createReport({
+        targetType: "BILLBOARD",
+        targetId: complaintBillboardId,
+        reason: complaintReason || "Báo cáo sự cố chất lượng bảng QC",
+      });
+      if (response.success) {
+        notify.success("Khiếu nại đã được gửi thành công");
+        setIsComplaintModalOpen(false);
+        setComplaintReason("");
+      } else {
+        notify.error(response.message || "Không thể gửi khiếu nại.");
+      }
+    } catch (error: unknown) {
+      notify.error(apiErrorMessage(error, "Lỗi khi gửi khiếu nại."));
+    } finally {
+      setSubmittingComplaint(false);
+    }
   };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -551,6 +594,7 @@ export default function AdvertiserDashboard() {
               onCancelBooking={handleCancelBooking}
               onPayBooking={handlePayBooking}
               onReviewBooking={handleOpenReview}
+              onReportBooking={handleOpenComplaint}
             />
           )}
 
@@ -597,56 +641,112 @@ export default function AdvertiserDashboard() {
 
       {/* Review Modal Dialog */}
       {isReviewModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-card text-card-foreground rounded-2xl max-w-md w-full p-6 shadow-2xl border border-border/80">
-            <h3 className="text-lg font-bold text-primary mb-4">Đánh giá chiến dịch</h3>
-            <form onSubmit={handleSubmitReview} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                  Số sao (1-5)
-                </label>
-                <div className="flex gap-2 text-amber-400">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRating(star)}
-                      className={`text-3xl cursor-pointer transition-transform hover:scale-110 active:scale-95 ${
-                        star <= rating ? "text-amber-400" : "text-gray-300"
-                      }`}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-card text-card-foreground rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-border/80">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Star className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-foreground">Đánh giá đặt chỗ</h3>
+              <p className="text-sm text-muted-foreground">Cho chủ bảng QC biết trải nghiệm của bạn để cải thiện chất lượng dịch vụ.</p>
+            </div>
+          </div>
+          <form onSubmit={handleSubmitReview} className="space-y-5">
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Đánh giá sao
+              </label>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className={`text-3xl transition-transform duration-150 ${
+                      star <= rating ? "text-amber-400 scale-110" : "text-slate-300 hover:text-amber-300"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Nhận xét của bạn
+              </label>
+              <textarea
+                required
+                rows={5}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Mô tả ngắn gọn về chất lượng bảng, nội dung hiển thị hoặc hỗ trợ khách hàng..."
+                className="w-full min-h-[140px] rounded-2xl border border-border/70 bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsReviewModalOpen(false)}
+                className="w-full sm:w-auto rounded-2xl border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-surface transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={submittingReview}
+                className="w-full sm:w-auto rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/10 hover:bg-primary/90 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      )}
+
+      {/* Complaint Modal Dialog */}
+      {isComplaintModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-card text-card-foreground rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-border/80">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Nhận xét
+                <h3 className="text-xl font-bold text-foreground">Gửi khiếu nại</h3>
+                <p className="text-sm text-muted-foreground">Mô tả vấn đề để bộ phận hỗ trợ xử lý nhanh chóng.</p>
+              </div>
+            </div>
+            <form onSubmit={handleSubmitComplaint} className="space-y-5">
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  Nội dung khiếu nại
                 </label>
                 <textarea
                   required
-                  rows={4}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Trải nghiệm về vị trí và chất lượng hiển thị..."
-                  className="w-full bg-background border border-border/50 rounded-xl p-3 text-sm focus:outline-none focus:border-accent text-foreground placeholder:text-muted-foreground/60"
+                  rows={6}
+                  value={complaintReason}
+                  onChange={(e) => setComplaintReason(e.target.value)}
+                  placeholder="Ví dụ: bảng quảng cáo không hiển thị đúng nội dung, chất lượng kém, hoặc chủ bảng không phản hồi..."
+                  className="w-full min-h-[160px] rounded-2xl border border-border/70 bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/10 transition-colors"
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsReviewModalOpen(false)}
-                  className="px-4.5 py-2.5 border border-border rounded-xl text-sm font-semibold text-muted-foreground hover:bg-surface/50 cursor-pointer transition-colors active:scale-95"
+                  onClick={() => setIsComplaintModalOpen(false)}
+                  className="w-full sm:w-auto rounded-2xl border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-surface transition-colors"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  disabled={submittingReview}
-                  className="px-4.5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/95 cursor-pointer disabled:opacity-50 transition-colors active:scale-95 shadow-md shadow-primary/10"
+                  disabled={submittingComplaint}
+                  className="w-full sm:w-auto rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60 shadow-lg shadow-red-500/10"
                 >
-                  {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                  {submittingComplaint ? "Đang gửi..." : "Gửi khiếu nại"}
                 </button>
               </div>
             </form>
