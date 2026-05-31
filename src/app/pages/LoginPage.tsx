@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Mail, Lock, Eye, EyeOff, Monitor, Key } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Monitor, Key, ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import authApi from "../../api/authApi";
 
@@ -172,6 +172,12 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       {/* Left */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#1D4ED8] via-[#3B82F6] to-[#0891B2] relative overflow-hidden items-center justify-center p-12">
+        <button 
+          onClick={() => navigate("/")} 
+          className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-200 border border-white/20 shadow-sm cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
+        </button>
         <div className="absolute top-20 left-10 w-72 h-72 bg-[#06B6D4]/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#06B6D4]/10 rounded-full blur-3xl" />
         <div className="relative z-10 text-center text-white max-w-md">
@@ -197,10 +203,14 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white relative">
+        <button 
+          onClick={() => navigate("/")} 
+          className="absolute top-6 left-6 lg:hidden flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1D4ED8] hover:text-white bg-[#F0F9FF] hover:bg-[#1D4ED8] rounded-xl transition-all duration-200 border border-[#E3E8EF] hover:border-[#1D4ED8] shadow-sm cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
+        </button>
         <div className="w-full max-w-[400px]">
-          <button onClick={() => navigate("/")} className="text-xl text-[#1D4ED8] mb-8 block lg:hidden cursor-pointer" style={{ fontWeight: 800 }}>ADORA</button>
           
           {view === 'login' && (
             <>
@@ -430,26 +440,24 @@ export default function LoginPage() {
             </form>
           )}
 
-          {view === 'login' && (
-            <>
-              <div className="my-6 flex items-center gap-4">
-                <div className="flex-1 h-px bg-[#E3E8EF]" />
-                <span className="text-xs text-[#6B7A8D]">hoặc đăng nhập bằng</span>
-                <div className="flex-1 h-px bg-[#E3E8EF]" />
-              </div>
+          <div style={{ display: view === 'login' ? 'block' : 'none' }}>
+            <div className="my-6 flex items-center gap-4">
+              <div className="flex-1 h-px bg-[#E3E8EF]" />
+              <span className="text-xs text-[#6B7A8D]">hoặc đăng nhập bằng</span>
+              <div className="flex-1 h-px bg-[#E3E8EF]" />
+            </div>
 
-              <div className="w-full flex justify-center">
-                <div id="google-signin-btn" className="w-full"></div>
-              </div>
+            <div className="w-full flex justify-center">
+              <div id="google-signin-btn" className="w-full"></div>
+            </div>
 
-              <p className="text-center text-sm text-[#6B7A8D] mt-8">
-                Chưa có tài khoản?{" "}
-                <button onClick={() => navigate("/register")} className="text-[#06B6D4] hover:underline cursor-pointer" style={{ fontWeight: 500 }}>
-                  Tạo tài khoản
-                </button>
-              </p>
-            </>
-          )}
+            <p className="text-center text-sm text-[#6B7A8D] mt-8">
+              Chưa có tài khoản?{" "}
+              <button onClick={() => navigate("/register")} className="text-[#06B6D4] hover:underline cursor-pointer" style={{ fontWeight: 500 }}>
+                Tạo tài khoản
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>

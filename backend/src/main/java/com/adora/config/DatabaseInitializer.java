@@ -126,7 +126,8 @@ public class DatabaseInitializer implements ApplicationRunner {
         }
 
         // 3. Seed Billboards
-        if (billboardRepository.count() == 0) {
+        List<Billboard> existingBillboards = billboardRepository.findAll();
+        if (existingBillboards.isEmpty() || existingBillboards.stream().noneMatch(b -> b.getTitle().equalsIgnoreCase("Cầu Rồng LED"))) {
             List<BillboardCategory> categories = categoryRepository.findAll();
             BillboardCategory highwayCat = categories.stream()
                     .filter(c -> c.getName().contains("Highways"))
@@ -388,11 +389,14 @@ public class DatabaseInitializer implements ApplicationRunner {
 
             List<Billboard> billboardsToSave = List.of(b1, b2, b3, b4, b5, b6, b7, b8, b9);
             for (Billboard b : billboardsToSave) {
-                b.setFormattedAddress(b.getAddress() + ", " + b.getCity());
-                b.setAddressDetail("");
-                b.setWard("");
+                final String title = b.getTitle();
+                if (existingBillboards.stream().noneMatch(ext -> ext.getTitle().equalsIgnoreCase(title))) {
+                    b.setFormattedAddress(b.getAddress() + ", " + b.getCity());
+                    b.setAddressDetail("");
+                    b.setWard("");
+                    billboardRepository.save(b);
+                }
             }
-            billboardRepository.saveAll(billboardsToSave);
         }
 
         // 4. Seed Bookings
