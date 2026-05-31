@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink, Info, Maximize, Lightbulb, Grid, CheckCircle, HelpCircle, Users, Calendar } from "lucide-react";
+import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink, Info, Maximize, Lightbulb, Grid, CheckCircle, HelpCircle, Users, Calendar, X } from "lucide-react";
 import { BillboardGoogleMap } from "../components/map/BillboardGoogleMap";
 import { getBillboardRentalStatus, MAP_BILLBOARD_MOCKS } from "../utils/billboardMap";
 import { TopNav } from "../components/TopNav";
@@ -374,7 +374,7 @@ export default function BillboardDetailPage() {
                 <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none h-full w-full">
                   {imagesList.map((img, idx) => (
                     <div key={idx} className="w-full h-full shrink-0 snap-center relative">
-                      <img
+                      <ImageWithFallback
                         src={img}
                         alt={`Billboard View ${idx + 1}`}
                         className="w-full h-full object-cover"
@@ -399,7 +399,7 @@ export default function BillboardDetailPage() {
               {/* 2. Tablet view: main image on top, thumbnails below */}
               <div className="hidden md:block lg:hidden space-y-3">
                 <div className="relative w-full h-[380px] rounded-2xl overflow-hidden shadow-sm border border-border/30 group">
-                  <img
+                  <ImageWithFallback
                     src={imagesList[selectedImageIndex] || fallbackImages[0]}
                     alt="Main Billboard View"
                     className="w-full h-full object-cover"
@@ -442,7 +442,7 @@ export default function BillboardDetailPage() {
                       onClick={() => setSelectedImageIndex(idx)}
                       className={`relative w-20 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${selectedImageIndex === idx ? "border-accent opacity-100 scale-95" : "border-transparent opacity-70 hover:opacity-90"}`}
                     >
-                      <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                      <ImageWithFallback src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                   <button
@@ -459,7 +459,7 @@ export default function BillboardDetailPage() {
               <div className="hidden lg:grid grid-cols-12 gap-3 h-[460px] lg:h-[500px]">
                 {/* Large Main Image */}
                 <div className="col-span-8 relative rounded-2xl overflow-hidden shadow-sm border border-border/30 group">
-                  <img
+                  <ImageWithFallback
                     src={imagesList[selectedImageIndex] || fallbackImages[0]}
                     alt="Main Billboard View"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-101"
@@ -502,7 +502,7 @@ export default function BillboardDetailPage() {
                       onClick={() => setSelectedImageIndex(idx)}
                       className={`relative w-full h-full rounded-xl overflow-hidden border-2 transition-all group ${selectedImageIndex === idx ? "border-accent opacity-100" : "border-transparent opacity-85 hover:opacity-100"}`}
                     >
-                      <img
+                      <ImageWithFallback
                         src={img}
                         alt={`Billboard View ${idx + 1}`}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-103"
@@ -857,7 +857,7 @@ export default function BillboardDetailPage() {
             <div className="max-w-5xl w-full flex flex-col items-center gap-4">
               {/* Large Image inside lightbox */}
               <div className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center">
-                <img
+                <ImageWithFallback
                   src={imagesList[selectedImageIndex]}
                   alt={`Large Billboard View ${selectedImageIndex + 1}`}
                   className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
@@ -886,7 +886,7 @@ export default function BillboardDetailPage() {
                     onClick={() => setSelectedImageIndex(idx)}
                     className={`w-16 h-12 md:w-20 md:h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${selectedImageIndex === idx ? "border-accent opacity-100" : "border-transparent opacity-60 hover:opacity-85"}`}
                   >
-                    <img src={img} alt={`Lightbox thumb ${idx}`} className="w-full h-full object-cover" />
+                    <ImageWithFallback src={img} alt={`Lightbox thumb ${idx}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
