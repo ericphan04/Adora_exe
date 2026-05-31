@@ -1,5 +1,5 @@
 import axiosClient from './axiosClient';
-import { ChangePasswordRequest, LoginRequest, LoginResponse, RegisterRequest, VerifyEmailRequest, ResendCodeRequest } from '../types/auth';
+import { ChangePasswordRequest, LoginRequest, LoginResponse, RegisterRequest, VerifyEmailRequest, ResendCodeRequest, ForgotPasswordRequest, ResetPasswordRequest } from '../types/auth';
 import { User } from '../types/user';
 import { ApiResponse } from '../types/api';
 
@@ -24,6 +24,12 @@ const authApi = {
   },
   changePassword: (data: ChangePasswordRequest): Promise<ApiResponse<void>> => {
     return axiosClient.post('/api/auth/change-password', data);
+  },
+  forgotPassword: (data: ForgotPasswordRequest): Promise<ApiResponse<void>> => {
+    return axiosClient.post('/api/auth/forgot-password', data);
+  },
+  resetPassword: (data: ResetPasswordRequest): Promise<ApiResponse<void>> => {
+    return axiosClient.post('/api/auth/reset-password', data);
   },
 };
 

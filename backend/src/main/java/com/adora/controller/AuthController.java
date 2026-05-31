@@ -8,6 +8,8 @@ import com.adora.dto.LoginResponse;
 import com.adora.dto.RegisterRequest;
 import com.adora.dto.VerifyEmailRequest;
 import com.adora.dto.ResendCodeRequest;
+import com.adora.dto.ForgotPasswordRequest;
+import com.adora.dto.ResetPasswordRequest;
 import com.adora.dto.UserDto;
 import com.adora.security.UserPrincipal;
 import com.adora.service.AuthService;
@@ -48,6 +50,18 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> resendVerificationCode(@Valid @RequestBody ResendCodeRequest request) {
         authService.resendVerificationCode(request);
         return ResponseEntity.ok(ApiResponse.success("Verification code resent successfully", null));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Mã xác thực khôi phục mật khẩu đã được gửi đến email của bạn.", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.", null));
     }
 
     @PostMapping("/change-password")

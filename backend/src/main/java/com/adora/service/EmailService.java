@@ -54,6 +54,34 @@ public class EmailService {
         }
     }
 
+    public void sendForgotPasswordEmail(String toEmail, String code) {
+        String subject = "Khoi phuc mat khau ADORA";
+        String body = "Ma xac thuc khoi phuc mat khau ADORA cua ban la: " + code + "\n" +
+                "Ma nay co hieu luc trong vong 5 phut. Vui long khong chia se ma nay voi bat ky ai.";
+
+        if (mailUsername == null || mailUsername.trim().isEmpty() || mailUsername.contains("MAIL_USERNAME")) {
+            logger.info("==================================================");
+            logger.info("[SMTP NOT CONFIGURED] Forgot Password Code for email {} is {}", toEmail, code);
+            logger.info("==================================================");
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(mailUsername);
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+            logger.info("Forgot password email sent successfully to {}", toEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send forgot password email to {}. Error: {}", toEmail, e.getMessage());
+            logger.info("==================================================");
+            logger.info("[FALLBACK] Forgot Password Code for email {} is {}", toEmail, code);
+            logger.info("==================================================");
+        }
+    }
+
     @Async
     public void sendPaymentSuccessEmail(String toEmail, String renterName, Long bookingId, String finalAmount, String billboardName, String transactionCode) {
         String subject = "[ADORA] Xác nhận thanh toán thành công - Đơn đặt #" + bookingId;

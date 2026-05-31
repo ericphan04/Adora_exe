@@ -20,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.adora.dto.GoogleLoginRequest;
 import com.adora.dto.VerifyEmailRequest;
 import com.adora.dto.ResendCodeRequest;
+import com.adora.dto.ForgotPasswordRequest;
+import com.adora.dto.ResetPasswordRequest;
 import com.adora.entity.VerificationCode;
 import com.adora.repository.VerificationCodeRepository;
 import com.adora.service.EmailService;
@@ -279,6 +281,55 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException("Email không tồn tại trong hệ thống"));
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new BadRequestException("Tài khoản của bạn đã bị khóa");
+        }
+
+        // Delete any existing codes
+        verificationCodeRepository.deleteByEmail(request.getEmail());
+
+        // Generate 6-digit OTP code
+        String code = String.format("%06d", new java.util.Random().nextInt(1000000));
+        VerificationCode verificationCode = VerificationCode.builder()
+                .email(request.getEmail())
+                .code(code)
+                .expiryTime(java.time.LocalDateTime.now().plusMinutes(5)) // 5 minutes validity
+                .build();
+        verificationCodeRepository.save(verificationCode);
+
+        // Send email
+        emailService.sendForgotPasswordEmail(request.getEmail(), code);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException("Email không tồn tại trong hệ thống"));
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new BadRequestException("Tài khoản của bạn đã bị khóa");
+        }
+
+        VerificationCode verificationCode = verificationCodeRepository.findByEmailAndCode(request.getEmail(), request.getCode())
+                .orElseThrow(() -> new BadRequestException("Mã xác thực không chính xác"));
+
+        if (verificationCode.getExpiryTime().isBefore(java.time.LocalDateTime.now())) {
+            throw new BadRequestException("Mã xác thực đã hết hạn");
+        }
+
+        // Update password
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Delete verification code
+        verificationCodeRepository.delete(verificationCode);
     }
 
     private UserDto convertToUserDto(User user) {
