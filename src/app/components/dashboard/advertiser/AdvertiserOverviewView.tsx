@@ -26,8 +26,51 @@ export function AdvertiserOverviewView({
   const navigate = useNavigate();
   const [timeframe, setTimeframe] = useState<"7d" | "30d" | "year">("year");
 
+  // Check if renter has any actual campaign data (non-zero views)
+  const hasData = useMemo(() => {
+    return (data.campaignPerformance || []).some(p => (p.views ?? p.impressions ?? 0) > 0);
+  }, [data.campaignPerformance]);
+
   // Chart data mapping
   const chartData = useMemo(() => {
+    if (!hasData) {
+      if (timeframe === "7d") {
+        const dataPoints = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const label = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+          dataPoints.push({
+            month: label,
+            impressions: 0,
+            clicks: 0,
+          });
+        }
+        return dataPoints;
+      }
+      
+      if (timeframe === "30d") {
+        const dataPoints = [];
+        for (let i = 9; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i * 3);
+          const label = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+          dataPoints.push({
+            month: label,
+            impressions: 0,
+            clicks: 0,
+          });
+        }
+        return dataPoints;
+      }
+
+      return (data.campaignPerformance || []).map((p) => ({
+        month: p.month,
+        impressions: 0,
+        clicks: 0,
+      }));
+    }
+
     if (timeframe === "7d") {
       const dataPoints = [];
       for (let i = 6; i >= 0; i--) {
@@ -65,7 +108,7 @@ export function AdvertiserOverviewView({
       impressions: (p.views ?? p.impressions ?? 0) / 1000,
       clicks: p.clicks ?? 0,
     }));
-  }, [data.campaignPerformance, timeframe]);
+  }, [data.campaignPerformance, timeframe, hasData]);
 
   // Total impressions calculation
   const totalImpressions = useMemo(() => {
