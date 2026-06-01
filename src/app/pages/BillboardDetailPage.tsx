@@ -101,7 +101,14 @@ export default function BillboardDetailPage() {
 
   const imagesList = useMemo(() => {
     if (!billboard || !billboard.images || billboard.images.length === 0) return [];
-    return billboard.images.map((img: any) => typeof img === "string" ? img : img.imageUrl);
+    const sorted = [...billboard.images].sort((a: any, b: any) => {
+      const aThumb = typeof a === "string" ? false : !!a.isThumbnail;
+      const bThumb = typeof b === "string" ? false : !!b.isThumbnail;
+      if (aThumb && !bThumb) return -1;
+      if (!aThumb && bThumb) return 1;
+      return 0;
+    });
+    return sorted.map((img: any) => typeof img === "string" ? img : img.imageUrl);
   }, [billboard]);
 
   useEffect(() => {

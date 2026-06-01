@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # Database Service (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    container_name: adora_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-adora}
+      POSTGRES_USER: ${DB_USERNAME:-adora_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-adora_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - adora_net
+
+  # Backend Service (Spring Boot)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: adora_backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-adora}
+      - DB_USERNAME=${DB_USERNAME:-adora_user}
+      - DB_PASSWORD=${DB_PASSWORD:-adora_password}
+      - JWT_SECRET=${JWT_SECRET:-9a4f2c8d3b7a1e5f8c6d4b2a0f8e6d4c2b0a8f6e4d2c0b8a6f4e2d0c8b6a4f2e}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-86400000}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-948345920089-7j515dqe1ihqph3lnapho8c7l6auo9r8.apps.googleusercontent.com}
+      - R2_ENDPOINT=${R2_ENDPOINT:-https://f57aad0e4caab95af1c52c46175ca7a6.r2.cloudflarestorage.com}
+      - R2_ACCESS_KEY=${R2_ACCESS_KEY:-your-access-key}
+      - R2_SECRET_KEY=${R2_SECRET_KEY:-your-secret-key}
+      - R2_BUCKET_NAME=${R2_BUCKET_NAME:-billboard}
+      - R2_PUBLIC_URL=${R2_PUBLIC_URL:-https://pub-f57aad0e4caab95af1c52c46175ca7a6.r2.dev}
+    ports:
+      - "8085:8085"
+    volumes:
+      - adora_uploads:/app/uploads
+    networks:
+      - adora_net
+
+  # Frontend Service (React SPA served by Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: adora_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - adora_net
+
+volumes:
+  pgdata:
+    driver: local
+  adora_uploads:
+    driver: local
+
+networks:
+  adora_net:
+    driver: bridge

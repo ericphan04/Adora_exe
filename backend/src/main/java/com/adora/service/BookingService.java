@@ -262,7 +262,7 @@ public class BookingService {
                                 .avatarUrl(entity.getRenter().getAvatarUrl())
                                 .companyName(entity.getRenter().getCompanyName())
                                 .build() : null)
-                .billboard(billboardService.mapToDto(entity.getBillboard()))
+                .billboard(billboardService.mapToLightDto(entity.getBillboard()))
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
                 .totalPrice(entity.getTotalPrice())

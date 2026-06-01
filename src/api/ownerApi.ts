@@ -48,6 +48,12 @@ const ownerApi = {
   addBillboardImage: (id: number, data: { imageUrl: string; isThumbnail: boolean }): Promise<ApiResponse<BillboardDto>> => {
     return axiosClient.post(`/api/owner/billboards/${id}/images`, data);
   },
+  deleteBillboardImage: (billboardId: number, imageId: number): Promise<ApiResponse<BillboardDto>> => {
+    return axiosClient.delete(`/api/owner/billboards/${billboardId}/images/${imageId}`);
+  },
+  setBillboardThumbnail: (billboardId: number, imageId: number): Promise<ApiResponse<BillboardDto>> => {
+    return axiosClient.put(`/api/owner/billboards/${billboardId}/images/${imageId}/thumbnail`);
+  },
   getBookings: (): Promise<ApiResponse<BookingDto[]>> => {
     return axiosClient.get('/api/owner/bookings');
   },

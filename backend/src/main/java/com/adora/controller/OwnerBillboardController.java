@@ -80,6 +80,32 @@ public class OwnerBillboardController {
                 .build());
     }
 
+    @DeleteMapping("/{id}/images/{imageId}")
+    public ResponseEntity<ApiResponse<BillboardDto>> deleteBillboardImage(
+            @PathVariable Long id,
+            @PathVariable Long imageId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        BillboardDto billboard = billboardService.deleteImage(id, imageId, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.<BillboardDto>builder()
+                .success(true)
+                .message("Image deleted successfully")
+                .data(billboard)
+                .build());
+    }
+
+    @PutMapping("/{id}/images/{imageId}/thumbnail")
+    public ResponseEntity<ApiResponse<BillboardDto>> setBillboardThumbnail(
+            @PathVariable Long id,
+            @PathVariable Long imageId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        BillboardDto billboard = billboardService.setThumbnail(id, imageId, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.<BillboardDto>builder()
+                .success(true)
+                .message("Thumbnail set successfully")
+                .data(billboard)
+                .build());
+    }
+
     @PostMapping("/{id}/availability")
     public ResponseEntity<ApiResponse<BillboardDto>> setBillboardAvailability(
             @PathVariable Long id,

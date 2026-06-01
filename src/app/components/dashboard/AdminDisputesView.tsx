@@ -41,17 +41,17 @@ const priorityStyle: Record<
 > = {
   high: {
     label: "Khẩn cấp",
-    className: "bg-red-50 text-red-700 border-red-200",
+    className: "bg-red-500/10 text-red-500 border-red-500/20",
     dot: "bg-red-500",
   },
   medium: {
     label: "Trung bình",
-    className: "bg-amber-50 text-amber-700 border-amber-200",
+    className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
     dot: "bg-amber-500",
   },
   low: {
     label: "Thấp",
-    className: "bg-slate-50 text-slate-600 border-slate-200",
+    className: "bg-slate-500/10 text-slate-500 border-slate-500/20",
     dot: "bg-slate-400",
   },
 };
@@ -61,19 +61,19 @@ const statusColumns: { status: ReportStatus; title: string; icon: React.ReactNod
     status: "PENDING",
     title: "Chờ xử lý",
     icon: <Clock className="w-4 h-4" />,
-    color: "border-amber-200 bg-amber-50/50",
+    color: "border-amber-500/20 bg-amber-500/[0.04]",
   },
   {
     status: "RESOLVED",
     title: "Đã giải quyết",
     icon: <CheckCircle2 className="w-4 h-4" />,
-    color: "border-emerald-200 bg-emerald-50/50",
+    color: "border-emerald-500/20 bg-emerald-500/[0.04]",
   },
   {
     status: "REJECTED",
     title: "Đã bác bỏ",
     icon: <XCircle className="w-4 h-4" />,
-    color: "border-slate-200 bg-slate-50/50",
+    color: "border-slate-500/20 bg-slate-500/[0.04]",
   },
 ];
 
@@ -128,67 +128,71 @@ export function AdminDisputesView({
           {
             label: "Chờ xử lý",
             value: stats.pending,
-            icon: <Clock className="w-5 h-5 text-amber-600" />,
-            bg: "from-amber-50 to-orange-50 border-amber-100",
+            icon: <Clock className="w-5 h-5 text-amber-500" />,
+            bg: "bg-card border-border",
+            iconBg: "bg-amber-500/10",
           },
           {
             label: "Khẩn cấp",
             value: stats.high,
-            icon: <AlertTriangle className="w-5 h-5 text-red-600" />,
-            bg: "from-red-50 to-rose-50 border-red-100",
+            icon: <AlertTriangle className="w-5 h-5 text-red-500" />,
+            bg: "bg-card border-border",
+            iconBg: "bg-red-500/10",
           },
           {
             label: "Đã giải quyết",
             value: stats.resolved,
-            icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" />,
-            bg: "from-emerald-50 to-green-50 border-emerald-100",
+            icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
+            bg: "bg-card border-border",
+            iconBg: "bg-emerald-500/10",
           },
           {
             label: "Đã bác bỏ",
             value: stats.rejected,
             icon: <XCircle className="w-5 h-5 text-slate-500" />,
-            bg: "from-slate-50 to-gray-50 border-slate-200",
+            bg: "bg-card border-border",
+            iconBg: "bg-slate-500/10",
           },
         ].map((s) => (
           <div
             key={s.label}
-            className={`rounded-xl border bg-gradient-to-br ${s.bg} p-4 flex items-center gap-4`}
+            className={`rounded-xl border ${s.bg} p-4 flex items-center gap-4`}
           >
-            <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center">
+            <div className={`w-11 h-11 rounded-xl ${s.iconBg} flex items-center justify-center shrink-0`}>
               {s.icon}
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#1E293B]">{s.value}</p>
-              <p className="text-xs text-[#6B7A8D] font-medium">{s.label}</p>
+              <p className="text-2xl font-bold text-foreground leading-none mb-1">{s.value}</p>
+              <p className="text-xs text-muted-foreground font-medium">{s.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-[#E3E8EF] p-4 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 border border-[#E3E8EF] rounded-lg px-3 py-2 bg-slate-50 flex-1 min-w-[200px] max-w-md">
-          <Search className="w-4 h-4 text-[#6B7A8D]" />
+      <div className="bg-card rounded-xl border border-border/80 p-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2 bg-surface/30 flex-1 min-w-[200px] max-w-md">
+          <Search className="w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Tìm theo ID, lý do, người gửi..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            className="bg-transparent border-none outline-none text-sm w-full"
+            className="bg-transparent border-none outline-none text-sm w-full text-foreground placeholder:text-muted-foreground"
           />
         </div>
-        <div className="flex items-center gap-2 border border-[#E3E8EF] rounded-lg px-3 py-2 bg-slate-50">
-          <Filter className="w-4 h-4 text-[#6B7A8D]" />
+        <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2 bg-surface/30">
+          <Filter className="w-4 h-4 text-muted-foreground" />
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-            className="bg-transparent border-none outline-none text-sm text-[#1D4ED8] font-medium cursor-pointer"
+            className="bg-transparent border-none outline-none text-sm text-primary font-medium cursor-pointer"
           >
-            <option value="">Tất cả loại</option>
-            <option value="BILLBOARD">Bảng QC</option>
-            <option value="USER">Người dùng</option>
+            <option className="bg-card text-foreground" value="">Tất cả loại</option>
+            <option className="bg-card text-foreground" value="BILLBOARD">Bảng QC</option>
+            <option className="bg-card text-foreground" value="USER">Người dùng</option>
           </select>
         </div>
-        <div className="flex rounded-lg border border-[#E3E8EF] overflow-hidden ml-auto">
+        <div className="flex rounded-lg border border-border overflow-hidden ml-auto">
           {(["board", "list"] as const).map((m) => (
             <button
               key={m}
@@ -196,8 +200,8 @@ export function AdminDisputesView({
               onClick={() => setViewMode(m)}
               className={`px-3 py-2 text-xs font-semibold cursor-pointer ${
                 viewMode === m
-                  ? "bg-[#1D4ED8] text-white"
-                  : "bg-white text-[#6B7A8D] hover:bg-slate-50"
+                  ? "bg-primary text-white"
+                  : "bg-card text-muted-foreground hover:bg-surface/50"
               }`}
             >
               {m === "board" ? "Kanban" : "Danh sách"}
@@ -216,17 +220,17 @@ export function AdminDisputesView({
                 className={`rounded-xl border-2 ${col.color} p-4 min-h-[320px]`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-sm font-bold text-[#1E293B]">
+                  <div className="flex items-center gap-2 text-sm font-bold text-foreground">
                     {col.icon}
                     {col.title}
                   </div>
-                  <span className="text-xs font-bold bg-white px-2 py-0.5 rounded-full border border-[#E3E8EF]">
+                  <span className="text-xs font-bold bg-card px-2 py-0.5 rounded-full border border-border/80">
                     {items.length}
                   </span>
                 </div>
                 <div className="space-y-3">
                   {items.length === 0 ? (
-                    <p className="text-xs text-[#6B7A8D] text-center py-8">
+                    <p className="text-xs text-muted-foreground text-center py-8">
                       Không có khiếu nại
                     </p>
                   ) : (
@@ -235,14 +239,14 @@ export function AdminDisputesView({
                         key={d.id}
                         type="button"
                         onClick={() => setSelectedId(d.id)}
-                        className={`w-full text-left bg-white rounded-lg border p-4 shadow-sm hover:shadow-md hover:border-[#1D4ED8]/40 transition-all cursor-pointer ${
+                        className={`w-full text-left bg-card rounded-lg border p-4 shadow-sm hover:shadow-md hover:border-primary/40 transition-all cursor-pointer ${
                           selected?.id === d.id
-                            ? "border-[#1D4ED8] ring-2 ring-[#1D4ED8]/20"
-                            : "border-[#E3E8EF]"
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-border/80"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="text-xs font-bold text-[#1D4ED8]">
+                          <span className="text-xs font-bold text-primary">
                             #{d.id}
                           </span>
                           <span
@@ -251,10 +255,10 @@ export function AdminDisputesView({
                             {priorityStyle[d.priority].label}
                           </span>
                         </div>
-                        <p className="text-sm text-[#1E293B] line-clamp-2 mb-2">
+                        <p className="text-sm text-foreground line-clamp-2 mb-2">
                           {d.reason}
                         </p>
-                        <div className="flex items-center gap-2 text-[10px] text-[#6B7A8D]">
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                           {d.targetType === "BILLBOARD" ? (
                             <Monitor className="w-3 h-3" />
                           ) : (
@@ -262,11 +266,11 @@ export function AdminDisputesView({
                           )}
                           <span>{d.targetType} · ID {d.targetId}</span>
                         </div>
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
-                          <span className="text-[10px] text-[#6B7A8D] truncate">
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
+                          <span className="text-[10px] text-muted-foreground truncate">
                             {d.reporter?.fullName ?? "Ẩn danh"}
                           </span>
-                          <span className="flex items-center gap-1 text-[10px] text-[#6B7A8D]">
+                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                             <MessageSquare className="w-3 h-3" />
                             {d.messages}
                           </span>
@@ -280,9 +284,9 @@ export function AdminDisputesView({
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-[#E3E8EF] divide-y divide-[#E3E8EF]">
+        <div className="bg-card rounded-xl border border-border/80 divide-y divide-border">
           {filtered.length === 0 ? (
-            <p className="text-center py-12 text-[#6B7A8D] text-sm">
+            <p className="text-center py-12 text-muted-foreground text-sm">
               Không tìm thấy khiếu nại phù hợp.
             </p>
           ) : (
@@ -291,20 +295,20 @@ export function AdminDisputesView({
                 key={d.id}
                 type="button"
                 onClick={() => setSelectedId(d.id)}
-                className="w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-50 text-left cursor-pointer"
+                className="w-full flex items-center gap-4 px-6 py-4 hover:bg-surface/30 text-left cursor-pointer"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-sm text-[#1D4ED8]">#{d.id}</span>
+                    <span className="font-bold text-sm text-primary">#{d.id}</span>
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${priorityStyle[d.priority].className}`}
                     >
                       {priorityStyle[d.priority].label}
                     </span>
                   </div>
-                  <p className="text-sm text-[#1E293B] truncate">{d.reason}</p>
+                  <p className="text-sm text-foreground truncate">{d.reason}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#6B7A8D] shrink-0" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
               </button>
             ))
           )}
@@ -312,17 +316,17 @@ export function AdminDisputesView({
       )}
 
       {selected && (
-        <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden shadow-sm">
-          <div className="px-6 py-4 border-b border-[#E3E8EF] bg-gradient-to-r from-[#F0F9FF] to-white flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-card rounded-xl border border-border/80 overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/80 bg-gradient-to-r from-primary-light/50 to-card flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#1D4ED8] text-white flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center">
                 <Scale className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-[#1E293B]">
+                <h3 className="font-bold text-foreground">
                   Chi tiết khiếu nại #{selected.id}
                 </h3>
-                <p className="text-xs text-[#6B7A8D]">
+                <p className="text-xs text-muted-foreground">
                   Gửi bởi {selected.reporter?.fullName ?? "—"} ·{" "}
                   {selected.createdAt}
                 </p>
@@ -350,15 +354,15 @@ export function AdminDisputesView({
           <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
               <div>
-                <p className="text-xs font-bold text-[#6B7A8D] uppercase mb-2">
+                <p className="text-xs font-bold text-muted-foreground uppercase mb-2">
                   Nội dung khiếu nại
                 </p>
-                <p className="text-sm text-[#1E293B] leading-relaxed bg-slate-50 rounded-lg p-4 border border-[#E3E8EF]">
+                <p className="text-sm text-foreground leading-relaxed bg-surface/30 rounded-lg p-4 border border-border/80">
                   {selected.reason}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold text-[#6B7A8D] uppercase mb-2">
+                <p className="text-xs font-bold text-muted-foreground uppercase mb-2">
                   Dòng thời gian
                 </p>
                 <ul className="space-y-3">
@@ -381,8 +385,8 @@ export function AdminDisputesView({
                         className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${priorityStyle[selected.priority].dot}`}
                       />
                       <div>
-                        <p className="text-[#1E293B]">{ev.text}</p>
-                        <p className="text-[10px] text-[#6B7A8D]">{ev.time}</p>
+                        <p className="text-foreground">{ev.text}</p>
+                        <p className="text-[10px] text-muted-foreground">{ev.time}</p>
                       </div>
                     </li>
                   ))}
@@ -390,25 +394,25 @@ export function AdminDisputesView({
               </div>
             </div>
             <div className="space-y-3 text-sm">
-              <div className="rounded-lg border border-[#E3E8EF] p-4">
-                <p className="text-xs text-[#6B7A8D] mb-1">Người xử lý</p>
-                <p className="font-semibold text-[#1E293B]">{selected.assignee}</p>
+              <div className="rounded-lg border border-border/80 p-4 bg-surface/30">
+                <p className="text-xs text-muted-foreground mb-1">Người xử lý</p>
+                <p className="font-semibold text-foreground">{selected.assignee}</p>
               </div>
-              <div className="rounded-lg border border-[#E3E8EF] p-4">
-                <p className="text-xs text-[#6B7A8D] mb-1">Đối tượng</p>
-                <p className="font-semibold text-[#1E293B]">
+              <div className="rounded-lg border border-border/80 p-4 bg-surface/30">
+                <p className="text-xs text-muted-foreground mb-1">Đối tượng</p>
+                <p className="font-semibold text-foreground">
                   {selected.targetType} #{selected.targetId}
                 </p>
               </div>
-              <div className="rounded-lg border border-[#E3E8EF] p-4">
-                <p className="text-xs text-[#6B7A8D] mb-1">Trạng thái</p>
+              <div className="rounded-lg border border-border/80 p-4 bg-surface/30">
+                <p className="text-xs text-muted-foreground mb-1">Trạng thái</p>
                 <span
-                  className={`inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                  className={`inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
                     selected.status === "PENDING"
-                      ? "bg-amber-50 text-amber-700"
+                      ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
                       : selected.status === "RESOLVED"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-slate-100 text-slate-600"
+                        ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                        : "bg-slate-500/10 text-slate-500 border-slate-500/20"
                   }`}
                 >
                   {selected.status}

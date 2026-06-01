@@ -61,6 +61,28 @@ public class UserService {
         return convertToUserDto(updatedUser);
     }
 
+    @Transactional
+    public UserDto updateProfile(Long id, com.adora.dto.UpdateProfileRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getCompanyName() != null) {
+            user.setCompanyName(request.getCompanyName());
+        }
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+        
+        User updatedUser = userRepository.save(user);
+        return convertToUserDto(updatedUser);
+    }
+
     private UserDto convertToUserDto(User user) {
         return UserDto.builder()
                 .id(user.getId())

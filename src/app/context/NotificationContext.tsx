@@ -34,12 +34,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (!user) return;
     setLoading(true);
     try {
-      const res = await notificationApi.getAll();
+      const [res, unreadRes] = await Promise.all([
+        notificationApi.getAll(),
+        notificationApi.getUnreadCount()
+      ]);
+      
       if (res.success && res.data) {
         setNotifications(res.data);
       }
       
-      const unreadRes = await notificationApi.getUnreadCount();
       if (unreadRes.success && unreadRes.data !== undefined) {
         setUnreadCount(unreadRes.data);
       }
@@ -159,6 +162,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             
             // 3. Trigger Toast alert
             triggerToastAlert(rawNotif);
+
+            // 4. Dispatch a custom window event to trigger auto-reload in listening components
+            window.dispatchEvent(new CustomEvent("notification-received", { detail: rawNotif }));
           } catch (err) {
             console.error("Failed to parse websocket notification body", err);
           }

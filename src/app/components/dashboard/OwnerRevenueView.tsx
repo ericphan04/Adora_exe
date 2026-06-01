@@ -23,6 +23,7 @@ import { KpiCard } from "../KpiCard";
 import { OwnerDashboardDto } from "../../../types/dashboard";
 import { BillboardDto } from "../../../types/billboard";
 import { BookingDto } from "../../../types/booking";
+import { useThemeContext } from "../../context/ThemeContext";
 
 interface OwnerRevenueViewProps {
   dashboardData: OwnerDashboardDto;
@@ -40,6 +41,7 @@ export function OwnerRevenueView({
   billboards,
   bookings,
 }: OwnerRevenueViewProps) {
+  const { resolvedTheme } = useThemeContext();
   const [range, setRange] = useState<"month" | "quarter">("month");
 
   const activeDate = useMemo(() => {
@@ -192,7 +194,7 @@ export function OwnerRevenueView({
           </div>
           <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
             <p className="text-[10px] text-blue-200 uppercase">Tỷ lệ lấp đầy</p>
-            <p className="text-lg font-bold mt-0.5">{dashboardData.fillRate}%</p>
+            <p className="text-lg font-bold mt-0.5">{Number(dashboardData.fillRate || 0).toFixed(2)}%</p>
           </div>
         </div>
       </div>
@@ -229,20 +231,20 @@ export function OwnerRevenueView({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3 bg-white rounded-xl border border-[#E3E8EF] p-6 shadow-sm">
-          <h3 className="text-[#1D4ED8] font-semibold mb-1">Xu hướng doanh thu</h3>
-          <p className="text-xs text-[#6B7A8D] mb-5">6 tháng gần nhất</p>
+        <div className="lg:col-span-3 bg-card rounded-xl border border-border p-6 shadow-sm">
+          <h3 className="text-primary font-semibold mb-1">Xu hướng doanh thu</h3>
+          <p className="text-xs text-muted-foreground mb-5">6 tháng gần nhất</p>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={dashboardData.revenueTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EF" />
+              <CartesianGrid strokeDasharray="3 3" stroke={resolvedTheme === "dark" ? "#30363D" : "#E3E8EF"} />
               <XAxis
                 dataKey="month"
-                tick={{ fill: "#6B7A8D", fontSize: 12 }}
+                tick={{ fill: resolvedTheme === "dark" ? "#8B949E" : "#6B7A8D", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "#6B7A8D", fontSize: 12 }}
+                tick={{ fill: resolvedTheme === "dark" ? "#8B949E" : "#6B7A8D", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}Tr`}
@@ -256,62 +258,62 @@ export function OwnerRevenueView({
               <Line
                 type="monotone"
                 dataKey="revenue"
-                stroke="#1D4ED8"
+                stroke={resolvedTheme === "dark" ? "#60A5FA" : "#1D4ED8"}
                 strokeWidth={3}
-                dot={{ fill: "#1D4ED8", r: 5, strokeWidth: 2, stroke: "#fff" }}
+                dot={{ fill: resolvedTheme === "dark" ? "#60A5FA" : "#1D4ED8", r: 5, strokeWidth: 2, stroke: resolvedTheme === "dark" ? "#161B22" : "#fff" }}
                 activeDot={{ r: 7 }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[#E3E8EF] p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-card rounded-xl border border-border p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <Monitor className="w-4 h-4 text-[#1D4ED8]" />
-            <h3 className="text-[#1D4ED8] font-semibold">Theo bảng QC</h3>
+            <Monitor className="w-4 h-4 text-primary" />
+            <h3 className="text-primary font-semibold">Theo bảng QC</h3>
           </div>
           {revenueByBillboard.length === 0 ? (
-            <p className="text-sm text-[#6B7A8D] text-center py-10">
+            <p className="text-sm text-muted-foreground text-center py-10">
               Chưa có doanh thu từ booking đã thanh toán.
             </p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={revenueByBillboard} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EF" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={resolvedTheme === "dark" ? "#30363D" : "#E3E8EF"} horizontal={false} />
                 <XAxis type="number" hide />
                 <YAxis
                   type="category"
                   dataKey="name"
                   width={100}
-                  tick={{ fill: "#6B7A8D", fontSize: 10 }}
+                  tick={{ fill: resolvedTheme === "dark" ? "#8B949E" : "#6B7A8D", fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip formatter={(v: number) => formatVnd(v)} />
-                <Bar dataKey="revenue" fill="#06B6D4" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="revenue" fill={resolvedTheme === "dark" ? "#22D3EE" : "#06B6D4"} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
-          <p className="text-[10px] text-[#6B7A8D] mt-2">
+          <p className="text-[10px] text-muted-foreground mt-2">
             {billboards.length} bảng đang quản lý
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-[#E3E8EF] flex justify-between items-center">
+      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-border flex justify-between items-center">
           <div>
-            <h3 className="text-[#1D4ED8] font-semibold">Lịch sử chi trả</h3>
-            <p className="text-xs text-[#6B7A8D]">Sau khi trừ phí sàn 5%</p>
+            <h3 className="text-primary font-semibold">Lịch sử chi trả</h3>
+            <p className="text-xs text-muted-foreground">Sau khi trừ phí sàn 5%</p>
           </div>
-          <span className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full font-semibold border border-emerald-100">
+          <span className="text-xs text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2.5 py-1 rounded-full font-semibold border border-emerald-100 dark:border-emerald-500/20">
             VNPay · T+3
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50 text-[#6B7A8D] text-xs uppercase">
+              <tr className="bg-muted/40 text-muted-foreground text-xs uppercase">
                 <th className="px-6 py-3 text-left">Mã chi trả</th>
                 <th className="px-6 py-3 text-left">Chiến dịch</th>
                 <th className="px-6 py-3 text-right">Gross</th>
@@ -320,20 +322,20 @@ export function OwnerRevenueView({
                 <th className="px-6 py-3 text-left">Trạng thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E3E8EF]">
+            <tbody className="divide-y divide-border">
               {payoutHistory.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-[#6B7A8D]">
+                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                     Chưa có khoản chi trả nào.
                   </td>
                 </tr>
               ) : (
                 payoutHistory.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/80">
-                    <td className="px-6 py-3 font-mono text-xs text-[#1D4ED8]">
+                  <tr key={p.id} className="hover:bg-muted/30">
+                    <td className="px-6 py-3 font-mono text-xs text-primary">
                       {p.ref}
                     </td>
-                    <td className="px-6 py-3 font-medium text-[#1E293B] max-w-[200px] truncate">
+                    <td className="px-6 py-3 font-medium text-foreground max-w-[200px] truncate">
                       {p.campaign}
                     </td>
                     <td className="px-6 py-3 text-right">
@@ -345,11 +347,11 @@ export function OwnerRevenueView({
                         {p.fee.toLocaleString("vi-VN")}₫
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-right font-bold text-emerald-600">
+                    <td className="px-6 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
                       {p.net.toLocaleString("vi-VN")}₫
                     </td>
                     <td className="px-6 py-3">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
                         {p.status}
                       </span>
                     </td>

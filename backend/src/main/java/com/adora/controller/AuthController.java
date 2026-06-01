@@ -98,4 +98,15 @@ public class AuthController {
         ApiResponse<UserDto> response = ApiResponse.success("Get current user successfully", currentUser);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserDto>> updateProfile(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody com.adora.dto.UpdateProfileRequest request) {
+        if (userPrincipal == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthorized"));
+        }
+        UserDto updatedUser = userService.updateProfile(userPrincipal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success("Update profile successfully", updatedUser));
+    }
 }

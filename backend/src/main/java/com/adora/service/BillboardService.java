@@ -55,14 +55,14 @@ public class BillboardService {
         List<Billboard> billboards = billboardRepository.searchBillboards(
                 BillboardStatus.APPROVED, categoryId, lowerCity, lowerDistrict, minPrice, maxPrice, featured, formattedKeyword, lowerFeature
         );
-        return billboards.stream().map(this::mapToDto).collect(Collectors.toList());
+        return billboards.stream().map(this::mapToLightDto).collect(Collectors.toList());
     }
 
     public List<BillboardDto> getFeaturedBillboards() {
         List<Billboard> billboards = billboardRepository.searchBillboards(
                 BillboardStatus.APPROVED, null, null, null, null, null, true, null, null
         );
-        return billboards.stream().map(this::mapToDto).collect(Collectors.toList());
+        return billboards.stream().map(this::mapToLightDto).collect(Collectors.toList());
     }
 
     public BillboardDto getBillboardById(Long id) {
@@ -73,13 +73,13 @@ public class BillboardService {
 
     public List<BillboardDto> getBillboardsByOwner(Long ownerId) {
         List<Billboard> billboards = billboardRepository.findByOwnerId(ownerId);
-        return billboards.stream().map(this::mapToDto).collect(Collectors.toList());
+        return billboards.stream().map(this::mapToLightDto).collect(Collectors.toList());
     }
 
     public List<BillboardDto> getAdminBillboards(BillboardStatus status) {
         List<Billboard> billboards = status != null ? 
                 billboardRepository.findByStatus(status) : billboardRepository.findAll();
-        return billboards.stream().map(this::mapToDto).collect(Collectors.toList());
+        return billboards.stream().map(this::mapToLightDto).collect(Collectors.toList());
     }
 
     public BillboardDto createBillboard(CreateBillboardRequest request, Long ownerId) {
@@ -232,6 +232,59 @@ public class BillboardService {
         return mapToDto(billboard);
     }
 
+    public BillboardDto deleteImage(Long billboardId, Long imageId, Long ownerId) {
+        Billboard billboard = billboardRepository.findById(billboardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Billboard not found with id: " + billboardId));
+
+        if (!billboard.getOwner().getId().equals(ownerId)) {
+            throw new BadRequestException("You can only manage your own billboard images");
+        }
+
+        BillboardImage image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image not found with id: " + imageId));
+
+        if (!image.getBillboard().getId().equals(billboardId)) {
+            throw new BadRequestException("Image does not belong to this billboard");
+        }
+
+        boolean wasThumbnail = Boolean.TRUE.equals(image.getIsThumbnail());
+
+        billboard.removeImage(image);
+        imageRepository.delete(image);
+
+        // If we deleted the thumbnail, set the first remaining image as the thumbnail
+        if (wasThumbnail && !billboard.getImages().isEmpty()) {
+            BillboardImage firstImg = billboard.getImages().get(0);
+            firstImg.setIsThumbnail(true);
+            imageRepository.save(firstImg);
+        }
+
+        return mapToDto(billboardRepository.save(billboard));
+    }
+
+    public BillboardDto setThumbnail(Long billboardId, Long imageId, Long ownerId) {
+        Billboard billboard = billboardRepository.findById(billboardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Billboard not found with id: " + billboardId));
+
+        if (!billboard.getOwner().getId().equals(ownerId)) {
+            throw new BadRequestException("You can only manage your own billboard images");
+        }
+
+        BillboardImage targetImage = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image not found with id: " + imageId));
+
+        if (!targetImage.getBillboard().getId().equals(billboardId)) {
+            throw new BadRequestException("Image does not belong to this billboard");
+        }
+
+        for (BillboardImage img : billboard.getImages()) {
+            img.setIsThumbnail(img.getId().equals(imageId));
+            imageRepository.save(img);
+        }
+
+        return mapToDto(billboardRepository.save(billboard));
+    }
+
     public BillboardDto setAvailability(Long id, SetAvailabilityRequest request, Long ownerId) {
         Billboard billboard = billboardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Billboard not found with id: " + id));
@@ -308,6 +361,16 @@ public class BillboardService {
                             .imageUrl(img.getImageUrl())
                             .isThumbnail(img.getIsThumbnail())
                             .build())
+                    .sorted((a, b) -> {
+                        boolean aThumb = a.getIsThumbnail() != null && a.getIsThumbnail();
+                        boolean bThumb = b.getIsThumbnail() != null && b.getIsThumbnail();
+                        if (aThumb && !bThumb) return -1;
+                        if (!aThumb && bThumb) return 1;
+                        if (a.getId() != null && b.getId() != null) {
+                            return a.getId().compareTo(b.getId());
+                        }
+                        return 0;
+                    })
                     .collect(Collectors.toList());
         }
 
@@ -367,4 +430,73 @@ public class BillboardService {
                 .availabilities(availDtos)
                 .build();
     }
+
+    public BillboardDto mapToLightDto(Billboard entity) {
+        if (entity == null) return null;
+
+        UserDto ownerDto = null;
+        if (entity.getOwner() != null) {
+            ownerDto = UserDto.builder()
+                    .id(entity.getOwner().getId())
+                    .fullName(entity.getOwner().getFullName())
+                    .build();
+        }
+
+        List<BillboardImageDto> imgDtos = new ArrayList<>();
+        if (entity.getImages() != null) {
+            imgDtos = entity.getImages().stream()
+                    .map(img -> BillboardImageDto.builder()
+                            .id(img.getId())
+                            .imageUrl(img.getImageUrl())
+                            .isThumbnail(img.getIsThumbnail())
+                            .build())
+                    .sorted((a, b) -> {
+                        boolean aThumb = a.getIsThumbnail() != null && a.getIsThumbnail();
+                        boolean bThumb = b.getIsThumbnail() != null && b.getIsThumbnail();
+                        if (aThumb && !bThumb) return -1;
+                        if (!aThumb && bThumb) return 1;
+                        if (a.getId() != null && b.getId() != null) {
+                            return a.getId().compareTo(b.getId());
+                        }
+                        return 0;
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        return BillboardDto.builder()
+                .id(entity.getId())
+                .owner(ownerDto)
+                .category(null)
+                .title(entity.getTitle())
+                .description(entity.getDescription())
+                .address(entity.getAddress())
+                .formattedAddress(entity.getFormattedAddress())
+                .addressDetail(entity.getAddressDetail())
+                .ward(entity.getWard())
+                .city(entity.getCity())
+                .district(entity.getDistrict())
+                .latitude(entity.getLatitude())
+                .longitude(entity.getLongitude())
+                .demoVideoUrl(entity.getDemoVideoUrl())
+                .width(entity.getWidth())
+                .height(entity.getHeight())
+                .resolution(entity.getResolution())
+                .brightness(entity.getBrightness())
+                .refreshRate(entity.getRefreshRate())
+                .screenType(entity.getScreenType())
+                .operatingHours(entity.getOperatingHours())
+                .pricePerDay(entity.getPricePerDay())
+                .pricePerMonth(entity.getPricePerMonth())
+                .locationSurcharge(entity.getLocationSurcharge())
+                .status(entity.getStatus())
+                .dailyViews(entity.getDailyViews())
+                .isFeatured(entity.getIsFeatured())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .images(imgDtos)
+                .features(new ArrayList<>())
+                .availabilities(new ArrayList<>())
+                .build();
+    }
 }
+

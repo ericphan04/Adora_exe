@@ -13,6 +13,7 @@ import React, {
 import { createPortal } from "react-dom";
 // @ts-ignore – alias in vite.config.ts points to dist/vietmap-gl.js
 import vietmapgl from "@vietmap/vietmap-gl-js";
+import { useThemeContext } from "@/app/context/ThemeContext";
 // Use VietmapGL's own CSS to ensure correct marker positioning and map controls.
 // We use a relative path here to bypass Vite's alias resolution.
 import "../../../node_modules/@vietmap/vietmap-gl-js/dist/vietmap-gl.css";
@@ -59,7 +60,7 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [styleToUse, setStyleToUse] = useState<any>(null);
+  const { resolvedTheme } = useThemeContext();
 
   useImperativeHandle(ref, () => mapInstance, [mapInstance]);
 
@@ -67,7 +68,10 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   // has CORS enabled (*) for both style JSON and vector pbf tiles.
   // Using direct URLs prevents proxy-induced corruption of vector tiles.
   const getStyleUrl = (): string => {
-    if (styles?.light) return styles.light;
+    const isDark = resolvedTheme === "dark";
+
+    if (isDark && styles?.dark) return styles.dark;
+    if (!isDark && styles?.light) return styles.light;
 
     const key = (import.meta.env.VITE_VIETMAP_TILEMAP_API_KEY ?? "").trim();
     const validKey =
@@ -76,10 +80,14 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       !key.toUpperCase().includes("YOUR_");
 
     if (validKey) {
-      return `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${key}`;
+      return isDark
+        ? `https://maps.vietmap.vn/api/maps/dark/styles.json?apikey=${key}`
+        : `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${key}`;
     }
     // Fallback when no tile key is configured
-    return "https://tiles.openfreemap.org/styles/bright";
+    return isDark
+      ? "https://tiles.openfreemap.org/styles/dark"
+      : "https://tiles.openfreemap.org/styles/bright";
   };
 
   // ── Initialize Map ─────────────────────────────────────────────────────────
@@ -112,6 +120,13 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Sync map style when theme changes ──────────────────────────────────────
+  useEffect(() => {
+    if (!mapInstance || !isLoaded) return;
+    const style = getStyleUrl();
+    mapInstance.setStyle(style);
+  }, [mapInstance, isLoaded, resolvedTheme, styles]);
 
   // ── Sync viewport props ────────────────────────────────────────────────────
   useEffect(() => {

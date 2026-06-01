@@ -22,6 +22,7 @@ public class DashboardService {
     private final ReportRepository reportRepository;
     private final BookingService bookingService;
     private final BillboardService billboardService;
+    private final BillboardAvailabilityRepository availabilityRepository;
 
     public DashboardService(UserRepository userRepository,
                             BillboardRepository billboardRepository,
@@ -29,7 +30,8 @@ public class DashboardService {
                             PaymentRepository paymentRepository,
                             ReportRepository reportRepository,
                             BookingService bookingService,
-                            BillboardService billboardService) {
+                            BillboardService billboardService,
+                            BillboardAvailabilityRepository availabilityRepository) {
         this.userRepository = userRepository;
         this.billboardRepository = billboardRepository;
         this.bookingRepository = bookingRepository;
@@ -37,31 +39,26 @@ public class DashboardService {
         this.reportRepository = reportRepository;
         this.bookingService = bookingService;
         this.billboardService = billboardService;
+        this.availabilityRepository = availabilityRepository;
     }
 
     public RenterDashboardResponse getRenterDashboard(Long renterId) {
-        List<Booking> bookings = bookingRepository.findByRenterId(renterId);
-
-        long activeCampaigns = bookings.stream()
-                .filter(b -> b.getStatus() == BookingStatus.PAID || b.getStatus() == BookingStatus.RUNNING)
-                .count();
+        long activeCampaigns = bookingRepository.countByRenterIdAndStatusIn(
+                renterId, List.of(BookingStatus.PAID, BookingStatus.RUNNING));
 
         BigDecimal totalSpending = paymentRepository.sumSpendingByRenterId(renterId);
 
-        List<BookingDto> upcomingBookings = bookings.stream()
-                .filter(b -> (b.getStatus() == BookingStatus.ACCEPTED || b.getStatus() == BookingStatus.PAID)
-                        && b.getStartDate().isAfter(LocalDate.now()))
+        List<BookingDto> upcomingBookings = bookingRepository.findByRenterIdAndStatusInAndStartDateAfter(
+                renterId, List.of(BookingStatus.ACCEPTED, BookingStatus.PAID), LocalDate.now()).stream()
                 .map(bookingService::mapToDto)
                 .collect(Collectors.toList());
 
         // For savedBillboards, fallback to returning 2 featured billboards
-        List<BillboardDto> savedBillboards = billboardService.getFeaturedBillboards().stream()
-                .limit(2)
+        List<BillboardDto> savedBillboards = billboardRepository.findFirst2ByStatusAndIsFeatured(BillboardStatus.APPROVED, true).stream()
+                .map(billboardService::mapToLightDto)
                 .collect(Collectors.toList());
 
-        List<BookingDto> recentBookings = bookings.stream()
-                .sorted(Comparator.comparing(Booking::getCreatedAt).reversed())
-                .limit(5)
+        List<BookingDto> recentBookings = bookingRepository.findTop5ByRenterIdOrderByCreatedAtDesc(renterId).stream()
                 .map(bookingService::mapToDto)
                 .collect(Collectors.toList());
 
@@ -85,31 +82,18 @@ public class DashboardService {
     }
 
     public OwnerDashboardResponse getOwnerDashboard(Long ownerId) {
-        List<Billboard> billboards = billboardRepository.findByOwnerId(ownerId);
-        int totalBillboards = billboards.size();
+        int totalBillboards = (int) billboardRepository.countByOwnerId(ownerId);
 
-        // Calculate fill rate (ratio of booked slots in calendar)
-        long totalSlots = 0;
-        long bookedSlots = 0;
-        for (Billboard b : billboards) {
-            totalSlots += b.getAvailabilities().size();
-            bookedSlots += b.getAvailabilities().stream()
-                    .filter(a -> a.getStatus() == AvailabilityStatus.BOOKED)
-                    .count();
-        }
+        // Calculate fill rate (ratio of booked slots in calendar) via optimized DB count queries
+        long totalSlots = availabilityRepository.countTotalSlotsByOwnerId(ownerId);
+        long bookedSlots = availabilityRepository.countBookedSlotsByOwnerId(ownerId);
         double fillRate = totalSlots > 0 ? ((double) bookedSlots / totalSlots) * 100 : 0.0;
 
         BigDecimal monthlyRevenue = paymentRepository.sumRevenueByOwnerId(ownerId);
 
-        List<Booking> ownerBookings = bookingRepository.findByBillboardOwnerId(ownerId);
-        long pendingRequests = ownerBookings.stream()
-                .filter(b -> b.getStatus() == BookingStatus.PENDING)
-                .count();
+        long pendingRequests = bookingRepository.countByBillboardOwnerIdAndStatus(ownerId, BookingStatus.PENDING);
 
-        List<BookingDto> recentBookingRequests = ownerBookings.stream()
-                .filter(b -> b.getStatus() == BookingStatus.PENDING)
-                .sorted(Comparator.comparing(Booking::getCreatedAt).reversed())
-                .limit(5)
+        List<BookingDto> recentBookingRequests = bookingRepository.findTop5ByBillboardOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, BookingStatus.PENDING).stream()
                 .map(bookingService::mapToDto)
                 .collect(Collectors.toList());
 
@@ -137,8 +121,8 @@ public class DashboardService {
         BigDecimal totalGMV = paymentRepository.sumAmountByStatus(PaymentStatus.SUCCESS);
         BigDecimal commissionRevenue = paymentRepository.sumCommissionByStatus(PaymentStatus.SUCCESS);
 
-        int pendingBillboards = billboardRepository.findByStatus(BillboardStatus.PENDING).size();
-        int pendingReports = reportRepository.findByStatus(ReportStatus.PENDING).size();
+        int pendingBillboards = (int) billboardRepository.countByStatus(BillboardStatus.PENDING);
+        int pendingReports = (int) reportRepository.countByStatus(ReportStatus.PENDING);
 
         // Construct mock charts for admin GMV and booking counts
         List<Map<String, Object>> gmvChart = List.of(

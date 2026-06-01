@@ -17,6 +17,13 @@ public interface BillboardRepository extends JpaRepository<Billboard, Long> {
 
     List<Billboard> findByStatus(BillboardStatus status);
 
+    List<Billboard> findFirst2ByStatusAndIsFeatured(BillboardStatus status, Boolean isFeatured);
+
+    long countByStatus(BillboardStatus status);
+
+    long countByOwnerId(Long ownerId);
+
+
     @Query("SELECT DISTINCT b FROM Billboard b " +
             "LEFT JOIN b.features f " +
             "WHERE (:status IS NULL OR b.status = :status) " +

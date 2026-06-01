@@ -10,6 +10,7 @@ import {
 } from "../../utils/availability";
 import ownerApi from "../../../api/ownerApi";
 import { notify, apiErrorMessage } from "../../utils/notify";
+import { useThemeContext } from "../../context/ThemeContext";
 
 interface OwnerAvailabilityViewProps {
   billboards: BillboardDto[];
@@ -24,6 +25,7 @@ export function OwnerAvailabilityView({
   isUsingFallback,
   onUpdated,
 }: OwnerAvailabilityViewProps) {
+  const { resolvedTheme } = useThemeContext();
   const today = getTodayParts();
   const [calendarYear, setCalendarYear] = useState(today.year);
   const [calendarMonth, setCalendarMonth] = useState(today.month);
@@ -114,8 +116,8 @@ export function OwnerAvailabilityView({
   if (billboards.length === 0) {
     return (
       <div className="p-8">
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-12 text-center">
-          <p className="text-[#6B7A8D] text-sm">
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-muted-foreground text-sm">
             Bạn chưa có bảng QC nào. Thêm bảng trong mục &quot;Bảng QC của tôi&quot;.
           </p>
         </div>
@@ -135,8 +137,8 @@ export function OwnerAvailabilityView({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[#E3E8EF] p-6">
-          <label className="text-xs font-semibold text-[#6B7A8D] block mb-2">
+        <div className="lg:col-span-2 bg-card rounded-xl border border-border p-6">
+          <label className="text-xs font-semibold text-muted-foreground block mb-2">
             Bảng quảng cáo
           </label>
           <select
@@ -146,7 +148,7 @@ export function OwnerAvailabilityView({
               setRangeStart(null);
               setRangeEnd(null);
             }}
-            className="w-full mb-6 px-3 py-2.5 border border-[#E3E8EF] rounded-lg text-sm cursor-pointer"
+            className="w-full mb-6 px-3 py-2.5 border border-border rounded-lg text-sm cursor-pointer bg-card text-foreground focus:outline-none focus:border-primary"
           >
             {billboards.map((b) => (
               <option key={b.id} value={b.id}>
@@ -166,8 +168,8 @@ export function OwnerAvailabilityView({
           />
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 space-y-4 h-fit">
-          <h3 className="font-semibold text-[#1D4ED8] flex items-center gap-2">
+        <div className="bg-card rounded-xl border border-border p-6 space-y-4 h-fit">
+          <h3 className="font-semibold text-primary flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             Thao tác
           </h3>
@@ -176,10 +178,10 @@ export function OwnerAvailabilityView({
             <button
               type="button"
               onClick={() => setBlockMode("BLOCKED")}
-              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-semibold cursor-pointer ${
+              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
                 blockMode === "BLOCKED"
-                  ? "border-red-300 bg-red-50 text-red-700"
-                  : "border-[#E3E8EF] text-[#6B7A8D]"
+                  ? "border-red-300 bg-red-50 text-red-700 dark:border-red-950/40 dark:bg-red-950/20 dark:text-red-400"
+                  : "border-border text-muted-foreground hover:bg-muted/55"
               }`}
             >
               <Lock className="w-4 h-4" />
@@ -188,10 +190,10 @@ export function OwnerAvailabilityView({
             <button
               type="button"
               onClick={() => setBlockMode("AVAILABLE")}
-              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-semibold cursor-pointer ${
+              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
                 blockMode === "AVAILABLE"
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                  : "border-[#E3E8EF] text-[#6B7A8D]"
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-950/40 dark:bg-emerald-950/20 dark:text-emerald-400"
+                  : "border-border text-muted-foreground hover:bg-muted/55"
               }`}
             >
               <Unlock className="w-4 h-4" />
@@ -200,7 +202,7 @@ export function OwnerAvailabilityView({
           </div>
 
           {rangeStart != null && rangeEnd != null && (
-            <p className="text-xs text-[#6B7A8D]">
+            <p className="text-xs text-muted-foreground">
               Khoảng: {rangeStart}/{calendarMonth}/{calendarYear} – {rangeEnd}/
               {calendarMonth}/{calendarYear}
             </p>
@@ -210,7 +212,7 @@ export function OwnerAvailabilityView({
             type="button"
             disabled={submitting || rangeStart == null || rangeEnd == null}
             onClick={handleApply}
-            className="w-full py-3 rounded-lg bg-[#1D4ED8] text-white text-sm font-bold hover:bg-[#1E40AF] disabled:opacity-50 cursor-pointer"
+            className="w-full py-3 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary-hover disabled:opacity-50 cursor-pointer transition-colors"
           >
             {submitting ? "Đang lưu..." : "Áp dụng lên lịch"}
           </button>

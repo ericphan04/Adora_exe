@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Mail, Lock, Eye, EyeOff, Monitor, Key, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Key, ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import authApi from "../../api/authApi";
 
@@ -182,7 +182,7 @@ export default function LoginPage() {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#06B6D4]/10 rounded-full blur-3xl" />
         <div className="relative z-10 text-center text-white max-w-md">
           <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center mx-auto mb-8">
-            <Monitor className="w-10 h-10 text-[#06B6D4]" />
+            <img src="/logo.png" className="w-12 h-12 object-contain rounded-lg" alt="ADORA logo" />
           </div>
           <h1 className="text-4xl mb-4" style={{ fontWeight: 800 }}>ADORA</h1>
           <p className="text-lg text-white/70 leading-relaxed">

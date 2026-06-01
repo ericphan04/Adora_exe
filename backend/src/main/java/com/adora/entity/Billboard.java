@@ -104,14 +104,17 @@ public class Billboard {
 
     @OneToMany(mappedBy = "billboard", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @org.hibernate.annotations.BatchSize(size = 25)
     private List<BillboardImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "billboard", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @org.hibernate.annotations.BatchSize(size = 25)
     private List<BillboardFeature> features = new ArrayList<>();
 
     @OneToMany(mappedBy = "billboard", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @org.hibernate.annotations.BatchSize(size = 25)
     private List<BillboardAvailability> availabilities = new ArrayList<>();
 
     public void addImage(BillboardImage image) {

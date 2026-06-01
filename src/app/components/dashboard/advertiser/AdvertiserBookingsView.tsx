@@ -134,23 +134,22 @@ export function AdvertiserBookingsView({
     {
       key: "code",
       label: "Mã đặt chỗ",
-      render: (v: string) => (
-        <span className="text-[#6B7A8D] font-mono text-xs">{v}</span>
-      ),
+      className: "font-mono text-xs text-muted-foreground",
+      render: (v: string) => <span>{v}</span>,
     },
     {
       key: "billboard",
       label: "Bảng QC",
-      render: (v: string) => (
-        <span className="font-medium text-[#1D4ED8]">{v}</span>
-      ),
+      className: "font-semibold text-primary",
+      render: (v: string) => <span>{v}</span>,
     },
-    { key: "location", label: "Vị trí" },
+    { key: "location", label: "Vị trí", className: "text-foreground" },
     {
       key: "time",
       label: "Thời gian",
+      className: "text-xs text-muted-foreground",
       render: (_: unknown, row: { startDate: string; endDate: string }) => (
-        <span className="text-xs">
+        <span>
           {row.startDate} – {row.endDate}
         </span>
       ),
@@ -166,9 +165,8 @@ export function AdvertiserBookingsView({
     {
       key: "payment",
       label: "Tổng tiền",
-      render: (v: string) => (
-        <span className="font-semibold text-[#1D4ED8]">{v}</span>
-      ),
+      className: "font-bold text-primary",
+      render: (v: string) => <span>{v}</span>,
     },
     {
       key: "actions",
@@ -177,7 +175,7 @@ export function AdvertiserBookingsView({
         <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1">
           <button
             type="button"
-            className="flex-shrink-0 w-7 h-7 rounded-md hover:bg-[#F0F9FF] flex items-center justify-center text-[#6B7A8D] cursor-pointer"
+            className="flex-shrink-0 w-7 h-7 rounded-md hover:bg-surface/50 flex items-center justify-center text-muted-foreground cursor-pointer"
             title="Chi tiết bảng QC"
             onClick={() =>
               row.billboardId
@@ -232,10 +230,10 @@ export function AdvertiserBookingsView({
     "https://images.unsplash.com/photo-1572945281861-68b1227368e5?w=600";
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-8">
       {/* Available billboards */}
       <section className="space-y-4">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1D4ED8] to-[#06B6D4] p-6 text-white">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1D4ED8] to-[#06B6D4] p-6 text-white shadow-md">
           <p className="text-sm text-blue-100">Đặt chỗ mới</p>
           <h2 className="text-xl font-bold mt-1">
             Bảng QC đang trống — {formatMonthTitle(year, month)}
@@ -248,11 +246,11 @@ export function AdvertiserBookingsView({
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7A8D]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Tìm bảng QC trống theo tên, quận..."
-              className="w-full pl-10 pr-4 py-2.5 border border-[#E3E8EF] rounded-lg text-sm bg-white focus:outline-none focus:border-[#1D4ED8]"
+              className="w-full pl-10 pr-4 py-2.5 bg-surface/30 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
               value={billboardSearch}
               onChange={(e) => setBillboardSearch(e.target.value)}
             />
@@ -260,7 +258,7 @@ export function AdvertiserBookingsView({
           <button
             type="button"
             onClick={() => navigate("/billboards")}
-            className="px-4 py-2.5 rounded-lg border border-[#1D4ED8] text-[#1D4ED8] text-sm font-semibold bg-white hover:bg-[#F0F9FF] cursor-pointer"
+            className="px-4 py-2.5 rounded-xl border border-primary text-primary text-sm font-bold bg-card hover:bg-surface/50 transition-all active:scale-95 cursor-pointer shadow-sm"
           >
             Xem tất cả bảng QC
           </button>
@@ -271,12 +269,12 @@ export function AdvertiserBookingsView({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-64 bg-white rounded-xl border border-[#E3E8EF] animate-pulse"
+                className="h-64 bg-card rounded-xl border border-border/80 animate-pulse"
               />
             ))}
           </div>
         ) : billboardsError ? (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex gap-3 text-sm text-amber-800">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 flex gap-3 text-sm text-destructive">
             <AlertTriangle className="w-5 h-5 shrink-0" />
             <div>
               <p className="font-semibold">Không tải được danh sách bảng QC</p>
@@ -284,12 +282,12 @@ export function AdvertiserBookingsView({
             </div>
           </div>
         ) : availableBillboards.length === 0 ? (
-          <div className="bg-white rounded-xl border border-[#E3E8EF] p-12 text-center">
-            <Monitor className="w-12 h-12 text-[#94A3B8] mx-auto mb-3" />
-            <p className="font-semibold text-[#1E293B]">
+          <div className="bg-card rounded-xl border border-border p-12 text-center">
+            <Monitor className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="font-semibold text-foreground">
               Không có bảng trống trong {formatMonthTitle(year, month)}
             </p>
-            <p className="text-sm text-[#6B7A8D] mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Thử tháng khác trên trang chi tiết bảng hoặc xem marketplace.
             </p>
           </div>
@@ -310,7 +308,7 @@ export function AdvertiserBookingsView({
               return (
                 <article
                   key={bb.id}
-                  className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden shadow-sm hover:shadow-md hover:border-[#1D4ED8]/30 transition-all"
+                  className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
                 >
                   <div className="relative h-40">
                     <img
@@ -323,23 +321,23 @@ export function AdvertiserBookingsView({
                     </span>
                   </div>
                   <div className="p-4 space-y-2">
-                    <h4 className="font-bold text-[#1E293B] line-clamp-1">
+                    <h4 className="font-bold text-foreground line-clamp-1">
                       {bb.title}
                     </h4>
-                    <p className="text-xs text-[#6B7A8D] flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" />
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                       {bb.district}, {bb.city}
                     </p>
-                    <p className="text-xs text-emerald-700 font-semibold">
+                    <p className="text-xs text-emerald-600 font-bold">
                       {freeDays} ngày trống còn lại trong tháng
                     </p>
-                    <p className="text-sm font-bold text-[#1D4ED8]">
+                    <p className="text-sm font-extrabold text-primary">
                       {(bb.pricePerDay / 1_000_000).toLocaleString("vi-VN")} Tr₫ / ngày
                     </p>
                     <button
                       type="button"
                       onClick={() => navigate(`/billboard/${bb.id}`)}
-                      className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#1D4ED8] text-white text-sm font-bold hover:bg-[#1E40AF] cursor-pointer"
+                      className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-hover shadow-md shadow-primary/10 transition-all active:scale-95 cursor-pointer"
                     >
                       <Calendar className="w-4 h-4" />
                       Chọn ngày & đặt chỗ
@@ -354,7 +352,7 @@ export function AdvertiserBookingsView({
 
       {/* My bookings */}
       <section className="space-y-4">
-        <h3 className="text-lg font-bold text-[#1D4ED8]">Đặt chỗ của tôi</h3>
+        <h3 className="text-lg font-bold text-primary">Đặt chỗ của tôi</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             title="Tổng đặt chỗ"
@@ -379,36 +377,36 @@ export function AdvertiserBookingsView({
           />
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E3E8EF] shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-[#E3E8EF] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="relative max-w-md w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7A8D]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Tìm đặt chỗ của bạn..."
-                className="w-full pl-10 pr-4 py-2 border border-[#E3E8EF] rounded-lg text-sm focus:outline-none focus:border-[#1D4ED8]"
+                className="w-full pl-10 pr-4 py-2 bg-surface/30 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-[#6B7A8D]" />
+            <div className="flex items-center gap-2 bg-surface/30 border border-border rounded-lg px-3 py-1">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-[#E3E8EF] rounded-lg text-sm cursor-pointer bg-white"
+                className="bg-transparent border-none outline-none text-primary text-sm cursor-pointer"
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="PENDING">Chờ duyệt</option>
-                <option value="ACCEPTED">Chờ thanh toán</option>
-                <option value="PAID">Đang hoạt động</option>
-                <option value="COMPLETED">Hoàn thành</option>
-                <option value="CANCELLED">Đã hủy</option>
+                <option className="bg-card text-foreground" value="">Tất cả trạng thái</option>
+                <option className="bg-card text-foreground" value="PENDING">Chờ duyệt</option>
+                <option className="bg-card text-foreground" value="ACCEPTED">Chờ thanh toán</option>
+                <option className="bg-card text-foreground" value="PAID">Đang hoạt động</option>
+                <option className="bg-card text-foreground" value="COMPLETED">Hoàn thành</option>
+                <option className="bg-card text-foreground" value="CANCELLED">Đã hủy</option>
               </select>
             </div>
           </div>
           {filteredBookings.length === 0 ? (
-            <div className="py-12 text-center text-[#6B7A8D] text-sm">
+            <div className="py-12 text-center text-muted-foreground text-sm font-semibold">
               Chưa có đặt chỗ nào. Hãy chọn bảng QC trống ở trên để bắt đầu.
             </div>
           ) : (

@@ -15,6 +15,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useThemeContext } from "../../context/ThemeContext";
 import { notify, apiErrorMessage } from "../../utils/notify";
 import authApi from "../../../api/authApi";
+import axiosClient from "../../../api/axiosClient";
+import { useEffect } from "react";
 
 const sections = [
   { id: "profile", label: "Hồ sơ", icon: <User className="w-4 h-4" /> },
@@ -27,7 +29,7 @@ const sections = [
 type SectionId = (typeof sections)[number]["id"];
 
 export function OwnerSettingsView() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { theme, setTheme } = useThemeContext();
   const [activeSection, setActiveSection] = useState<SectionId>("profile");
   const [bookingAlerts, setBookingAlerts] = useState(true);
@@ -38,30 +40,102 @@ export function OwnerSettingsView() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const initials = (user?.fullName ?? "OS")
+  const [fullName, setFullName] = useState(user?.fullName ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [companyName, setCompanyName] = useState(user?.companyName ?? "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFullName(user.fullName ?? "");
+      setPhone(user.phone ?? "");
+      setCompanyName(user.companyName ?? "");
+    }
+  }, [user]);
+
+  const initials = (fullName || user?.fullName || "OS")
     .split(" ")
     .map((w) => w[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
 
-  const handleSave = () => {
-    notify.success("Đã lưu cài đặt");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await authApi.updateProfile({
+        fullName,
+        phone,
+        companyName,
+      });
+      if (res.success) {
+        await refreshUser();
+        notify.success("Cập nhật thông tin thành công");
+      } else {
+        notify.error(res.message || "Không thể cập nhật hồ sơ");
+      }
+    } catch (err) {
+      notify.error(apiErrorMessage(err, "Lỗi cập nhật hồ sơ"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file.type.startsWith("image/")) {
+      notify.error("Vui lòng chọn tệp ảnh hợp lệ");
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = (await axiosClient.post("/api/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })) as { url: string };
+
+      if (uploadRes && uploadRes.url) {
+        const updateRes = await authApi.updateProfile({
+          avatarUrl: uploadRes.url,
+        });
+        if (updateRes.success) {
+          await refreshUser();
+          notify.success("Cập nhật ảnh đại diện thành công");
+        } else {
+          notify.error(updateRes.message || "Lỗi cập nhật ảnh đại diện");
+        }
+      }
+    } catch (err) {
+      notify.error(apiErrorMessage(err, "Lỗi tải ảnh lên cloud"));
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   return (
-    <div className="p-8 flex flex-col lg:flex-row gap-6">
+    <div className="p-8 flex flex-col lg:flex-row gap-6 bg-background text-foreground">
       <aside className="lg:w-56 shrink-0">
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-2 sticky top-4">
-          <div className="px-3 py-3 flex items-center gap-3 border-b border-[#E3E8EF] mb-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1D4ED8] to-[#06B6D4] text-white text-sm font-bold flex items-center justify-center">
-              {initials}
-            </div>
+        <div className="bg-card rounded-xl border border-border p-2 sticky top-4">
+          <div className="px-3 py-3 flex items-center gap-3 border-b border-border/60 mb-2">
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent text-white text-sm font-bold flex items-center justify-center shrink-0">
+                {initials}
+              </div>
+            )}
             <div className="min-w-0">
-              <p className="text-sm font-bold text-[#1E293B] truncate">
+              <p className="text-sm font-bold text-foreground truncate">
                 {user?.fullName ?? "Chủ bảng"}
               </p>
-              <p className="text-[10px] text-[#6B7A8D]">OWNER</p>
+              <p className="text-[10px] text-muted-foreground">OWNER</p>
             </div>
           </div>
           <nav className="space-y-0.5">
@@ -72,8 +146,8 @@ export function OwnerSettingsView() {
                 onClick={() => setActiveSection(s.id)}
                 className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors ${
                   activeSection === s.id
-                    ? "bg-[#EFF6FF] text-[#1D4ED8] font-semibold"
-                    : "text-[#6B7A8D] hover:bg-slate-50"
+                    ? "bg-primary-light text-primary font-semibold"
+                    : "text-muted-foreground hover:bg-surface/50"
                 }`}
               >
                 {s.icon}
@@ -86,39 +160,99 @@ export function OwnerSettingsView() {
 
       <div className="flex-1 space-y-5 min-w-0">
         {activeSection === "profile" && (
-          <div className="bg-white rounded-xl border border-[#E3E8EF] p-6">
-            <h3 className="text-[#1D4ED8] font-bold mb-4">Thông tin chủ sở hữu</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              {[
-                { label: "Họ tên", icon: User, value: user?.fullName ?? "" },
-                { label: "Email", icon: Mail, value: user?.email ?? "" },
-                { label: "Điện thoại", icon: Phone, value: user?.phone ?? "+84" },
-                { label: "Công ty / thương hiệu", icon: Building2, value: "Billboard Co." },
-              ].map((f) => (
-                <div key={f.label}>
-                  <label className="text-xs text-[#6B7A8D] font-medium">{f.label}</label>
-                  <div className="mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#E3E8EF]">
-                    <f.icon className="w-4 h-4 text-[#9CA3AF]" />
-                    <input
-                      defaultValue={f.value}
-                      className="flex-1 bg-transparent focus:outline-none"
-                    />
+          <div className="bg-card rounded-xl border border-border p-6">
+            <h3 className="text-primary font-bold mb-4">Thông tin chủ sở hữu</h3>
+            
+            {/* Avatar Upload Container */}
+            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border/60">
+              <div className="relative group w-16 h-16 rounded-full overflow-hidden bg-muted border border-border flex items-center justify-center shrink-0">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="User Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl font-bold text-muted-foreground">{initials}</span>
+                )}
+                {avatarUploading && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-[10px] text-white font-semibold">
+                    Đang tải...
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
+              <div>
+                <label className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-3.5 py-2.5 rounded-lg cursor-pointer inline-flex items-center transition-colors">
+                  Thay đổi ảnh đại diện
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={avatarUploading}
+                    onChange={handleAvatarUpload}
+                  />
+                </label>
+                <p className="text-[10px] text-muted-foreground mt-1.5">Định dạng JPG, PNG. Dung lượng tối đa 5MB.</p>
+              </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-[#E3E8EF]">
-              <p className="text-xs text-[#6B7A8D] mb-2">Giao diện</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Họ tên</label>
+                <div className="mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-surface/30">
+                  <User className="w-4 h-4 text-muted-foreground/60" />
+                  <input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="flex-1 bg-transparent focus:outline-none text-foreground"
+                    placeholder="Nhập họ tên"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Email</label>
+                <div className="mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-surface/10 opacity-70">
+                  <Mail className="w-4 h-4 text-muted-foreground/60" />
+                  <input
+                    value={user?.email || ""}
+                    disabled
+                    className="flex-1 bg-transparent focus:outline-none cursor-not-allowed text-foreground"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Điện thoại</label>
+                <div className="mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-surface/30">
+                  <Phone className="w-4 h-4 text-muted-foreground/60" />
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="flex-1 bg-transparent focus:outline-none text-foreground"
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">Công ty / thương hiệu</label>
+                <div className="mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-surface/30">
+                  <Building2 className="w-4 h-4 text-muted-foreground/60" />
+                  <input
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="flex-1 bg-transparent focus:outline-none text-foreground"
+                    placeholder="Nhập tên công ty / thương hiệu"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-2">Giao diện</p>
               <div className="flex gap-2">
                 {(["light", "dark", "system"] as const).map((t) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => setTheme(t)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
                       theme === t
-                        ? "border-[#1D4ED8] bg-[#EFF6FF] text-[#1D4ED8]"
-                        : "border-[#E3E8EF] text-[#6B7A8D]"
+                        ? "border-primary bg-primary-light text-primary"
+                        : "border-border text-muted-foreground hover:bg-surface/50"
                     }`}
                   >
                     {t === "light" ? "Sáng" : t === "dark" ? "Tối" : "Hệ thống"}
@@ -130,75 +264,75 @@ export function OwnerSettingsView() {
         )}
 
         {activeSection === "payout" && (
-          <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 space-y-4">
+          <div className="bg-card rounded-xl border border-border p-6 space-y-4">
             <div className="flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-[#1D4ED8]" />
-              <h3 className="text-[#1D4ED8] font-bold">Tài khoản nhận tiền</h3>
+              <Landmark className="w-5 h-5 text-primary" />
+              <h3 className="text-primary font-bold">Tài khoản nhận tiền</h3>
             </div>
-            <p className="text-xs text-[#6B7A8D]">
+            <p className="text-xs text-muted-foreground">
               ADORA chuyển doanh thu ròng (sau 5% phí) vào tài khoản này trong 3 ngày làm việc.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <label className="text-xs text-[#6B7A8D]">Ngân hàng</label>
-                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF]">
-                  <option>Vietcombank</option>
-                  <option>Techcombank</option>
-                  <option>MB Bank</option>
+                <label className="text-xs text-muted-foreground">Ngân hàng</label>
+                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-border bg-surface/30 focus:outline-none focus:border-primary">
+                  <option className="bg-card text-foreground">Vietcombank</option>
+                  <option className="bg-card text-foreground">Techcombank</option>
+                  <option className="bg-card text-foreground">MB Bank</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs text-[#6B7A8D]">Số tài khoản</label>
+                <label className="text-xs text-muted-foreground">Số tài khoản</label>
                 <input
                   defaultValue="0123456789"
-                  className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF] focus:outline-none focus:border-[#1D4ED8]"
+                  className="mt-1 w-full px-3 py-2.5 rounded-lg border border-border bg-surface/30 focus:outline-none focus:border-primary"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs text-[#6B7A8D]">Chủ tài khoản</label>
+                <label className="text-xs text-muted-foreground">Chủ tài khoản</label>
                 <input
                   defaultValue={user?.fullName ?? ""}
-                  className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF] focus:outline-none focus:border-[#1D4ED8]"
+                  className="mt-1 w-full px-3 py-2.5 rounded-lg border border-border bg-surface/30 focus:outline-none focus:border-primary"
                 />
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-[#F0F9FF] border border-[#BAE6FD] text-xs text-[#0369A1]">
+            <div className="p-3 rounded-lg bg-primary-light border border-primary/20 text-xs text-primary font-semibold">
               Thông tin ngân hàng được mã hóa. Cập nhật có hiệu lực từ kỳ chi trả tiếp theo.
             </div>
           </div>
         )}
 
         {activeSection === "listings" && (
-          <div className="bg-white rounded-xl border border-[#E3E8EF] p-6">
-            <h3 className="text-[#1D4ED8] font-bold mb-4">Mặc định khi đăng tin</h3>
+          <div className="bg-card rounded-xl border border-border p-6">
+            <h3 className="text-primary font-bold mb-4">Mặc định khi đăng tin</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <label className="text-xs text-[#6B7A8D]">Giờ hoạt động mặc định</label>
+                <label className="text-xs text-muted-foreground">Giờ hoạt động mặc định</label>
                 <input
                   defaultValue="06:00 - 23:00"
-                  className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF]"
+                  className="mt-1 w-full px-3 py-2.5 rounded-lg border border-border bg-surface/30"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#6B7A8D]">Loại màn hình</label>
-                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF]">
-                  <option>LED Outdoor</option>
-                  <option>LED Indoor</option>
+                <label className="text-xs text-muted-foreground">Loại màn hình</label>
+                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-border bg-surface/30 focus:outline-none focus:border-primary">
+                  <option className="bg-card text-foreground">LED Outdoor</option>
+                  <option className="bg-card text-foreground">LED Indoor</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs text-[#6B7A8D]">Tự động chấp nhận đặt chỗ</label>
-                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF]">
-                  <option>Không — duyệt thủ công</option>
-                  <option>Có — với khách đã xác minh</option>
+                <label className="text-xs text-muted-foreground">Tự động chấp nhận đặt chỗ</label>
+                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-border bg-surface/30 focus:outline-none focus:border-primary">
+                  <option className="bg-card text-foreground">Không — duyệt thủ công</option>
+                  <option className="bg-card text-foreground">Có — với khách đã xác minh</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs text-[#6B7A8D]">Chính sách hủy</label>
-                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-[#E3E8EF]">
-                  <option>Linh hoạt (7 ngày)</option>
-                  <option>Vừa phải (14 ngày)</option>
-                  <option>Nghiêm (30 ngày)</option>
+                <label className="text-xs text-muted-foreground">Chính sách hủy</label>
+                <select className="mt-1 w-full px-3 py-2.5 rounded-lg border border-border bg-surface/30 focus:outline-none focus:border-primary">
+                  <option className="bg-card text-foreground">Linh hoạt (7 ngày)</option>
+                  <option className="bg-card text-foreground">Vừa phải (14 ngày)</option>
+                  <option className="bg-card text-foreground">Nghiêm (30 ngày)</option>
                 </select>
               </div>
             </div>
@@ -206,8 +340,8 @@ export function OwnerSettingsView() {
         )}
 
         {activeSection === "notifications" && (
-          <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 space-y-3">
-            <h3 className="text-[#1D4ED8] font-bold mb-2">Thông báo</h3>
+          <div className="bg-card rounded-xl border border-border p-6 space-y-3">
+            <h3 className="text-primary font-bold mb-2">Thông báo</h3>
             {[
               {
                 label: "Yêu cầu đặt chỗ mới",
@@ -224,17 +358,17 @@ export function OwnerSettingsView() {
             ].map((n) => (
               <label
                 key={n.label}
-                className="flex items-center justify-between p-4 rounded-xl border border-[#E3E8EF] cursor-pointer hover:border-[#1D4ED8]/30"
+                className="flex items-center justify-between p-4 rounded-xl border border-border cursor-pointer hover:bg-surface/30 transition-colors"
               >
                 <div>
-                  <p className="text-sm font-semibold text-[#1E293B]">{n.label}</p>
-                  <p className="text-xs text-[#6B7A8D]">{n.desc}</p>
+                  <p className="text-sm font-semibold text-foreground">{n.label}</p>
+                  <p className="text-xs text-muted-foreground">{n.desc}</p>
                 </div>
                 <input
                   type="checkbox"
                   checked={n.checked}
                   onChange={(e) => n.set(e.target.checked)}
-                  className="w-5 h-5 accent-[#1D4ED8] cursor-pointer"
+                  className="w-5 h-5 accent-primary cursor-pointer"
                 />
               </label>
             ))}
@@ -242,42 +376,42 @@ export function OwnerSettingsView() {
         )}
 
         {activeSection === "security" && (
-          <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 space-y-3">
-            <h3 className="text-[#1D4ED8] font-bold">Bảo mật</h3>
+          <div className="bg-card rounded-xl border border-border p-6 space-y-3">
+            <h3 className="text-primary font-bold">Bảo mật</h3>
             <button
               type="button"
               onClick={() => setShowChangePasswordForm((prev) => !prev)}
-              className="w-full text-left px-4 py-3 rounded-xl border border-[#E3E8EF] hover:border-[#1D4ED8]/40 text-sm font-semibold text-[#1D4ED8] cursor-pointer"
+              className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-primary/45 text-sm font-semibold text-primary cursor-pointer transition-colors"
             >
               {showChangePasswordForm ? "Ẩn đổi mật khẩu" : "Đổi mật khẩu"}
             </button>
             {showChangePasswordForm && (
-              <div className="space-y-3 p-4 rounded-xl border border-[#E3E8EF] bg-slate-50">
+              <div className="space-y-3 p-4 rounded-xl border border-border/60 bg-surface/50">
                 <div className="space-y-1 text-sm">
-                  <label className="text-[#6B7A8D] text-xs">Mật khẩu hiện tại</label>
+                  <label className="text-muted-foreground text-xs">Mật khẩu hiện tại</label>
                   <input
                     type="password"
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div className="space-y-1 text-sm">
-                  <label className="text-[#6B7A8D] text-xs">Mật khẩu mới</label>
+                  <label className="text-muted-foreground text-xs">Mật khẩu mới</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div className="space-y-1 text-sm">
-                  <label className="text-[#6B7A8D] text-xs">Xác nhận mật khẩu mới</label>
+                  <label className="text-muted-foreground text-xs">Xác nhận mật khẩu mới</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] bg-white text-sm focus:outline-none focus:border-[#4F46E5]"
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:border-primary"
                   />
                 </div>
                 <button
@@ -311,7 +445,7 @@ export function OwnerSettingsView() {
                       setIsChangingPassword(false);
                     }
                   }}
-                  className="w-full px-3 py-2 rounded-lg bg-[#1D4ED8] text-white text-xs font-semibold hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                 >
                   {isChangingPassword ? "Đang cập nhật..." : "Lưu mật khẩu mới"}
                 </button>
@@ -319,7 +453,7 @@ export function OwnerSettingsView() {
             )}
             <button
               type="button"
-              className="w-full text-left px-4 py-3 rounded-xl border border-[#E3E8EF] hover:border-[#1D4ED8]/40 text-sm font-semibold cursor-pointer"
+              className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-primary/45 text-sm font-semibold cursor-pointer transition-colors"
             >
               Bật xác thực hai bước (2FA)
             </button>
@@ -330,7 +464,7 @@ export function OwnerSettingsView() {
           <button
             type="button"
             onClick={handleSave}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#1D4ED8] text-white text-sm font-bold hover:bg-[#1E40AF] cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary-hover cursor-pointer transition-colors shadow-md shadow-primary/10"
           >
             <Save className="w-4 h-4" />
             Lưu cài đặt

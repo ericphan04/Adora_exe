@@ -4,6 +4,8 @@ interface Column {
   key: string;
   label: string;
   render?: (value: any, row: any) => React.ReactNode;
+  className?: string;
+  headerClassName?: string;
 }
 
 interface DataTableProps {
@@ -14,23 +16,44 @@ interface DataTableProps {
 
 export function DataTable({ columns, data, className = "" }: DataTableProps) {
   return (
-    <div className={`bg-white rounded-lg border border-[#E3E8EF] overflow-hidden ${className}`}>
-      <div className="overflow-x-auto">
-        <table className="w-full">
+    <div className={`bg-card rounded-lg border border-border/80 overflow-hidden ${className}`}>
+      <div className="overflow-x-auto scrollbar-thin">
+        <table className="w-full min-w-[800px] border-collapse">
           <thead>
-            <tr className="bg-[#F0F9FF] border-b border-[#E3E8EF]">
-              {columns.map((col) => (
-                <th key={col.key} className="text-left px-4 py-3 text-xs text-[#6B7A8D] uppercase tracking-wider">
-                  {col.label}
-                </th>
-              ))}
+            <tr className="bg-surface/60 border-b border-border/80">
+              {columns.map((col) => {
+                const widthAndSpacingClasses = col.className
+                  ? col.className
+                      .split(" ")
+                      .filter((c) => c.startsWith("min-w-") || c.startsWith("w-") || c.startsWith("max-w-") || c.includes("nowrap"))
+                      .join(" ")
+                  : "";
+                return (
+                  <th
+                    key={col.key}
+                    className={`text-left px-4 py-3.5 text-xs text-muted-foreground uppercase tracking-wider font-semibold ${
+                      col.headerClassName || ""
+                    } ${widthAndSpacingClasses}`}
+                  >
+                    {col.label}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {data.map((row, i) => (
-              <tr key={i} className="border-b border-[#E3E8EF] last:border-0 hover:bg-[#F0F9FF]/50 transition-colors">
+              <tr
+                key={i}
+                className="border-b border-border/40 last:border-0 hover:bg-surface/30 transition-colors"
+              >
                 {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3 text-sm text-[#1A2332]">
+                  <td
+                    key={col.key}
+                    className={`px-4 py-3.5 text-sm text-foreground align-middle ${
+                      col.className || ""
+                    }`}
+                  >
                     {col.render ? col.render(row[col.key], row) : row[col.key]}
                   </td>
                 ))}

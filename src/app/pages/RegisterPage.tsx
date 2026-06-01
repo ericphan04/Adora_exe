@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Megaphone, Monitor, ArrowRight, Mail, Lock, Building2, User, Phone, KeyRound } from "lucide-react";
+import { Megaphone, Monitor, ArrowRight, Mail, Lock, Building2, User, Phone, KeyRound, ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import authApi from "../../api/authApi";
 
@@ -120,9 +120,18 @@ export default function RegisterPage() {
     <div className="min-h-screen flex">
       {/* Left */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#1D4ED8] via-[#3B82F6] to-[#0891B2] relative overflow-hidden items-center justify-center p-12">
+        <button 
+          onClick={() => navigate("/")} 
+          className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-200 border border-white/20 shadow-sm cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
+        </button>
         <div className="absolute top-20 left-10 w-72 h-72 bg-[#06B6D4]/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#06B6D4]/10 rounded-full blur-3xl" />
         <div className="relative z-10 text-center text-white max-w-md">
+          <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center mx-auto mb-8">
+            <img src="/logo.png" className="w-12 h-12 object-contain rounded-lg" alt="ADORA logo" />
+          </div>
           <h1 className="text-4xl mb-4" style={{ fontWeight: 800 }}>Tham Gia ADORA</h1>
           <p className="text-lg text-white/70 leading-relaxed mb-10">
             Dù bạn là nhà quảng cáo tìm bảng LED hoàn hảo hay chủ sở hữu muốn tối ưu tài sản.
@@ -146,9 +155,14 @@ export default function RegisterPage() {
       </div>
 
       {/* Right */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white overflow-y-auto">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white overflow-y-auto relative">
         <div className="w-full max-w-md">
-          <button onClick={() => navigate("/")} className="text-xl text-[#1D4ED8] mb-8 block lg:hidden cursor-pointer" style={{ fontWeight: 800 }}>ADORA</button>
+          <button 
+            onClick={() => navigate("/")} 
+            className="absolute top-6 left-6 lg:hidden flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1D4ED8] hover:text-white bg-[#F0F9FF] hover:bg-[#1D4ED8] rounded-xl transition-all duration-200 border border-[#E3E8EF] hover:border-[#1D4ED8] shadow-sm cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
+          </button>
           <h2 className="text-2xl text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>Tạo tài khoản</h2>
           <p className="text-sm text-[#6B7A8D] mb-8">
             {step === 3 

@@ -64,7 +64,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/google", "/api/auth/verify", "/api/auth/resend-code", "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
-                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/ws/**", "/uploads/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api/payments/callback").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/billboards/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

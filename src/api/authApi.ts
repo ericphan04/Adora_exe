@@ -31,6 +31,9 @@ const authApi = {
   resetPassword: (data: ResetPasswordRequest): Promise<ApiResponse<void>> => {
     return axiosClient.post('/api/auth/reset-password', data);
   },
+  updateProfile: (data: { fullName?: string; phone?: string; companyName?: string; avatarUrl?: string }): Promise<ApiResponse<User>> => {
+    return axiosClient.put('/api/auth/me', data);
+  },
 };
 
 export default authApi;

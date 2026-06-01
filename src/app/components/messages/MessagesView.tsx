@@ -358,28 +358,22 @@ export function MessagesView({ role }: MessagesViewProps) {
   return (
     <div className="p-8 h-[calc(100vh-140px)] flex flex-col">
       <div className="flex items-center justify-between mb-3 gap-3">
-        <span
-          className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${
-            realtimeStatus === "connected"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-              : realtimeStatus === "polling"
+        {realtimeStatus !== "connected" && (
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${
+              realtimeStatus === "polling"
                 ? "bg-amber-50 border-amber-200 text-amber-800"
                 : "bg-slate-100 border-slate-200 text-slate-600"
-          }`}
-        >
-          {realtimeStatus === "connected" ? (
-            <Wifi className="w-3.5 h-3.5" />
-          ) : (
+            }`}
+          >
             <WifiOff className="w-3.5 h-3.5" />
-          )}
-          {realtimeStatus === "connected"
-            ? "Realtime (WebSocket)"
-            : realtimeStatus === "polling"
+            {realtimeStatus === "polling"
               ? "Polling dự phòng (4s)"
               : realtimeStatus === "connecting"
                 ? "Đang kết nối..."
                 : "Ngoại tuyến"}
-        </span>
+          </span>
+        )}
         {role !== "ADMIN" && (
           <button
             type="button"
@@ -392,18 +386,18 @@ export function MessagesView({ role }: MessagesViewProps) {
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-[#E3E8EF] flex-1 flex overflow-hidden min-h-0">
+      <div className="bg-card rounded-xl border border-border/80 flex-1 flex overflow-hidden min-h-0">
         {/* List */}
-        <aside className="w-80 border-r border-[#E3E8EF] flex flex-col shrink-0">
-          <div className="p-3 border-b border-[#E3E8EF]">
+        <aside className="w-80 border-r border-border/80 flex flex-col shrink-0">
+          <div className="p-3 border-b border-border/80">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7A8D]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Tìm hội thoại..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-[#E3E8EF] rounded-lg text-sm focus:outline-none focus:border-[#1D4ED8]"
+                className="w-full pl-9 pr-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:border-primary bg-surface/30 text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -424,8 +418,8 @@ export function MessagesView({ role }: MessagesViewProps) {
                     key={c.id}
                     type="button"
                     onClick={() => openConversation(c.id)}
-                    className={`w-full text-left px-4 py-3 border-b border-[#F1F5F9] flex gap-3 cursor-pointer transition-colors ${
-                      isActive ? "bg-[#F0F9FF]" : "hover:bg-slate-50"
+                    className={`w-full text-left px-4 py-3 border-b border-border/40 flex gap-3 cursor-pointer transition-colors ${
+                      isActive ? "bg-primary-light/50" : "hover:bg-surface/50"
                     }`}
                   >
                     <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1D4ED8] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -433,17 +427,17 @@ export function MessagesView({ role }: MessagesViewProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between gap-1">
-                        <p className="text-sm font-semibold text-[#1E293B] truncate">
+                        <p className="text-sm font-semibold text-foreground truncate">
                           {displayTitle(c)}
                         </p>
-                        <span className="text-[10px] text-[#94A3B8] shrink-0">
+                        <span className="text-[10px] text-muted-foreground shrink-0">
                           {formatTime(c.lastMessageAt)}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#6B7A8D] truncate">
+                      <p className="text-[11px] text-muted-foreground truncate">
                         {displaySubtitle(c)}
                       </p>
-                      <p className="text-xs text-[#64748B] truncate mt-0.5">
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
                         {c.lastMessagePreview || "Chưa có tin nhắn"}
                       </p>
                     </div>
@@ -467,14 +461,14 @@ export function MessagesView({ role }: MessagesViewProps) {
             </div>
           ) : (
             <>
-              <div className="px-5 py-3 border-b border-[#E3E8EF] flex items-center justify-between gap-3">
+              <div className="px-5 py-3 border-b border-border/80 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1D4ED8] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold">
                     {initials(activeTitle)}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-[#1E293B] truncate">{activeTitle}</p>
-                    <p className="text-xs text-[#6B7A8D] truncate">
+                    <p className="font-semibold text-foreground truncate">{activeTitle}</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {displaySubtitle(active)}
                     </p>
                   </div>
@@ -482,7 +476,7 @@ export function MessagesView({ role }: MessagesViewProps) {
                 <button
                   type="button"
                   onClick={handleMarkRead}
-                  className="text-xs px-2 py-1 rounded-lg border border-[#E3E8EF] hover:bg-slate-50 cursor-pointer flex items-center gap-1 shrink-0"
+                  className="text-xs px-2 py-1 rounded-lg border border-border hover:bg-surface/50 cursor-pointer flex items-center gap-1 shrink-0"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   Đã đọc
@@ -494,7 +488,7 @@ export function MessagesView({ role }: MessagesViewProps) {
                   <Loader2 className="w-8 h-8 animate-spin text-[#1D4ED8]" />
                 </div>
               ) : (
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-[#F9FAFB]">
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-surface/20">
                   {activeMessages.map((m: MessageDto) => (
                     <div
                       key={m.id}
@@ -503,10 +497,10 @@ export function MessagesView({ role }: MessagesViewProps) {
                       <div
                         className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
                           m.mine
-                            ? "bg-[#1D4ED8] text-white rounded-br-sm"
+                            ? "bg-primary text-white rounded-br-sm"
                             : m.senderRole === "ADMIN"
-                              ? "bg-amber-50 border border-amber-200 text-amber-950 rounded-bl-sm"
-                              : "bg-white text-[#111827] rounded-bl-sm"
+                              ? "bg-amber-50 border border-amber-200 text-amber-950 rounded-bl-sm dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-200"
+                              : "bg-card border border-border/80 text-foreground rounded-bl-sm"
                         }`}
                       >
                         {m.senderRole === "ADMIN" && !m.mine && (
@@ -528,7 +522,7 @@ export function MessagesView({ role }: MessagesViewProps) {
                 </div>
               )}
 
-              <div className="px-5 py-3 border-t border-[#E3E8EF] bg-white">
+              <div className="px-5 py-3 border-t border-border/80 bg-card">
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -541,7 +535,7 @@ export function MessagesView({ role }: MessagesViewProps) {
                         handleSend();
                       }
                     }}
-                    className="flex-1 px-3 py-2.5 border border-[#E3E8EF] rounded-lg text-sm focus:outline-none focus:border-[#1D4ED8]"
+                    className="flex-1 px-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:border-primary bg-surface/30 text-foreground placeholder:text-muted-foreground"
                   />
                   <button
                     type="button"
@@ -564,44 +558,44 @@ export function MessagesView({ role }: MessagesViewProps) {
 
         {/* Context panel */}
         {active && (
-          <aside className="w-72 border-l border-[#E3E8EF] bg-[#F9FAFB] p-4 hidden xl:block shrink-0 overflow-y-auto">
-            <p className="text-xs font-semibold text-[#6B7A8D] mb-3">Ngữ cảnh</p>
+          <aside className="w-72 border-l border-border/80 bg-surface/20 p-4 hidden xl:block shrink-0 overflow-y-auto">
+            <p className="text-xs font-semibold text-muted-foreground mb-3">Ngữ cảnh</p>
             {active.billboardTitle && (
-              <div className="bg-white rounded-lg border border-[#E3E8EF] p-3 mb-3 text-sm">
-                <p className="text-[10px] text-[#6B7A8D] flex items-center gap-1 mb-1">
+              <div className="bg-card rounded-lg border border-border/80 p-3 mb-3 text-sm">
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1 mb-1">
                   <Monitor className="w-3 h-3" /> Bảng QC
                 </p>
-                <p className="font-medium text-[#1D4ED8]">{active.billboardTitle}</p>
+                <p className="font-medium text-primary">{active.billboardTitle}</p>
               </div>
             )}
             {active.bookingId && (
-              <div className="bg-white rounded-lg border border-[#E3E8EF] p-3 mb-3 text-sm">
-                <p className="text-[10px] text-[#6B7A8D] flex items-center gap-1 mb-1">
+              <div className="bg-card rounded-lg border border-border/80 p-3 mb-3 text-sm">
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1 mb-1">
                   <BookOpen className="w-3 h-3" /> Đặt chỗ
                 </p>
-                <p className="font-mono text-xs">#{active.bookingId}</p>
+                <p className="font-mono text-xs text-foreground">#{active.bookingId}</p>
                 {active.bookingStatus && (
-                  <p className="text-xs text-[#6B7A8D] mt-1">{active.bookingStatus}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{active.bookingStatus}</p>
                 )}
               </div>
             )}
             {role === "ADMIN" && active.renter && active.owner && (
-              <div className="bg-white rounded-lg border border-[#E3E8EF] p-3 text-xs space-y-2">
+              <div className="bg-card rounded-lg border border-border/80 p-3 text-xs space-y-2">
                 <p>
-                  <span className="text-[#6B7A8D]">Renter:</span>{" "}
+                  <span className="text-muted-foreground">Renter:</span>{" "}
                   {active.renter.fullName}
                 </p>
                 <p>
-                  <span className="text-[#6B7A8D]">Owner:</span>{" "}
+                  <span className="text-muted-foreground">Owner:</span>{" "}
                   {active.owner.fullName}
                 </p>
               </div>
             )}
             {active.peer && role !== "ADMIN" && (
-              <div className="bg-white rounded-lg border border-[#E3E8EF] p-3 mt-3 text-xs">
-                <p className="font-semibold text-[#1E293B]">{active.peer.fullName}</p>
-                <p className="text-[#6B7A8D] mt-1">{active.peer.email}</p>
-                <p className="text-[#6B7A8D]">{active.peer.phone}</p>
+              <div className="bg-card rounded-lg border border-border/80 p-3 mt-3 text-xs">
+                <p className="font-semibold text-foreground">{active.peer.fullName}</p>
+                <p className="text-muted-foreground mt-1">{active.peer.email}</p>
+                <p className="text-muted-foreground">{active.peer.phone}</p>
               </div>
             )}
           </aside>
@@ -610,18 +604,18 @@ export function MessagesView({ role }: MessagesViewProps) {
 
       {newChatOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-[#E3E8EF]">
+          <div className="bg-card rounded-xl max-w-md w-full p-6 shadow-xl border border-border/80">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-[#1D4ED8]">{meta.newChatLabel}</h3>
+              <h3 className="font-bold text-primary">{meta.newChatLabel}</h3>
               <button
                 type="button"
                 onClick={() => setNewChatOpen(false)}
-                className="cursor-pointer text-[#6B7A8D]"
+                className="cursor-pointer text-muted-foreground"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <label className="text-xs font-medium text-[#6B7A8D] block mb-1">
+            <label className="text-xs font-medium text-muted-foreground block mb-1">
               Chọn đặt chỗ
             </label>
             <select
@@ -629,7 +623,7 @@ export function MessagesView({ role }: MessagesViewProps) {
               onChange={(e) =>
                 setNewBookingId(e.target.value ? Number(e.target.value) : "")
               }
-              className="w-full mb-3 px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm"
+              className="w-full mb-3 px-3 py-2 border border-border rounded-lg text-sm bg-surface/30 text-foreground"
             >
               <option value="">— Chọn —</option>
               {bookings.map((b) => (
@@ -638,14 +632,14 @@ export function MessagesView({ role }: MessagesViewProps) {
                 </option>
               ))}
             </select>
-            <label className="text-xs font-medium text-[#6B7A8D] block mb-1">
+            <label className="text-xs font-medium text-muted-foreground block mb-1">
               Tin nhắn đầu (tuỳ chọn)
             </label>
             <textarea
               value={newInitialMsg}
               onChange={(e) => setNewInitialMsg(e.target.value)}
               rows={3}
-              className="w-full mb-4 px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm"
+              className="w-full mb-4 px-3 py-2 border border-border rounded-lg text-sm bg-surface/30 text-foreground"
               placeholder="Xin chào, tôi muốn trao đổi về đặt chỗ..."
             />
             <button

@@ -225,13 +225,13 @@ export function AdminRevenueView({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[#E3E8EF] p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-card rounded-xl border border-border/80 p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>
+              <h3 className="text-primary" style={{ fontWeight: 600 }}>
                 GMV vs Hoa hồng
               </h3>
-              <p className="text-xs text-[#6B7A8D] mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 So sánh doanh số và thu phí nền tảng theo tháng
               </p>
             </div>
@@ -248,15 +248,15 @@ export function AdminRevenueView({
                   <stop offset="100%" stopColor="#06B6D4" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EF" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis
                 dataKey="month"
-                tick={{ fill: "#6B7A8D", fontSize: 12 }}
+                tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "#6B7A8D", fontSize: 12 }}
+                tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `${(v / 1_000_000_000).toFixed(1)}T`}
@@ -288,11 +288,11 @@ export function AdminRevenueView({
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 shadow-sm">
-          <h3 className="text-[#1D4ED8] mb-1" style={{ fontWeight: 600 }}>
+        <div className="bg-card rounded-xl border border-border/80 p-6">
+          <h3 className="text-primary mb-1" style={{ fontWeight: 600 }}>
             Phân bổ doanh thu
           </h3>
-          <p className="text-xs text-[#6B7A8D] mb-5">Từ các giao dịch thành công</p>
+          <p className="text-xs text-muted-foreground mb-5">Từ các giao dịch thành công</p>
           <div className="space-y-4">
             {[
               {
@@ -322,43 +322,43 @@ export function AdminRevenueView({
             ].map((row) => (
               <div key={row.label}>
                 <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-[#6B7A8D]">{row.label}</span>
-                  <span className="font-bold text-[#1E293B]">{row.pct}%</span>
+                  <span className="text-muted-foreground">{row.label}</span>
+                  <span className="font-bold text-foreground">{row.pct}%</span>
                 </div>
-                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-2 rounded-full bg-border/50 overflow-hidden">
                   <div
                     className={`h-full rounded-full ${row.color} transition-all`}
                     style={{ width: `${row.pct}%` }}
                   />
                 </div>
-                <p className="text-xs font-semibold text-[#1D4ED8] mt-1">
+                <p className="text-xs font-semibold text-primary mt-1">
                   {formatVnd(row.value)}
                 </p>
               </div>
             ))}
           </div>
-          <div className="mt-6 p-3 rounded-lg bg-[#F0F9FF] border border-[#E0F2FE] text-xs text-[#1E40AF]">
+          <div className="mt-6 p-3 rounded-lg bg-accent-light/30 border border-accent/20 text-xs text-primary">
             <strong>Mô hình:</strong> Mỗi booking thành công, ADORA thu 5% phí nền tảng trước khi chuyển cho Owner.
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 shadow-sm">
-          <h3 className="text-[#1D4ED8] mb-4" style={{ fontWeight: 600 }}>
+        <div className="bg-card rounded-xl border border-border/80 p-6">
+          <h3 className="text-primary mb-4" style={{ fontWeight: 600 }}>
             Chiến dịch theo tháng
           </h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={bookingChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EF" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis
                 dataKey="month"
-                tick={{ fill: "#6B7A8D", fontSize: 12 }}
+                tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "#6B7A8D", fontSize: 12 }}
+                tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -368,33 +368,33 @@ export function AdminRevenueView({
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 shadow-sm">
+        <div className="bg-card rounded-xl border border-border/80 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>
+            <h3 className="text-primary" style={{ fontWeight: 600 }}>
               Top chủ bảng QC
             </h3>
-            <Building2 className="w-4 h-4 text-[#6B7A8D]" />
+            <Building2 className="w-4 h-4 text-muted-foreground" />
           </div>
           {topOwners.length === 0 ? (
-            <p className="text-sm text-[#6B7A8D] text-center py-8">Chưa có dữ liệu.</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Chưa có dữ liệu.</p>
           ) : (
             <ul className="space-y-3">
               {topOwners.map((o, i) => (
                 <li
                   key={o.name}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-[#E3E8EF] hover:border-[#1D4ED8]/30 hover:bg-[#F8FAFC] transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border/80 hover:border-primary/30 hover:bg-surface/30 transition-colors"
                 >
                   <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D4ED8] to-[#06B6D4] text-white text-xs font-bold flex items-center justify-center">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#1E293B] truncate">
+                    <p className="text-sm font-semibold text-foreground truncate">
                       {o.name}
                     </p>
-                    <p className="text-xs text-[#6B7A8D]">{o.bookings} chiến dịch</p>
+                    <p className="text-xs text-muted-foreground">{o.bookings} chiến dịch</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-[#1D4ED8]">
+                    <p className="text-sm font-bold text-primary">
                       {formatVnd(o.gmv)}
                     </p>
                     <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500 ml-auto" />
@@ -406,19 +406,19 @@ export function AdminRevenueView({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-[#E3E8EF] flex justify-between items-center">
-          <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>
+      <div className="bg-card rounded-xl border border-border/80 overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/80 flex justify-between items-center">
+          <h3 className="text-primary" style={{ fontWeight: 600 }}>
             Lịch sử giao dịch & hoa hồng ({periodLabel})
           </h3>
-          <span className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-semibold border border-emerald-100">
+          <span className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-semibold border border-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30">
             {periodSuccessPayments.length} thành công
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-slate-50 text-[#6B7A8D] text-xs uppercase tracking-wide">
+              <tr className="bg-surface/50 text-muted-foreground text-xs uppercase tracking-wide">
                 <th className="px-6 py-3">Mã GD</th>
                 <th className="px-6 py-3">Booking</th>
                 <th className="px-6 py-3">Tổng tiền</th>
@@ -427,27 +427,27 @@ export function AdminRevenueView({
                 <th className="px-6 py-3">Trạng thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E3E8EF]">
+            <tbody className="divide-y divide-border">
               {periodPayments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-[#6B7A8D]">
+                  <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground">
                     Chưa có giao dịch trong khoảng {periodLabel}.
                   </td>
                 </tr>
               ) : (
                 periodPayments.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/80">
-                    <td className="px-6 py-3 font-mono text-xs text-[#1D4ED8]">
+                  <tr key={p.id} className="hover:bg-surface/30">
+                    <td className="px-6 py-3 font-mono text-xs text-primary">
                       {p.transactionCode}
                     </td>
-                    <td className="px-6 py-3">#{p.bookingId}</td>
-                    <td className="px-6 py-3 font-semibold">
+                    <td className="px-6 py-3 text-foreground">#{p.bookingId}</td>
+                    <td className="px-6 py-3 font-semibold text-foreground">
                       {p.amount.toLocaleString("vi-VN")}₫
                     </td>
                     <td className="px-6 py-3 text-emerald-600 font-semibold">
                       +{p.platformCommission.toLocaleString("vi-VN")}₫
                     </td>
-                    <td className="px-6 py-3">
+                    <td className="px-6 py-3 text-foreground">
                       {p.ownerRevenue.toLocaleString("vi-VN")}₫
                     </td>
                     <td className="px-6 py-3">

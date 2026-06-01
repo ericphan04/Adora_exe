@@ -58,10 +58,10 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
 
   const iconWrapClass =
     variant === "destructive"
-      ? "bg-red-50 text-red-600"
+      ? "bg-red-500/10 text-red-500"
       : variant === "success"
-        ? "bg-emerald-50 text-emerald-600"
-        : "bg-[#EFF6FF] text-[#1D4ED8]";
+        ? "bg-emerald-500/10 text-emerald-500"
+        : "bg-primary-light text-primary";
 
   const confirmBtnClass =
     variant === "destructive"
@@ -79,7 +79,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           if (!open) close(false);
         }}
       >
-        <AlertDialogContent className="sm:max-w-md border-[#E3E8EF] bg-white p-0 overflow-hidden gap-0">
+        <AlertDialogContent className="sm:max-w-md border-border bg-card p-0 overflow-hidden gap-0">
           <AlertDialogHeader className="px-6 pt-6 pb-2 text-left space-y-3">
             <div className="flex items-start gap-3">
               <div
@@ -88,19 +88,19 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                 <Icon className="w-5 h-5" />
               </div>
               <div className="min-w-0 pt-0.5">
-                <AlertDialogTitle className="text-[#1E293B] text-base">
+                <AlertDialogTitle className="text-foreground text-base">
                   {pending?.title ?? "Xác nhận thao tác"}
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-[#6B7A8D] text-sm mt-1.5 leading-relaxed">
+                <AlertDialogDescription className="text-muted-foreground text-sm mt-1.5 leading-relaxed">
                   {pending?.description}
                 </AlertDialogDescription>
               </div>
             </div>
           </AlertDialogHeader>
-          <AlertDialogFooter className="px-6 py-4 bg-slate-50 border-t border-[#E3E8EF] sm:justify-end gap-2">
+          <AlertDialogFooter className="px-6 py-4 bg-surface border-t border-border sm:justify-end gap-2">
             <AlertDialogCancel
               onClick={() => close(false)}
-              className="cursor-pointer border-[#E3E8EF] text-[#6B7A8D] hover:bg-white"
+              className="cursor-pointer border-border text-muted-foreground hover:bg-surface/50"
             >
               {pending?.cancelLabel ?? "Huỷ"}
             </AlertDialogCancel>
