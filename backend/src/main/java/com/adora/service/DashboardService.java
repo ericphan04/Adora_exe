@@ -53,23 +53,63 @@ public class DashboardService {
                 .map(bookingService::mapToDto)
                 .collect(Collectors.toList());
 
-        // For savedBillboards, fallback to returning 2 featured billboards
-        List<BillboardDto> savedBillboards = billboardRepository.findFirst2ByStatusAndIsFeatured(BillboardStatus.APPROVED, true).stream()
-                .map(billboardService::mapToLightDto)
-                .collect(Collectors.toList());
+        // For savedBillboards, return an empty list as they are managed via client-side LocalStorage
+        List<BillboardDto> savedBillboards = new ArrayList<>();
 
         List<BookingDto> recentBookings = bookingRepository.findTop5ByRenterIdOrderByCreatedAtDesc(renterId).stream()
                 .map(bookingService::mapToDto)
                 .collect(Collectors.toList());
 
-        // Construct mock campaign performance data for the frontend charts
-        List<Map<String, Object>> performance = List.of(
-                Map.of("month", "Jan", "views", 12000, "clicks", 450, "spent", 250),
-                Map.of("month", "Feb", "views", 19000, "clicks", 800, "spent", 400),
-                Map.of("month", "Mar", "views", 32000, "clicks", 1200, "spent", 650),
-                Map.of("month", "Apr", "views", 54000, "clicks", 2100, "spent", 1200),
-                Map.of("month", "May", "views", 78000, "clicks", 3400, "spent", 2100)
-        );
+        // Construct campaign performance data dynamically using renter's bookings
+        List<Booking> bookings = bookingRepository.findByRenterId(renterId);
+        List<Map<String, Object>> performance = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        for (int i = 4; i >= 0; i--) {
+            LocalDate monthStart = today.minusMonths(i).withDayOfMonth(1);
+            LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+            String monthLabel = monthStart.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH);
+
+            long views = 0;
+            long clicks = 0;
+            BigDecimal spent = BigDecimal.ZERO;
+
+            for (Booking booking : bookings) {
+                if (booking.getStatus() == BookingStatus.PAID || 
+                    booking.getStatus() == BookingStatus.RUNNING || 
+                    booking.getStatus() == BookingStatus.COMPLETED) {
+
+                    LocalDate start = booking.getStartDate();
+                    LocalDate end = booking.getEndDate();
+
+                    // Check overlap between [start, end] and [monthStart, monthEnd]
+                    LocalDate overlapStart = start.isAfter(monthStart) ? start : monthStart;
+                    LocalDate overlapEnd = end.isBefore(monthEnd) ? end : monthEnd;
+
+                    if (!overlapStart.isAfter(overlapEnd)) {
+                        // There is an overlap! Calculate number of active days in this month
+                        long days = java.time.temporal.ChronoUnit.DAYS.between(overlapStart, overlapEnd) + 1;
+                        long dailyViews = booking.getBillboard() != null ? booking.getBillboard().getDailyViews() : 1000;
+                        views += dailyViews * days;
+
+                        // Prorate spent (finalAmount) based on total days
+                        long totalDays = java.time.temporal.ChronoUnit.DAYS.between(start, end) + 1;
+                        if (totalDays > 0) {
+                            BigDecimal dailyRate = booking.getFinalAmount().divide(BigDecimal.valueOf(totalDays), 2, java.math.RoundingMode.HALF_UP);
+                            spent = spent.add(dailyRate.multiply(BigDecimal.valueOf(days)));
+                        }
+                    }
+                }
+            }
+            clicks = Math.round(views * 0.02); // Simulate a 2% CTR (click-through rate)
+
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("month", monthLabel);
+            dataPoint.put("views", views);
+            dataPoint.put("clicks", clicks);
+            dataPoint.put("spent", spent);
+            performance.add(dataPoint);
+        }
 
         return RenterDashboardResponse.builder()
                 .activeCampaigns((int) activeCampaigns)

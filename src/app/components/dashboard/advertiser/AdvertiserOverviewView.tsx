@@ -78,6 +78,13 @@ export function AdvertiserOverviewView({
     return String(total);
   }, [data]);
 
+  // Completion / Active Rate calculation
+  const completionRate = useMemo(() => {
+    const active = data.activeCampaigns || 0;
+    const total = active + (data.upcomingBookings?.length || 0);
+    return total > 0 ? ((active / total) * 100).toFixed(1) : "0.0";
+  }, [data]);
+
   const recentBookingsList = useMemo(
     () => (data.recentBookings || []).slice(0, 5),
     [data]
@@ -121,10 +128,21 @@ export function AdvertiserOverviewView({
             </div>
           </div>
           <div className="mt-6 flex items-center gap-2">
-            <span className="text-accent flex items-center font-bold text-sm">
-              <TrendingUp className="w-4 h-4 mr-0.5" /> +12.5%
-            </span>
-            <span className="text-muted-foreground text-xs font-semibold">so với tháng trước</span>
+            {data.totalSpending && Number(data.totalSpending) > 0 ? (
+              <>
+                <span className="text-accent flex items-center font-bold text-sm">
+                  <TrendingUp className="w-4 h-4 mr-0.5" /> +12.5%
+                </span>
+                <span className="text-muted-foreground text-xs font-semibold">so với tháng trước</span>
+              </>
+            ) : (
+              <>
+                <span className="text-muted-foreground flex items-center font-bold text-sm">
+                  0%
+                </span>
+                <span className="text-muted-foreground text-xs font-semibold">Chưa có chi tiêu</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -134,7 +152,7 @@ export function AdvertiserOverviewView({
             <div>
               <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Lượt hiển thị</p>
               <h3 className="text-2xl md:text-3xl font-extrabold mt-2 text-foreground">
-                {totalImpressions || "1.2M+"}
+                {totalImpressions}
               </h3>
             </div>
             <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent">
@@ -142,10 +160,21 @@ export function AdvertiserOverviewView({
             </div>
           </div>
           <div className="mt-6 flex items-center gap-2">
-            <span className="text-accent flex items-center font-bold text-sm">
-              <TrendingUp className="w-4 h-4 mr-0.5" /> +8.2%
-            </span>
-            <span className="text-muted-foreground text-xs font-semibold">hiệu suất cao</span>
+            {totalImpressions !== "0" ? (
+              <>
+                <span className="text-accent flex items-center font-bold text-sm">
+                  <TrendingUp className="w-4 h-4 mr-0.5" /> +8.2%
+                </span>
+                <span className="text-muted-foreground text-xs font-semibold">hiệu suất cao</span>
+              </>
+            ) : (
+              <>
+                <span className="text-muted-foreground flex items-center font-bold text-sm">
+                  0
+                </span>
+                <span className="text-muted-foreground text-xs font-semibold">Chưa có lượt tiếp cận</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -154,7 +183,7 @@ export function AdvertiserOverviewView({
           <div className="flex justify-between items-start">
             <div>
               <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Tỉ lệ lấp đầy</p>
-              <h3 className="text-2xl md:text-3xl font-extrabold mt-2 text-foreground">94.2%</h3>
+              <h3 className="text-2xl md:text-3xl font-extrabold mt-2 text-foreground">{completionRate}%</h3>
             </div>
             <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent">
               <Megaphone className="w-6 h-6" />
@@ -162,7 +191,7 @@ export function AdvertiserOverviewView({
           </div>
           <div className="mt-6">
             <div className="w-full bg-border h-2 rounded-full overflow-hidden">
-              <div className="bg-accent h-full rounded-full" style={{ width: "94.2%" }}></div>
+              <div className="bg-accent h-full rounded-full" style={{ width: `${completionRate}%` }}></div>
             </div>
             <p className="text-muted-foreground text-xs font-semibold mt-2.5">
               {data.activeCampaigns} / { (data.activeCampaigns || 0) + (data.upcomingBookings?.length || 0) } màn hình đang hoạt động
