@@ -148,8 +148,20 @@ public class AuthService {
             .setAudience(Collections.singletonList(googleClientId))
             .build();
 
+            System.out.println("DEBUG: Configured Google Client ID in backend: [" + googleClientId + "]");
+            try {
+                String[] parts = request.getIdToken().split("\\.");
+                if (parts.length > 1) {
+                    String decodedPayload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
+                    System.out.println("DEBUG: Decoded Google Token Payload: " + decodedPayload);
+                }
+            } catch (Exception e) {
+                System.out.println("DEBUG: Failed to decode token payload: " + e.getMessage());
+            }
+
             GoogleIdToken idToken = verifier.verify(request.getIdToken());
             if (idToken == null) {
+                System.err.println("ERROR: GoogleIdTokenVerifier.verify returned null. Verification failed.");
                 throw new BadRequestException("Invalid Google ID Token");
             }
 
