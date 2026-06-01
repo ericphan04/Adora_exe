@@ -6,7 +6,7 @@ import { NotificationDto, NotificationType } from "../../types/notification";
 import notificationApi from "../../api/notificationApi";
 import { useAuth } from "./AuthContext";
 
-const WS_BASE = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8085";
+const WS_BASE = (import.meta.env.VITE_API_URL ?? "http://localhost:8085").replace(/\/$/, "");
 
 interface NotificationContextType {
   notifications: NotificationDto[];

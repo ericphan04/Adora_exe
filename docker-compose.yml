@@ -35,7 +35,7 @@ services:
       - DB_SSL_MODE=${DB_SSL_MODE:-disable}
       - JWT_SECRET=${JWT_SECRET:-9a4f2c8d3b7a1e5f8c6d4b2a0f8e6d4c2b0a8f6e4d2c0b8a6f4e2d0c8b6a4f2e}
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-86400000}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-948345920089-7j515dqe1ihqph3lnapho8c7l6auo9r8.apps.googleusercontent.com}
+      - GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-948345920089-7j515dqe1ihqph3lnapho8c7l6auo9r8.apps.googleusercontent.com}
       - R2_ENDPOINT=${R2_ENDPOINT:-https://f57aad0e4caab95af1c52c46175ca7a6.r2.cloudflarestorage.com}
       - R2_ACCESS_KEY=${R2_ACCESS_KEY:-your-access-key}
       - R2_SECRET_KEY=${R2_SECRET_KEY:-your-secret-key}
@@ -53,6 +53,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-948345920089-7j515dqe1ihqph3lnapho8c7l6auo9r8.apps.googleusercontent.com}
+        - VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY:-your_google_maps_api_key_here}
+        - VITE_VIETMAP_API_KEY=${VITE_VIETMAP_API_KEY:-5ccc4cd6f70448296dcc3ce29a3d34958dd4b86eef43fa46}
+        - VITE_VIETMAP_TILEMAP_API_KEY=${VITE_VIETMAP_TILEMAP_API_KEY:-6ef81d02dd3377004ee1c34726cbb71c9393fe42f098e24e}
+        - VITE_API_URL=${VITE_API_URL:-}
     container_name: adora_frontend
     restart: always
     depends_on:

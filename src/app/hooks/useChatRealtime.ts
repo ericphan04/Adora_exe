@@ -3,7 +3,7 @@ import { Client, IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { MessageDto } from "../../types/conversation";
 
-const WS_BASE = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8085";
+const WS_BASE = (import.meta.env.VITE_API_URL ?? "http://localhost:8085").replace(/\/$/, "");
 
 export type RealtimeStatus = "connecting" | "connected" | "polling" | "offline";
 
