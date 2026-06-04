@@ -47,6 +47,13 @@ export default function BillboardMapPage({ isDashboard = false }: BillboardMapPa
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   
+  useEffect(() => {
+    document.body.classList.add("map-page-active");
+    return () => {
+      document.body.classList.remove("map-page-active");
+    };
+  }, []);
+  
   // Filters state
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("Đà Nẵng");
@@ -197,14 +204,14 @@ export default function BillboardMapPage({ isDashboard = false }: BillboardMapPa
   }, [filtered, selectedId]);
 
   return (
-    <div className={isDashboard ? "w-full h-full flex flex-col min-h-0 overflow-hidden bg-background text-foreground" : "h-screen w-full flex flex-col bg-background text-foreground overflow-hidden font-sans"}>
+    <div className={isDashboard ? "w-full h-full flex flex-col min-h-0 md:overflow-hidden bg-background text-foreground" : "h-screen w-full flex flex-col bg-background text-foreground md:overflow-hidden font-sans"}>
       {!isDashboard && <TopNav />}
 
       {/* Main split-screen panel */}
-      <main className="flex-1 flex flex-col md:flex-row min-h-0 pt-0 overflow-hidden bg-background">
+      <main className="flex-1 flex flex-col md:flex-row min-h-0 pt-0 overflow-y-auto md:overflow-hidden bg-background">
         
         {/* Left Column: Filter & List */}
-        <section className="w-full md:w-[400px] lg:w-[450px] bg-card border-r border-slate-200 dark:border-border/30 flex flex-col h-full z-10 overflow-hidden flex-shrink-0 text-foreground">
+        <section className="w-full md:w-[400px] lg:w-[450px] bg-card border-r border-slate-200 dark:border-border/30 flex flex-col h-auto md:h-full z-10 md:overflow-hidden flex-shrink-0 text-foreground">
           
           {/* Header & Filters Box */}
           <div className="p-5 space-y-4 border-b border-slate-100 dark:border-border/20 bg-slate-50/20 dark:bg-slate-800/10">
@@ -316,7 +323,7 @@ export default function BillboardMapPage({ isDashboard = false }: BillboardMapPa
           </div>
 
           {/* List Scrollable Container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="p-4 space-y-4 md:flex-1 md:overflow-y-auto">
             {loading ? (
               <div className="text-center py-20 text-sm text-muted-foreground font-semibold animate-pulse">
                 Đang tải danh sách bảng hiệu...
@@ -386,7 +393,7 @@ export default function BillboardMapPage({ isDashboard = false }: BillboardMapPa
         </section>
 
         {/* Right Column: Google Interactive Map */}
-        <section className="flex-1 relative bg-background overflow-hidden min-h-[300px] md:min-h-0">
+        <section className="w-full h-[400px] md:h-full md:flex-1 relative bg-background overflow-hidden flex-shrink-0">
           <BillboardGoogleMap
             billboards={filtered}
             selectedId={selectedId}

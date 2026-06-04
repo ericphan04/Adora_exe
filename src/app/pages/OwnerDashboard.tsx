@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Monitor, BarChart3, DollarSign, Clock, Check, X, Eye, Edit2, Trash2, AlertTriangle, Plus, MapPin, Sun, Moon, Settings, LogOut } from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import { MobileBottomNav } from "../components/MobileBottomNav";
 import { KpiCard } from "../components/KpiCard";
 import { StatusBadge } from "../components/StatusBadge";
 import { DataTable } from "../components/DataTable";
@@ -184,6 +185,17 @@ export default function OwnerDashboard() {
   const [loading, setLoading] = useState(true);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".profile-dropdown-trigger")) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, []);
 
   const initials = (user?.fullName || "OS")
     .split(" ")
@@ -1151,7 +1163,7 @@ export default function OwnerDashboard() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <DashboardSidebar role="owner" />
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto pb-16 lg:pb-0">
         {isUsingFallback && (
           <div className="bg-amber-50/15 border-b border-amber-200/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -1200,7 +1212,7 @@ export default function OwnerDashboard() {
               </button>
 
               {user && (
-                <div className="relative">
+                <div className="relative profile-dropdown-trigger">
                   <button
                     type="button"
                     onClick={() => setShowProfileDropdown((prev) => !prev)}
@@ -1219,9 +1231,7 @@ export default function OwnerDashboard() {
                   </button>
 
                   {showProfileDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setShowProfileDropdown(false)} />
-                      <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="px-4 py-2 border-b border-border">
                           <p className="text-sm font-semibold text-foreground truncate">{user.fullName}</p>
                           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -1250,7 +1260,6 @@ export default function OwnerDashboard() {
                           Đăng xuất
                         </button>
                       </div>
-                    </>
                   )}
                 </div>
               )}
@@ -2392,6 +2401,7 @@ export default function OwnerDashboard() {
           </div>
         </div>
       )}
+      <MobileBottomNav />
     </div>
   );
 }

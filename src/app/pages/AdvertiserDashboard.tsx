@@ -6,6 +6,7 @@ import {
   Settings, LogOut
 } from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import { MobileBottomNav } from "../components/MobileBottomNav";
 import { useAuth } from "../context/AuthContext";
 import { useConfirm } from "../context/ConfirmContext";
 import { useNotifications } from "../context/NotificationContext";
@@ -92,6 +93,20 @@ export default function AdvertiserDashboard() {
   const [submittingComplaint, setSubmittingComplaint] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".profile-dropdown-trigger")) {
+        setShowProfileDropdown(false);
+      }
+      if (!target.closest(".notification-dropdown-trigger")) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, []);
 
   const renderNotificationIcon = (type: string) => {
     switch (type) {
@@ -418,24 +433,8 @@ export default function AdvertiserDashboard() {
         <DashboardSidebar role="advertiser" />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileSidebarOpen(false)} />
-          <div className="relative w-64 bg-card h-full flex flex-col shadow-2xl animate-in slide-in-from-left duration-200">
-            <DashboardSidebar role="advertiser" />
-            <button
-              onClick={() => setIsMobileSidebarOpen(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-foreground hover:bg-border/30 cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Main Content Area */}
-      <main className={`flex-1 flex flex-col h-screen ${view === "map" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
+      <main className={`flex-1 flex flex-col h-screen pb-16 lg:pb-0 ${view === "map" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
         {/* Offline Fallback Banner */}
         {isUsingFallback && (
           <div className="bg-amber-500/10 border-b border-amber-500/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold shrink-0">
@@ -450,13 +449,6 @@ export default function AdvertiserDashboard() {
         <header className="sticky top-0 w-full z-40 bg-surface/80 backdrop-blur-xl border-b border-border/30 px-6 md:px-8 h-16 shadow-[0_0_20px_rgba(6,182,212,0.1)] shrink-0 flex items-center">
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center gap-4">
-              {/* Hamburger for mobile */}
-              <button
-                onClick={() => setIsMobileSidebarOpen(true)}
-                className="lg:hidden text-foreground hover:text-accent transition-colors cursor-pointer"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
               <h2 className="text-lg md:text-xl font-black text-foreground">{pageMeta.title}</h2>
 
               {/* Search Input */}
@@ -482,7 +474,7 @@ export default function AdvertiserDashboard() {
                 </button>
 
                 {/* Notifications */}
-                <div className="relative">
+                <div className="relative notification-dropdown-trigger">
                   <button
                     type="button"
                     onClick={() => setShowNotifications(!showNotifications)}
@@ -500,9 +492,7 @@ export default function AdvertiserDashboard() {
 
                   {/* Glassmorphic Dropdown Panel */}
                   {showNotifications && (
-                    <>
-                      <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)} />
-                      <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-border/50 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="fixed md:absolute top-16 md:top-auto md:mt-3 left-4 right-4 md:left-auto md:right-0 w-auto md:w-96 bg-white dark:bg-slate-900 border border-border/50 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                         {/* Header */}
                         <div className="p-4 border-b border-border/30 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
                           <div className="flex items-center gap-2">
@@ -571,7 +561,6 @@ export default function AdvertiserDashboard() {
                           )}
                         </div>
                       </div>
-                    </>
                   )}
                 </div>
               </div>
@@ -580,7 +569,7 @@ export default function AdvertiserDashboard() {
 
               {/* User Profile */}
               {user && (
-                <div className="relative">
+                <div className="relative profile-dropdown-trigger">
                   <button
                     type="button"
                     onClick={() => setShowProfileDropdown((prev) => !prev)}
@@ -599,9 +588,7 @@ export default function AdvertiserDashboard() {
                   </button>
 
                   {showProfileDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setShowProfileDropdown(false)} />
-                      <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="px-4 py-2 border-b border-border">
                           <p className="text-sm font-semibold text-foreground truncate">{user.fullName}</p>
                           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -630,7 +617,6 @@ export default function AdvertiserDashboard() {
                           Đăng xuất
                         </button>
                       </div>
-                    </>
                   )}
                 </div>
               )}
@@ -823,6 +809,7 @@ export default function AdvertiserDashboard() {
           </div>
         </div>
       )}
+      <MobileBottomNav />
     </div>
   );
 }

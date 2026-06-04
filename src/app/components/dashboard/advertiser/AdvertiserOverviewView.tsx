@@ -437,13 +437,14 @@ export function AdvertiserOverviewView({
           </button>
         </div>
         
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto md:overflow-visible">
           {recentBookingsList.length === 0 ? (
             <div className="text-center py-12 text-sm text-muted-foreground font-semibold">
               Không có giao dịch đặt chỗ nào gần đây.
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <>
+            <table className="hidden md:table w-full text-left border-collapse">
               <thead className="bg-surface/50 text-muted-foreground text-[10px] uppercase font-bold tracking-wider border-b border-border/30">
                 <tr>
                   <th className="px-6 py-4 font-semibold">Giao dịch</th>
@@ -536,6 +537,92 @@ export function AdvertiserOverviewView({
                 })}
               </tbody>
             </table>
+
+            <div className="md:hidden p-4 space-y-4">
+              {recentBookingsList.map((b) => {
+                const { label } = mapBookingStatus(b.status);
+                const isPending = b.status === "PENDING";
+                const isAccepted = b.status === "ACCEPTED";
+                const isCompleted = b.status === "PAID" || b.status === "COMPLETED";
+
+                return (
+                  <div key={b.id} className="p-4 bg-card rounded-xl border border-border/40 space-y-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <Megaphone className="w-4.5 h-4.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-foreground truncate text-sm">{b.billboard?.title || "Bảng hiệu LED"}</p>
+                          <p className="text-[10px] text-muted-foreground font-semibold">ID: AD-{b.id}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1.5 uppercase shrink-0 ${
+                        b.status === "PAID" || b.status === "COMPLETED" 
+                          ? "bg-accent/15 text-accent" 
+                          : b.status === "PENDING" || b.status === "ACCEPTED"
+                          ? "bg-amber-500/15 text-amber-500"
+                          : "bg-red-500/15 text-red-500"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          b.status === "PAID" || b.status === "COMPLETED"
+                            ? "bg-accent"
+                            : b.status === "PENDING" || b.status === "ACCEPTED"
+                            ? "bg-amber-500"
+                            : "bg-red-500"
+                        }`}></span>
+                        {label}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs text-muted-foreground py-2 border-t border-b border-border/10">
+                      <div>
+                        <span className="block text-[9px] uppercase font-bold text-muted-foreground/60">Thời gian</span>
+                        <span className="font-semibold">{formatAdvertiserDate(b.startDate)} – {formatAdvertiserDate(b.endDate)}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-[9px] uppercase font-bold text-muted-foreground/60">Số tiền</span>
+                        <span className="font-extrabold text-foreground text-sm">{b.finalAmount.toLocaleString("vi-VN")}₫</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-1">
+                      {isPending && (
+                        <button
+                          type="button"
+                          onClick={() => onCancelBooking(b.id)}
+                          className="px-4 py-2 text-xs font-bold text-red-500 hover:text-white border border-red-500/30 hover:bg-red-500 rounded-lg cursor-pointer transition-all active:scale-95 w-full text-center"
+                        >
+                          Hủy đặt lịch
+                        </button>
+                      )}
+                      {isAccepted && (
+                        <button
+                          type="button"
+                          onClick={() => onPayBooking(b.id)}
+                          className="px-4 py-2 text-xs font-bold text-accent hover:text-white border border-accent/30 hover:bg-accent rounded-lg cursor-pointer transition-all active:scale-95 shadow-md shadow-accent/10 w-full text-center"
+                        >
+                          Thanh toán
+                        </button>
+                      )}
+                      {isCompleted && (
+                        <button
+                          type="button"
+                          onClick={() => onReviewBooking(b.id)}
+                          className="px-4 py-2 text-xs font-bold text-primary hover:text-white border border-primary/30 hover:bg-primary rounded-lg cursor-pointer transition-all active:scale-95 w-full text-center"
+                        >
+                          Đánh giá
+                        </button>
+                      )}
+                      {!isPending && !isAccepted && !isCompleted && (
+                        <span className="text-xs text-muted-foreground font-semibold py-1">Không có thao tác khả dụng</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            </>
           )}
         </div>
       </div>

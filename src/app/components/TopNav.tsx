@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { 
   Bell, 
@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useNotifications } from "../context/NotificationContext";
 import { NotificationDto } from "../../types/notification";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 export function TopNav() {
   const navigate = useNavigate();
@@ -23,6 +24,20 @@ export function TopNav() {
   
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".profile-dropdown-trigger")) {
+        setShowDropdown(false);
+      }
+      if (!target.closest(".notification-dropdown-trigger")) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, []);
 
   const getDashboardPath = () => {
     if (!user) return "/";
@@ -111,7 +126,8 @@ export function TopNav() {
   };
 
   return (
-    <header className="w-full border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50 text-foreground">
+    <>
+      <header className="w-full border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50 text-foreground">
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
         <div className="flex items-center gap-8">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-xl text-primary tracking-tight cursor-pointer font-black bg-transparent border-none">
@@ -136,7 +152,7 @@ export function TopNav() {
         <div className="flex items-center gap-3">
           {/* Dynamic Notification Bell Button */}
           {user && (
-            <div className="relative">
+            <div className="relative notification-dropdown-trigger">
               <button 
                 onClick={() => {
                   setShowNotifications(!showNotifications);
@@ -155,9 +171,7 @@ export function TopNav() {
 
               {/* Glassmorphic Dropdown Panel */}
               {showNotifications && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
-                  <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="fixed md:absolute top-16 md:top-auto md:mt-2 left-4 right-4 md:left-auto md:right-0 w-auto md:w-96 bg-card border border-border rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Header */}
                     <div className="p-4 border-b border-border flex items-center justify-between bg-muted/50 backdrop-blur-sm">
                       <div className="flex items-center gap-2">
@@ -232,13 +246,12 @@ export function TopNav() {
                       </button>
                     </div>
                   </div>
-                </>
               )}
             </div>
           )}
 
           {user ? (
-            <div className="relative">
+            <div className="relative profile-dropdown-trigger">
               <button
                 onClick={() => {
                   setShowDropdown(!showDropdown);
@@ -259,9 +272,7 @@ export function TopNav() {
               </button>
 
               {showDropdown && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)} />
-                  <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="px-4 py-2 border-b border-border">
                       <p className="text-sm font-semibold text-foreground truncate">{user.fullName}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -288,20 +299,19 @@ export function TopNav() {
                       <span>Đăng Xuất</span>
                     </button>
                   </div>
-                </>
               )}
             </div>
           ) : (
             <>
               <button
                 onClick={() => navigate("/login")}
-                className="text-sm text-primary border border-border px-4 py-2 rounded-lg hover:bg-primary-light transition-colors cursor-pointer bg-transparent"
+                className="text-xs sm:text-sm text-primary border border-border px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-primary-light transition-colors cursor-pointer bg-transparent"
               >
                 Đăng Nhập
               </button>
               <button
                 onClick={() => navigate("/register")}
-                className="text-sm text-white bg-primary px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors cursor-pointer border-none"
+                className="text-xs sm:text-sm text-white bg-primary px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-primary-hover transition-colors cursor-pointer border-none"
               >
                 Bắt Đầu
               </button>
@@ -310,5 +320,7 @@ export function TopNav() {
         </div>
       </div>
     </header>
+    <MobileBottomNav />
+    </>
   );
 }
