@@ -60,7 +60,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
 
   return (
     <aside
-      className={`h-screen bg-card text-foreground flex flex-col transition-all duration-300 border-r border-border/30 shrink-0 z-50 ${collapsed ? "w-[68px]" : "w-[256px]"
+      className={`hidden lg:flex h-screen bg-card text-foreground flex-col transition-all duration-300 border-r border-border/30 shrink-0 z-50 ${collapsed ? "w-[68px]" : "w-[256px]"
         }`}
     >
       <div className="flex flex-col px-4 py-6 border-b border-border/20 relative">

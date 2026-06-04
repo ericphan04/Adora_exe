@@ -377,4 +377,23 @@
   background: linear-gradient(to bottom, transparent, rgba(6, 182, 212, 0.05), transparent);
   animation: scan 4s linear infinite;
   pointer-events: none;
+}
+
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: 4rem;
+  }
+
+  body.map-page-active {
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+
+  html.map-page-active {
+    overflow: hidden !important;
+    height: 100%;
+  }
 }

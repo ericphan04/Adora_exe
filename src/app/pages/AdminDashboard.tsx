@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Users, Monitor, DollarSign, TrendingUp, Check, X, Eye, Trash2, AlertTriangle, Search, Filter, RefreshCw, Sun, Moon, ChevronLeft, ChevronRight, MapPin, Layers, Zap, Clock, Star, Image as ImageIcon, Settings, LogOut } from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import { MobileBottomNav } from "../components/MobileBottomNav";
 import { KpiCard } from "../components/KpiCard";
 import { StatusBadge } from "../components/StatusBadge";
 import { DataTable } from "../components/DataTable";
@@ -187,6 +188,17 @@ export default function AdminDashboard() {
   const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [selectedDetailBillboard, setSelectedDetailBillboard] = useState<BillboardDto | null>(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".profile-dropdown-trigger")) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, []);
 
   const initials = (currentUser?.fullName || "AD")
     .split(" ")
@@ -740,7 +752,7 @@ export default function AdminDashboard() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <DashboardSidebar role="admin" />
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto pb-16 lg:pb-0">
         {isUsingFallback && (
           <div className="bg-amber-50/15 border-b border-amber-200/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -795,11 +807,11 @@ export default function AdminDashboard() {
               </button>
 
               {currentUser && (
-                <div className="relative">
+                <div className="relative profile-dropdown-trigger">
                   <button
                     type="button"
                     onClick={() => setShowProfileDropdown((prev) => !prev)}
-                    className="flex items-center gap-2 hover:bg-surface/50 p-1.5 rounded-lg border border-border/40 transition-colors cursor-pointer bg-transparent"
+                    className="flex items-center gap-2 hover:bg-surface/50 p-1.5 rounded-lg border border-border/40 transition-colors cursor-pointer bg-transparent text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs overflow-hidden shrink-0 border border-primary/20">
                       {currentUser.avatarUrl ? (
@@ -814,9 +826,7 @@ export default function AdminDashboard() {
                   </button>
 
                   {showProfileDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setShowProfileDropdown(false)} />
-                      <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="px-4 py-2 border-b border-border">
                           <p className="text-sm font-semibold text-foreground truncate">{currentUser.fullName}</p>
                           <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
@@ -845,7 +855,6 @@ export default function AdminDashboard() {
                           Đăng xuất
                         </button>
                       </div>
-                    </>
                   )}
                 </div>
               )}
@@ -1442,6 +1451,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      <MobileBottomNav />
     </div>
   );
 }

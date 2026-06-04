@@ -289,12 +289,12 @@ export default function BillboardListingPage() {
       </div>
 
       <div className="bg-white border-b border-[#E3E8EF]">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl text-[#1D4ED8]" style={{ fontWeight: 700 }}>Tìm Bảng Quảng Cáo</h1>
             <p className="text-sm text-[#6B7A8D] mt-1">{billboards.length} bảng quảng cáo tại Đà Nẵng</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-start sm:justify-end">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 text-sm text-[#6B7A8D] border border-[#E3E8EF] px-3 py-2 rounded-lg hover:bg-[#F0F9FF] transition-colors cursor-pointer"
@@ -330,10 +330,10 @@ export default function BillboardListingPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 flex gap-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-6">
         {showFilters && (
-          <aside className="w-72 shrink-0">
-            <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 sticky top-24">
+          <aside className="w-full lg:w-72 shrink-0">
+            <div className="bg-white rounded-xl border border-[#E3E8EF] p-5 sm:p-6 lg:sticky lg:top-24">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>Bộ Lọc</h3>
                 <button onClick={handleClearFilters} className="text-xs text-[#06B6D4] hover:underline cursor-pointer">Xóa Tất Cả</button>

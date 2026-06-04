@@ -127,9 +127,11 @@ export default function LoginPage() {
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "948345920089-7j515dqe1ihqph3lnapho8c7l6auo9r8.apps.googleusercontent.com",
         callback: handleGoogleLoginCallback,
       });
+      
+      const width = Math.max(200, Math.min(400, window.innerWidth - 64));
       window.google.accounts.id.renderButton(
         document.getElementById("google-signin-btn"),
-        { theme: "outline", size: "large", width: 400, text: "continue_with" }
+        { theme: "outline", size: "large", width, text: "continue_with" }
       );
     }
   }, []);
