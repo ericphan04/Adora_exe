@@ -752,7 +752,7 @@ export default function AdminDashboard() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <DashboardSidebar role="admin" />
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto pb-16 lg:pb-0">
+      <main className={`flex-1 flex flex-col h-screen pb-16 lg:pb-0 ${view === "messages" ? "overflow-hidden" : "overflow-y-auto"}`}>
         {isUsingFallback && (
           <div className="bg-amber-50/15 border-b border-amber-200/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -762,45 +762,33 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="bg-card border-b border-border/30 px-8 py-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl text-primary font-bold">
-                {view === "users"
-                  ? "Quản Lý Thành Viên"
-                  : view === "listings"
-                  ? "Duyệt Tin Đăng Bảng QC"
-                  : view === "transactions"
-                  ? "Giám Sát Doanh Thu & Giao Dịch"
-                  : view === "revenue"
-                  ? "Doanh Thu & Hoa Hồng"
-                  : view === "disputes"
-                  ? "Trung Tâm Khiếu Nại"
-                  : view === "reports"
-                  ? "Báo Cáo & Tố Cáo"
-                  : view === "settings"
-                  ? "Cài Đặt Hệ Thống"
-                  : view === "messages"
-                  ? "Tin Nhắn Nền Tảng"
-                  : "Bảng Điều Khiển Quản Trị"}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {view === "revenue"
-                  ? "Phân tích GMV, hoa hồng 5% và dòng tiền nền tảng."
-                  : view === "disputes"
-                  ? "Xử lý tranh chấp giữa nhà quảng cáo và chủ bảng QC."
-                  : view === "settings"
-                  ? "Cấu hình ADORA, thanh toán và chính sách vận hành."
-                  : view === "messages"
-                  ? "Giám sát và hỗ trợ hội thoại Renter ↔ Owner."
-                  : `Chào mừng trở lại, ${currentUser?.fullName || "Admin"}. Quản lý hệ thống LED Billboard.`}
-              </p>
-            </div>
-            <div className="flex items-center gap-2.5">
+        <header className="sticky top-0 w-full z-40 bg-surface/80 backdrop-blur-xl border-b border-border/30 px-6 md:px-8 h-16 shadow-[0_0_20px_rgba(6,182,212,0.1)] shrink-0 flex items-center">
+          <div className="w-full flex items-center justify-between gap-4">
+            <h1 className="text-lg md:text-xl font-bold text-foreground">
+              {view === "users"
+                ? "Quản Lý Thành Viên"
+                : view === "listings"
+                ? "Duyệt Tin Đăng Bảng QC"
+                : view === "transactions"
+                ? "Giám Sát Doanh Thu & Giao Dịch"
+                : view === "revenue"
+                ? "Doanh Thu & Hoa Hồng"
+                : view === "disputes"
+                ? "Trung Tâm Khiếu Nại"
+                : view === "reports"
+                ? "Báo Cáo & Tố Cáo"
+                : view === "settings"
+                ? "Cài Đặt Hệ Thống"
+                : view === "messages"
+                ? "Tin Nhắn Nền Tảng"
+                : "Bảng Điều Khiển Quản Trị"}
+            </h1>
+
+            <div className="flex items-center gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="p-2 border border-border/50 rounded-lg text-muted-foreground hover:text-accent hover:bg-surface/50 transition-colors cursor-pointer active:scale-95 flex items-center justify-center"
+                className="p-2 border border-border/50 rounded-lg text-muted-foreground hover:text-accent hover:bg-surface/50 transition-colors cursor-pointer active:scale-95 flex items-center justify-center bg-transparent"
                 title="Đổi giao diện"
               >
                 {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -827,48 +815,48 @@ export default function AdminDashboard() {
 
                   {showProfileDropdown && (
                     <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="px-4 py-2 border-b border-border">
-                          <p className="text-sm font-semibold text-foreground truncate">{currentUser.fullName}</p>
-                          <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowProfileDropdown(false);
-                            navigate("/admin/settings");
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-surface transition-colors cursor-pointer flex items-center gap-2 border-none bg-transparent"
-                        >
-                          <Settings className="w-4 h-4 text-muted-foreground" />
-                          Cấu hình hệ thống
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowProfileDropdown(false);
-                            logout();
-                            navigate("/");
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/5 transition-colors cursor-pointer flex items-center gap-2 border-t border-border mt-1 bg-transparent"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          Đăng xuất
-                        </button>
+                      <div className="px-4 py-2 border-b border-border">
+                        <p className="text-sm font-semibold text-foreground truncate">{currentUser.fullName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          navigate("/admin/settings");
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-surface transition-colors cursor-pointer flex items-center gap-2 border-none bg-transparent"
+                      >
+                        <Settings className="w-4 h-4 text-muted-foreground" />
+                        Cấu hình hệ thống
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          logout();
+                          navigate("/");
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/5 transition-colors cursor-pointer flex items-center gap-2 border-t border-border mt-1 bg-transparent"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Đăng xuất
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
 
               <button
                 onClick={loadAllData}
-                className="p-2 border border-border/50 rounded-lg text-primary hover:bg-surface/50 cursor-pointer flex items-center justify-center transition-colors"
+                className="p-2 border border-border/50 rounded-lg text-primary hover:bg-surface/50 cursor-pointer flex items-center justify-center transition-colors bg-transparent"
                 title="Làm mới dữ liệu"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* 1. OVERVIEW DASHBOARD VIEW */}
         {view === "dashboard" && dashboardData && (

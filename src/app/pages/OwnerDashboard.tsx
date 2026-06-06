@@ -1163,7 +1163,7 @@ export default function OwnerDashboard() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <DashboardSidebar role="owner" />
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto pb-16 lg:pb-0">
+      <main className={`flex-1 flex flex-col h-screen pb-16 lg:pb-0 ${view === "messages" ? "overflow-hidden" : "overflow-y-auto"}`}>
         {isUsingFallback && (
           <div className="bg-amber-50/15 border-b border-amber-200/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -1173,39 +1173,29 @@ export default function OwnerDashboard() {
           </div>
         )}
 
-        <div className="bg-card border-b border-border/30 px-8 py-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl text-primary" style={{ fontWeight: 700 }}>
-                {view === "billboards"
-                  ? "Bảng Quảng Cáo Của Tôi"
-                  : view === "bookings"
-                  ? "Quản Lý Đặt Chỗ"
-                  : view === "availability"
-                  ? "Xem Lịch Trống"
-                  : view === "revenue"
-                  ? "Doanh Thu & Chi Trả"
-                  : view === "settings"
-                  ? "Cài Đặt Tài Khoản"
-                  : view === "messages"
-                  ? "Tin Nhắn"
-                  : "Tổng Quan Chủ Sở Hữu"}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {view === "revenue"
-                  ? "Theo dõi thu nhập ròng và lịch sử chi trả từ các chiến dịch."
-                  : view === "settings"
-                  ? "Hồ sơ, tài khoản ngân hàng và tùy chọn tin đăng mặc định."
-                  : view === "messages"
-                  ? "Trao đổi với nhà quảng cáo về yêu cầu đặt chỗ."
-                  : `Chào mừng trở lại, ${user?.fullName || "Chủ sở hữu"}. Đây là danh mục quảng cáo của bạn.`}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
+        <header className="sticky top-0 w-full z-40 bg-surface/80 backdrop-blur-xl border-b border-border/30 px-6 md:px-8 h-16 shadow-[0_0_20px_rgba(6,182,212,0.1)] shrink-0 flex items-center">
+          <div className="w-full flex items-center justify-between gap-4">
+            <h1 className="text-lg md:text-xl font-black text-foreground">
+              {view === "billboards"
+                ? "Bảng Quảng Cáo Của Tôi"
+                : view === "bookings"
+                ? "Quản Lý Đặt Chỗ"
+                : view === "availability"
+                ? "Xem Lịch Trống"
+                : view === "revenue"
+                ? "Doanh Thu & Chi Trả"
+                : view === "settings"
+                ? "Cài Đặt Tài Khoản"
+                : view === "messages"
+                ? "Tin Nhắn"
+                : "Tổng Quan Chủ Sở Hữu"}
+            </h1>
+
+            <div className="flex items-center gap-3 shrink-0">
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="p-2 border border-border/50 rounded-lg text-muted-foreground hover:text-accent hover:bg-surface/50 transition-colors cursor-pointer active:scale-95 flex items-center justify-center"
+                className="p-2 border border-border/50 rounded-lg text-muted-foreground hover:text-accent hover:bg-surface/50 transition-colors cursor-pointer active:scale-95 flex items-center justify-center bg-transparent"
                 title="Đổi giao diện"
               >
                 {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -1216,7 +1206,7 @@ export default function OwnerDashboard() {
                   <button
                     type="button"
                     onClick={() => setShowProfileDropdown((prev) => !prev)}
-                    className="flex items-center gap-2 hover:bg-surface/50 p-1.5 rounded-lg border border-border/40 transition-colors cursor-pointer bg-transparent"
+                    className="flex items-center gap-2 hover:bg-surface/50 p-1.5 rounded-lg border border-border/40 transition-colors cursor-pointer bg-transparent text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs overflow-hidden shrink-0 border border-primary/20">
                       {user.avatarUrl ? (
@@ -1232,34 +1222,34 @@ export default function OwnerDashboard() {
 
                   {showProfileDropdown && (
                     <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="px-4 py-2 border-b border-border">
-                          <p className="text-sm font-semibold text-foreground truncate">{user.fullName}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowProfileDropdown(false);
-                            navigate("/owner/settings");
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-surface transition-colors cursor-pointer flex items-center gap-2 border-none bg-transparent"
-                        >
-                          <Settings className="w-4 h-4 text-muted-foreground" />
-                          Hồ sơ cá nhân
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowProfileDropdown(false);
-                            logout();
-                            navigate("/");
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/5 transition-colors cursor-pointer flex items-center gap-2 border-t border-border mt-1 bg-transparent"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          Đăng xuất
-                        </button>
+                      <div className="px-4 py-2 border-b border-border">
+                        <p className="text-sm font-semibold text-foreground truncate">{user.fullName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          navigate("/owner/settings");
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-surface transition-colors cursor-pointer flex items-center gap-2 border-none bg-transparent"
+                      >
+                        <Settings className="w-4 h-4 text-muted-foreground" />
+                        Hồ sơ cá nhân
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          logout();
+                          navigate("/");
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/5 transition-colors cursor-pointer flex items-center gap-2 border-t border-border mt-1 bg-transparent"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Đăng xuất
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -1267,14 +1257,14 @@ export default function OwnerDashboard() {
               {view === "billboards" && (
                 <button
                   onClick={openCreateModal}
-                  className="bg-[#1D4ED8] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#3B82F6] transition-colors cursor-pointer flex items-center gap-1 font-semibold shadow-sm"
+                  className="bg-[#1D4ED8] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#3B82F6] transition-colors cursor-pointer flex items-center gap-1 font-semibold shadow-sm shrink-0"
                 >
-                  <Plus className="w-4 h-4" /> Thêm Bảng QC
+                  <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Thêm Bảng QC</span>
                 </button>
               )}
             </div>
           </div>
-        </div>
+        </header>
 
         {/* 1. OVERVIEW DASHBOARD VIEW */}
         {view === "dashboard" && dashboardData && (

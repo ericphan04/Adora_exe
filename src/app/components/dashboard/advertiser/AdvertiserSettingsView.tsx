@@ -120,7 +120,7 @@ export function AdvertiserSettingsView() {
   return (
     <div className="flex flex-col lg:flex-row gap-6 bg-background text-foreground w-full">
       <aside className="lg:w-56 shrink-0">
-        <div className="bg-card rounded-xl border border-border p-2 sticky top-4">
+        <div className="bg-card rounded-xl border border-border p-2 sticky top-20">
           <div className="px-3 py-3 flex items-center gap-3 border-b border-border/60 mb-2">
             {user?.avatarUrl ? (
               <img src={user.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover shrink-0" />

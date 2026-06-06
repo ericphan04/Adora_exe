@@ -12,6 +12,7 @@ import {
   X,
   Wifi,
   WifiOff,
+  ArrowLeft,
 } from "lucide-react";
 import conversationApiFor, { ConversationApiRole } from "../../../api/conversationApi";
 import bookingApi from "../../../api/bookingApi";
@@ -356,8 +357,8 @@ export function MessagesView({ role }: MessagesViewProps) {
   const activeMessages = active?.messages ?? [];
 
   return (
-    <div className="p-8 h-[calc(100vh-140px)] flex flex-col">
-      <div className="flex items-center justify-between mb-3 gap-3">
+    <div className="p-4 md:p-8 flex-1 min-h-0 flex flex-col">
+      <div className={`flex items-center justify-between mb-3 gap-3 ${active ? "hidden md:flex" : "flex"}`}>
         {realtimeStatus !== "connected" && (
           <span
             className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${
@@ -388,7 +389,7 @@ export function MessagesView({ role }: MessagesViewProps) {
 
       <div className="bg-card rounded-xl border border-border/80 flex-1 flex overflow-hidden min-h-0">
         {/* List */}
-        <aside className="w-80 border-r border-border/80 flex flex-col shrink-0">
+        <aside className={`w-full md:w-80 md:border-r border-border/80 flex flex-col shrink-0 ${active ? "hidden md:flex" : "flex"}`}>
           <div className="p-3 border-b border-border/80">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -454,7 +455,7 @@ export function MessagesView({ role }: MessagesViewProps) {
         </aside>
 
         {/* Chat */}
-        <section className="flex-1 flex flex-col min-w-0">
+        <section className={`flex-1 flex flex-col min-w-0 ${active ? "flex" : "hidden md:flex"}`}>
           {!active ? (
             <div className="flex-1 flex items-center justify-center text-[#6B7A8D] text-sm">
               Chọn một hội thoại để xem tin nhắn
@@ -463,7 +464,21 @@ export function MessagesView({ role }: MessagesViewProps) {
             <>
               <div className="px-5 py-3 border-b border-border/80 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1D4ED8] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActive(null);
+                      setSearchParams((prev) => {
+                        const next = new URLSearchParams(prev);
+                        next.delete("conversationId");
+                        return next;
+                      }, { replace: true });
+                    }}
+                    className="p-1 -ml-1 rounded-lg hover:bg-surface/50 text-muted-foreground hover:text-foreground transition-colors md:hidden cursor-pointer shrink-0"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1D4ED8] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {initials(activeTitle)}
                   </div>
                   <div className="min-w-0">

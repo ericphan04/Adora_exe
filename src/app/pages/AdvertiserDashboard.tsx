@@ -434,7 +434,7 @@ export default function AdvertiserDashboard() {
       </div>
 
       {/* Main Content Area */}
-      <main className={`flex-1 flex flex-col h-screen pb-16 lg:pb-0 ${view === "map" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
+      <main className={`flex-1 flex flex-col h-screen pb-16 lg:pb-0 ${view === "map" || view === "messages" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
         {/* Offline Fallback Banner */}
         {isUsingFallback && (
           <div className="bg-amber-500/10 border-b border-amber-500/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold shrink-0">

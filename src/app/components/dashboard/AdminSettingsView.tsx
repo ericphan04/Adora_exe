@@ -78,7 +78,7 @@ export function AdminSettingsView() {
   return (
     <div className="p-8 flex flex-col lg:flex-row gap-6 bg-background text-foreground">
       <aside className="lg:w-56 shrink-0">
-        <div className="bg-card rounded-xl border border-border p-2 sticky top-4">
+        <div className="bg-card rounded-xl border border-border p-2 sticky top-20">
           <p className="px-3 py-2 text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
             Cài đặt hệ thống
           </p>
