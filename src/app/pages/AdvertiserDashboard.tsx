@@ -413,7 +413,7 @@ export default function AdvertiserDashboard() {
 
   if (loading && !data) {
     return (
-      <div className="flex h-screen bg-background">
+      <div className="flex h-dvh bg-background">
         <DashboardSidebar role="advertiser" />
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary" />
@@ -427,14 +427,14 @@ export default function AdvertiserDashboard() {
   const avatarUrl = user?.avatarUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuDVTzsXMFUBL6xS6CmJJJch9mV7DFDkQqCHSqxIDDBQzqkTqqGhzLzhUT4hU_XmxjYGu0SDYJXpaBApwGDaEwbHJtSAjjNterm154XUJ6M51e7zXHfsUQ9nopH9haH_hxlj3gPTj_ikOSm6xeb0naB_ncdtyMsbyWyhL4qViWWtjOC8dwml4QfkeTxAN6bdXM5rhUgWsNWf2m2LXQs1zQz8ULaErakKC6ph4ba3IW67FcDW0YSZhjzo1ACJ4S_4vvMeAbE-9npkDfE";
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden relative">
+    <div className="flex h-dvh bg-background text-foreground font-sans overflow-hidden relative">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <DashboardSidebar role="advertiser" />
       </div>
 
       {/* Main Content Area */}
-      <main className={`flex-1 flex flex-col h-screen pb-16 lg:pb-0 ${view === "map" || view === "messages" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
+      <main className={`flex-1 flex flex-col h-dvh pb-safe-nav lg:pb-0 ${view === "map" || view === "messages" ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
         {/* Offline Fallback Banner */}
         {isUsingFallback && (
           <div className="bg-amber-500/10 border-b border-amber-500/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold shrink-0">

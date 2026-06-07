@@ -358,7 +358,7 @@ export function MessagesView({ role }: MessagesViewProps) {
 
   return (
     <div className="p-4 md:p-8 flex-1 min-h-0 flex flex-col">
-      <div className={`flex items-center justify-between mb-3 gap-3 ${active ? "hidden md:flex" : "flex"}`}>
+      <div className={`flex flex-wrap items-center justify-between mb-3 gap-3 ${active ? "hidden md:flex" : "flex"}`}>
         {realtimeStatus !== "connected" && (
           <span
             className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${

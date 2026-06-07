@@ -205,7 +205,7 @@ export default function BillboardMapPage({ isDashboard = false }: BillboardMapPa
   }, [filtered, selectedId]);
 
   return (
-    <div className={isDashboard ? "w-full h-full flex flex-col min-h-0 md:overflow-hidden bg-background text-foreground" : "h-screen w-full flex flex-col bg-background text-foreground md:overflow-hidden font-sans"}>
+    <div className={isDashboard ? "w-full h-full flex flex-col min-h-0 md:overflow-hidden bg-background text-foreground" : "h-dvh w-full flex flex-col bg-background text-foreground md:overflow-hidden font-sans"}>
       {!isDashboard && <TopNav />}
 
       {/* Main split-screen panel */}

@@ -381,7 +381,7 @@
 
 @media (max-width: 1023px) {
   body {
-    padding-bottom: 4rem;
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
   }
 
   body.map-page-active {
@@ -396,4 +396,24 @@
     overflow: hidden !important;
     height: 100%;
   }
+}
+
+/* Safe Area Utility Classes */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+.mt-safe {
+  margin-top: env(safe-area-inset-top);
+}
+.h-safe-nav {
+  height: calc(4rem + env(safe-area-inset-bottom));
+}
+.pb-safe-nav {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 }

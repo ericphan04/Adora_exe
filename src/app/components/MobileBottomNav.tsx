@@ -116,7 +116,7 @@ export function MobileBottomNav() {
   return (
     <>
       {/* Bottom Nav Bar - visible only on screens smaller than lg (1024px) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card/90 backdrop-blur-lg border-t border-border/40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50 flex items-center justify-around px-2 pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-safe-nav bg-card/90 backdrop-blur-lg border-t border-border/40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50 flex items-center justify-around px-2 pb-safe">
         {/* Far Left: Menu Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}

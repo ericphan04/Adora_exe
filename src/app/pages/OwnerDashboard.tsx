@@ -1151,7 +1151,7 @@ export default function OwnerDashboard() {
 
   if (loading && !dashboardData) {
     return (
-      <div className="flex h-screen bg-background text-foreground">
+      <div className="flex h-dvh bg-background text-foreground">
         <DashboardSidebar role="owner" />
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary"></div>
@@ -1161,9 +1161,9 @@ export default function OwnerDashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-dvh bg-background text-foreground">
       <DashboardSidebar role="owner" />
-      <main className={`flex-1 flex flex-col h-screen pb-16 lg:pb-0 ${view === "messages" ? "overflow-hidden" : "overflow-y-auto"}`}>
+      <main className={`flex-1 flex flex-col h-dvh pb-safe-nav lg:pb-0 ${view === "messages" ? "overflow-hidden" : "overflow-y-auto"}`}>
         {isUsingFallback && (
           <div className="bg-amber-50/15 border-b border-amber-200/20 px-8 py-3 flex items-center gap-2 text-xs text-amber-500 font-semibold">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />

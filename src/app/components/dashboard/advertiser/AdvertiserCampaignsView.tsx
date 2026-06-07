@@ -402,7 +402,7 @@ function CampaignWizard({ onClose, onSuccess, bookings = [] }: { onClose: () => 
                 <input type="text" placeholder="VD: Tết 2027 – Đại Tiệc Mua Sắm" value={campaignName} onChange={e => setCampaignName(e.target.value)}
                   className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-surface/30 text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-foreground mb-1.5">Thể Loại <span className="text-red-500">*</span></label>
                   <div className="relative">
@@ -423,7 +423,7 @@ function CampaignWizard({ onClose, onSuccess, bookings = [] }: { onClose: () => 
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-foreground mb-1.5">Ngày Bắt Đầu <span className="text-red-500">*</span></label>
                   <div className="relative">
