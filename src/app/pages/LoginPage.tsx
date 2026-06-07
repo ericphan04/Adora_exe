@@ -171,7 +171,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-dvh flex bg-white dark:bg-[#0D1117]">
       {/* Left */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#1D4ED8] via-[#3B82F6] to-[#0891B2] relative overflow-hidden items-center justify-center p-12">
         <button 
@@ -205,44 +205,44 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-white relative">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-8 bg-white dark:bg-[#0D1117] relative min-h-dvh pt-[calc(5rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))]">
         <button 
           onClick={() => navigate("/")} 
-          className="absolute top-6 left-6 lg:hidden flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1D4ED8] hover:text-white bg-[#F0F9FF] hover:bg-[#1D4ED8] rounded-xl transition-all duration-200 border border-[#E3E8EF] hover:border-[#1D4ED8] shadow-sm cursor-pointer"
+          className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-6 lg:hidden flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1D4ED8] dark:text-[#3B82F6] hover:text-white bg-[#F0F9FF] dark:bg-[#161B22] hover:bg-[#1D4ED8] dark:hover:bg-[#2563EB] rounded-xl transition-all duration-200 border border-[#E3E8EF] dark:border-[#30363D] hover:border-[#1D4ED8] dark:hover:border-[#2563EB] shadow-sm cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
         </button>
-        <div className="w-full max-w-[400px]">
+        <div className="w-full max-w-[400px] my-auto">
           
           {view === 'login' && (
             <>
-              <h2 className="text-2xl text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>Chào mừng trở lại</h2>
-              <p className="text-sm text-[#6B7A8D] mb-8">Đăng nhập vào tài khoản của bạn để tiếp tục</p>
+              <h2 className="text-2xl text-[#1D4ED8] dark:text-[#2563EB] mb-2" style={{ fontWeight: 700 }}>Chào mừng trở lại</h2>
+              <p className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-8">Đăng nhập vào tài khoản của bạn để tiếp tục</p>
             </>
           )}
 
           {view === 'forgot' && (
             <>
-              <h2 className="text-2xl text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>Quên mật khẩu</h2>
-              <p className="text-sm text-[#6B7A8D] mb-8">Nhập email để nhận mã OTP xác thực khôi phục mật khẩu</p>
+              <h2 className="text-2xl text-[#1D4ED8] dark:text-[#2563EB] mb-2" style={{ fontWeight: 700 }}>Quên mật khẩu</h2>
+              <p className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-8">Nhập email để nhận mã OTP xác thực khôi phục mật khẩu</p>
             </>
           )}
 
           {view === 'reset' && (
             <>
-              <h2 className="text-2xl text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>Đặt lại mật khẩu</h2>
-              <p className="text-sm text-[#6B7A8D] mb-8">Nhập mã OTP đã nhận được trong email và mật khẩu mới của bạn</p>
+              <h2 className="text-2xl text-[#1D4ED8] dark:text-[#2563EB] mb-2" style={{ fontWeight: 700 }}>Đặt lại mật khẩu</h2>
+              <p className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-8">Nhập mã OTP đã nhận được trong email và mật khẩu mới của bạn</p>
             </>
           )}
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm">
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm">
               {successMessage}
             </div>
           )}
@@ -250,42 +250,42 @@ export default function LoginPage() {
           {view === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Địa Chỉ Email</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Địa Chỉ Email</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     placeholder="ten@congty.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Mật Khẩu</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Mật Khẩu</label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Nhập mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-10 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-10 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7A8D] cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7A8D] dark:text-[#8B949E] cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm text-[#6B7A8D] cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-[#6B7A8D] dark:text-[#8B949E] cursor-pointer">
                   <input type="checkbox" className="rounded accent-[#06B6D4]" />
                   Ghi nhớ đăng nhập
                 </label>
@@ -314,15 +314,15 @@ export default function LoginPage() {
           {view === 'forgot' && (
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Địa Chỉ Email</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Địa Chỉ Email</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     placeholder="ten@congty.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                 </div>
@@ -341,7 +341,7 @@ export default function LoginPage() {
                   setError(null);
                   setSuccessMessage(null);
                 }}
-                className="w-full bg-white border border-[#E3E8EF] text-[#6B7A8D] py-2.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer text-sm"
+                className="w-full bg-white dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-[#6B7A8D] dark:text-[#8B949E] py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer text-sm"
               >
                 Quay lại đăng nhập
               </button>
@@ -351,71 +351,71 @@ export default function LoginPage() {
           {view === 'reset' && (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Địa Chỉ Email</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Địa Chỉ Email</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     placeholder="ten@congty.com"
                     value={email}
                     disabled
-                    className="w-full bg-slate-100 border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none cursor-not-allowed text-[#6B7A8D]"
+                    className="w-full bg-slate-100 dark:bg-slate-900 border border-[#E3E8EF] dark:border-[#30363D] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none cursor-not-allowed text-[#6B7A8D] dark:text-[#8B949E]"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Mã OTP (6 chữ số)</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Mã OTP (6 chữ số)</label>
                 <div className="relative">
-                  <Key className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Key className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Nhập mã OTP"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
                     maxLength={6}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Mật Khẩu Mới</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Mật Khẩu Mới</label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Nhập mật khẩu mới"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-10 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-10 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7A8D] cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7A8D] dark:text-[#8B949E] cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Xác Nhận Mật Khẩu Mới</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Xác Nhận Mật Khẩu Mới</label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Nhập lại mật khẩu mới"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-10 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-10 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7A8D] cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7A8D] dark:text-[#8B949E] cursor-pointer"
                   >
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -435,7 +435,7 @@ export default function LoginPage() {
                   setError(null);
                   setSuccessMessage(null);
                 }}
-                className="w-full bg-white border border-[#E3E8EF] text-[#6B7A8D] py-2.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer text-sm"
+                className="w-full bg-white dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-[#6B7A8D] dark:text-[#8B949E] py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer text-sm"
               >
                 Quay lại gửi mã OTP
               </button>
@@ -444,16 +444,16 @@ export default function LoginPage() {
 
           <div style={{ display: view === 'login' ? 'block' : 'none' }}>
             <div className="my-6 flex items-center gap-4">
-              <div className="flex-1 h-px bg-[#E3E8EF]" />
-              <span className="text-xs text-[#6B7A8D]">hoặc đăng nhập bằng</span>
-              <div className="flex-1 h-px bg-[#E3E8EF]" />
+              <div className="flex-1 h-px bg-[#E3E8EF] dark:bg-[#30363D]" />
+              <span className="text-xs text-[#6B7A8D] dark:text-[#8B949E]">hoặc đăng nhập bằng</span>
+              <div className="flex-1 h-px bg-[#E3E8EF] dark:bg-[#30363D]" />
             </div>
 
             <div className="w-full flex justify-center">
               <div id="google-signin-btn" className="w-full"></div>
             </div>
 
-            <p className="text-center text-sm text-[#6B7A8D] mt-8">
+            <p className="text-center text-sm text-[#6B7A8D] dark:text-[#8B949E] mt-8">
               Chưa có tài khoản?{" "}
               <button onClick={() => navigate("/register")} className="text-[#06B6D4] hover:underline cursor-pointer" style={{ fontWeight: 500 }}>
                 Tạo tài khoản
