@@ -1,0 +1,36 @@
+name: CI/CD Deploy to GCP VM
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy:
+    name: Deploy to GCP VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_SSH_IP }}
+          username: ${{ secrets.GCP_SSH_USER }}
+          key: ${{ secrets.GCP_SSH_KEY }}
+          port: 22
+          script: |
+            # Di chuyển tới thư mục chứa dự án trên VM
+            cd ${{ secrets.GCP_WORK_DIR }}
+            
+            # Kéo code mới nhất từ nhánh tương ứng
+            git pull
+            
+            # Build lại image Docker và chạy ngầm (chỉ downtime vài giây khi container restart)
+            docker compose up -d --build
+            
+            # Dọn dẹp các Docker image cũ không còn sử dụng để tránh đầy ổ cứng VM
+            docker image prune -f
