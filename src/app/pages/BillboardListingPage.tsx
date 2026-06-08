@@ -275,40 +275,40 @@ export default function BillboardListingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F9FF]">
+    <div className="min-h-screen bg-[#F0F9FF] dark:bg-[#0D1117]">
       <TopNav />
 
-      <div className="bg-white border-b border-[#E3E8EF]">
+      <div className="bg-white dark:bg-[#161B22] border-b border-[#E3E8EF] dark:border-[#30363D]">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center gap-2 text-sm">
-            <button onClick={() => navigate("/")} className="text-[#6B7A8D] hover:text-[#1D4ED8] cursor-pointer">Trang Chủ</button>
-            <span className="text-[#E3E8EF]">/</span>
-            <span className="text-[#1D4ED8]" style={{ fontWeight: 500 }}>Tìm Bảng Quảng Cáo</span>
+            <button onClick={() => navigate("/")} className="text-[#6B7A8D] dark:text-[#8B949E] hover:text-[#1D4ED8] dark:hover:text-[#3B82F6] cursor-pointer">Trang Chủ</button>
+            <span className="text-[#E3E8EF] dark:text-[#30363D]">/</span>
+            <span className="text-[#1D4ED8] dark:text-[#3B82F6]" style={{ fontWeight: 500 }}>Tìm Bảng Quảng Cáo</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white border-b border-[#E3E8EF]">
+      <div className="bg-white dark:bg-[#161B22] border-b border-[#E3E8EF] dark:border-[#30363D]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl text-[#1D4ED8]" style={{ fontWeight: 700 }}>Tìm Bảng Quảng Cáo</h1>
-            <p className="text-sm text-[#6B7A8D] mt-1">{billboards.length} bảng quảng cáo tại Đà Nẵng</p>
+            <h1 className="text-2xl text-[#1D4ED8] dark:text-[#3B82F6]" style={{ fontWeight: 700 }}>Tìm Bảng Quảng Cáo</h1>
+            <p className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mt-1">{billboards.length} bảng quảng cáo tại Đà Nẵng</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-start sm:justify-end">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 text-sm text-[#6B7A8D] border border-[#E3E8EF] px-3 py-2 rounded-lg hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+              className="flex items-center gap-2 text-sm text-[#6B7A8D] dark:text-[#8B949E] border border-[#E3E8EF] dark:border-[#30363D] px-3 py-2 rounded-lg hover:bg-[#F0F9FF] dark:hover:bg-[#0D1117] transition-colors cursor-pointer"
             >
               <SlidersHorizontal className="w-4 h-4" />
               Bộ Lọc
             </button>
-            <div className="flex items-center gap-2 text-sm text-[#6B7A8D] border border-[#E3E8EF] px-3 py-2 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-[#6B7A8D] dark:text-[#8B949E] border border-[#E3E8EF] dark:border-[#30363D] px-3 py-2 rounded-lg">
               <span>Sắp xếp:</span>
-              <select className="bg-transparent outline-none text-[#1D4ED8] text-sm cursor-pointer" style={{ fontWeight: 500 }}>
-                <option>Đề Xuất</option>
-                <option>Giá: Thấp → Cao</option>
-                <option>Giá: Cao → Thấp</option>
-                <option>Lưu Lượng: Cao → Thấp</option>
+              <select className="bg-transparent outline-none text-[#1D4ED8] dark:text-[#3B82F6] text-sm cursor-pointer" style={{ fontWeight: 500 }}>
+                <option className="bg-white dark:bg-[#161B22]">Đề Xuất</option>
+                <option className="bg-white dark:bg-[#161B22]">Giá: Thấp → Cao</option>
+                <option className="bg-white dark:bg-[#161B22]">Giá: Cao → Thấp</option>
+                <option className="bg-white dark:bg-[#161B22]">Lưu Lượng: Cao → Thấp</option>
               </select>
             </div>
             <button
@@ -318,11 +318,11 @@ export default function BillboardListingPage() {
               <Map className="w-4 h-4" />
               Bản đồ
             </button>
-            <div className="flex items-center border border-[#E3E8EF] rounded-lg overflow-hidden">
+            <div className="flex items-center border border-[#E3E8EF] dark:border-[#30363D] rounded-lg overflow-hidden">
               <button className="w-9 h-9 flex items-center justify-center bg-[#1D4ED8] text-white cursor-pointer">
                 <Grid3X3 className="w-4 h-4" />
               </button>
-              <button className="w-9 h-9 flex items-center justify-center text-[#6B7A8D] hover:bg-[#F0F9FF] cursor-pointer">
+              <button className="w-9 h-9 flex items-center justify-center text-[#6B7A8D] dark:text-[#8B949E] hover:bg-[#F0F9FF] dark:hover:bg-[#0D1117] cursor-pointer">
                 <List className="w-4 h-4" />
               </button>
             </div>
@@ -333,28 +333,28 @@ export default function BillboardListingPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col lg:flex-row gap-6">
         {showFilters && (
           <aside className="w-full lg:w-72 shrink-0">
-            <div className="bg-white rounded-xl border border-[#E3E8EF] p-5 sm:p-6 lg:sticky lg:top-24">
+            <div className="bg-white dark:bg-[#161B22] rounded-xl border border-[#E3E8EF] dark:border-[#30363D] p-5 sm:p-6 lg:sticky lg:top-24">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>Bộ Lọc</h3>
+                <h3 className="text-[#1D4ED8] dark:text-[#3B82F6]" style={{ fontWeight: 600 }}>Bộ Lọc</h3>
                 <button onClick={handleClearFilters} className="text-xs text-[#06B6D4] hover:underline cursor-pointer">Xóa Tất Cả</button>
               </div>
 
               <div className="mb-6">
-                <label className="text-sm text-[#6B7A8D] mb-2 block">Khu Vực</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-2 block">Khu Vực</label>
                 <div className="relative">
                   <select
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg px-3 py-2.5 text-sm text-[#1D4ED8] appearance-none cursor-pointer"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#0D1117] border border-[#E3E8EF] dark:border-[#30363D] text-[#1D4ED8] dark:text-[#3B82F6] rounded-lg px-3 py-2.5 text-sm appearance-none cursor-pointer"
                   >
-                    {locations.map((l) => <option key={l}>{l}</option>)}
+                    {locations.map((l) => <option key={l} className="bg-white dark:bg-[#161B22]">{l}</option>)}
                   </select>
-                  <ChevronDown className="w-4 h-4 text-[#6B7A8D] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
               <div className="mb-6">
-                <label className="text-sm text-[#6B7A8D] mb-2 block">Ngân sách (mỗi tháng)</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-2 block">Ngân sách (mỗi tháng)</label>
                 <input
                   type="range"
                   min="10000000"
@@ -364,28 +364,28 @@ export default function BillboardListingPage() {
                   onChange={(e) => setBudgetRange(Number(e.target.value))}
                   className="w-full accent-[#06B6D4]"
                 />
-                <div className="flex items-center justify-between mt-1 text-xs text-[#6B7A8D]">
+                <div className="flex items-center justify-between mt-1 text-xs text-[#6B7A8D] dark:text-[#8B949E]">
                   <span>10 Triệu</span>
-                  <span className="text-[#1D4ED8]" style={{ fontWeight: 600 }}>{(budgetRange / 1000000).toFixed(0)} Triệu ₫</span>
+                  <span className="text-[#1D4ED8] dark:text-[#3B82F6]" style={{ fontWeight: 600 }}>{(budgetRange / 1000000).toFixed(0)} Triệu ₫</span>
                 </div>
               </div>
 
               <div className="mb-6">
-                <label className="text-sm text-[#6B7A8D] mb-2 block">Kích Thước</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-2 block">Kích Thước</label>
                 <div className="relative">
                   <select
                     value={selectedSize}
                     onChange={(e) => setSelectedSize(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg px-3 py-2.5 text-sm text-[#1D4ED8] appearance-none cursor-pointer"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#0D1117] border border-[#E3E8EF] dark:border-[#30363D] text-[#1D4ED8] dark:text-[#3B82F6] rounded-lg px-3 py-2.5 text-sm appearance-none cursor-pointer"
                   >
-                    {sizes.map((s) => <option key={s}>{s}</option>)}
+                    {sizes.map((s) => <option key={s} className="bg-white dark:bg-[#161B22]">{s}</option>)}
                   </select>
-                  <ChevronDown className="w-4 h-4 text-[#6B7A8D] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
               <div className="mb-6">
-                <label className="text-sm text-[#6B7A8D] mb-3 block">Thời Gian Trống</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-3 block">Thời Gian Trống</label>
                 <div className="space-y-2">
                   {["Trống Ngay", "Trống Tuần Sau", "Trống Tháng Sau"].map((a) => (
                     <label key={a} className="flex items-center gap-2 cursor-pointer">
@@ -395,14 +395,14 @@ export default function BillboardListingPage() {
                         onChange={() => toggleAvailability(a)}
                         className="rounded accent-[#06B6D4]"
                       />
-                      <span className="text-sm text-[#1A2332]">{a}</span>
+                      <span className="text-sm text-[#1A2332] dark:text-[#E6EDF3]">{a}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div className="mb-6">
-                <label className="text-sm text-[#6B7A8D] mb-3 block">Thông Số Kỹ Thuật</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-3 block">Thông Số Kỹ Thuật</label>
                 <div className="space-y-2">
                   {["Độ phân giải 4K", "Hỗ trợ HDR", "Chống thời tiết", "Có âm thanh"].map((t) => (
                     <label key={t} className="flex items-center gap-2 cursor-pointer">
@@ -412,7 +412,7 @@ export default function BillboardListingPage() {
                         onChange={() => toggleTechSpec(t)}
                         className="rounded accent-[#06B6D4]"
                       />
-                      <span className="text-sm text-[#1A2332]">{t}</span>
+                      <span className="text-sm text-[#1A2332] dark:text-[#E6EDF3]">{t}</span>
                     </label>
                   ))}
                 </div>
@@ -432,17 +432,17 @@ export default function BillboardListingPage() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="animate-pulse bg-white rounded-xl h-80 border border-[#E3E8EF] flex items-center justify-center text-[#6B7A8D] font-semibold text-sm">
+                <div key={i} className="animate-pulse bg-white dark:bg-[#161B22] rounded-xl h-80 border border-[#E3E8EF] dark:border-[#30363D] flex items-center justify-center text-[#6B7A8D] dark:text-[#8B949E] font-semibold text-sm">
                   Đang tải...
                 </div>
               ))}
             </div>
           ) : billboards.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-xl border border-[#E3E8EF]">
-              <p className="text-lg text-[#6B7A8D] font-medium">Không tìm thấy bảng quảng cáo nào khớp với bộ lọc.</p>
+            <div className="text-center py-20 bg-white dark:bg-[#161B22] rounded-xl border border-[#E3E8EF] dark:border-[#30363D]">
+              <p className="text-lg text-[#6B7A8D] dark:text-[#8B949E] font-medium">Không tìm thấy bảng quảng cáo nào khớp với bộ lọc.</p>
               <button
                 onClick={handleClearFilters}
-                className="mt-4 bg-[#F0F9FF] text-[#1D4ED8] border border-[#E3E8EF] px-4 py-2 rounded-lg hover:bg-[#1D4ED8] hover:text-white transition-colors"
+                className="mt-4 bg-[#F0F9FF] dark:bg-[#0D1117] text-[#1D4ED8] dark:text-[#3B82F6] border border-[#E3E8EF] dark:border-[#30363D] px-4 py-2 rounded-lg hover:bg-[#1D4ED8] hover:text-white transition-colors"
               >
                 Đặt lại bộ lọc
               </button>
@@ -463,19 +463,19 @@ export default function BillboardListingPage() {
 
           {billboards.length > 0 && (
             <div className="flex items-center justify-center gap-2 mt-10">
-              <button className="w-9 h-9 rounded-lg border border-[#E3E8EF] text-[#6B7A8D] hover:bg-white transition-colors cursor-pointer text-sm">&lt;</button>
+              <button className="w-9 h-9 rounded-lg border border-[#E3E8EF] dark:border-[#30363D] text-[#6B7A8D] dark:text-[#8B949E] hover:bg-white dark:hover:bg-[#161B22] transition-colors cursor-pointer text-sm">&lt;</button>
               {[1].map((p) => (
                 <button
                   key={p}
                   onClick={() => setCurrentPage(p)}
                   className={`w-9 h-9 rounded-lg text-sm transition-colors cursor-pointer ${
-                    p === currentPage ? "bg-[#1D4ED8] text-white" : "border border-[#E3E8EF] text-[#6B7A8D] hover:bg-white"
+                    p === currentPage ? "bg-[#1D4ED8] text-white" : "border border-[#E3E8EF] dark:border-[#30363D] text-[#6B7A8D] dark:text-[#8B949E] hover:bg-white dark:hover:bg-[#161B22]"
                   }`}
                 >
                   {p}
                 </button>
               ))}
-              <button className="w-9 h-9 rounded-lg border border-[#E3E8EF] text-[#6B7A8D] hover:bg-white transition-colors cursor-pointer text-sm">&gt;</button>
+              <button className="w-9 h-9 rounded-lg border border-[#E3E8EF] dark:border-[#30363D] text-[#6B7A8D] dark:text-[#8B949E] hover:bg-white dark:hover:bg-[#161B22] transition-colors cursor-pointer text-sm">&gt;</button>
             </div>
           )}
         </main>

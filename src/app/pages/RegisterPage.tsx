@@ -117,7 +117,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-white dark:bg-[#0D1117]">
       {/* Left */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#1D4ED8] via-[#3B82F6] to-[#0891B2] relative overflow-hidden items-center justify-center p-12">
         <button 
@@ -155,29 +155,29 @@ export default function RegisterPage() {
       </div>
 
       {/* Right */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white overflow-y-auto relative">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-6 md:p-8 bg-white dark:bg-[#0D1117] overflow-y-auto relative min-h-screen pt-[calc(5rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))]">
+        <div className="w-full max-w-md my-auto">
           <button 
             onClick={() => navigate("/")} 
-            className="absolute top-6 left-6 lg:hidden flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1D4ED8] hover:text-white bg-[#F0F9FF] hover:bg-[#1D4ED8] rounded-xl transition-all duration-200 border border-[#E3E8EF] hover:border-[#1D4ED8] shadow-sm cursor-pointer"
+            className="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-6 lg:hidden flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1D4ED8] dark:text-[#3B82F6] hover:text-white bg-[#F0F9FF] dark:bg-[#161B22] hover:bg-[#1D4ED8] dark:hover:bg-[#2563EB] rounded-xl transition-all duration-200 border border-[#E3E8EF] dark:border-[#30363D] hover:border-[#1D4ED8] dark:hover:border-[#2563EB] shadow-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
           </button>
-          <h2 className="text-2xl text-[#1D4ED8] mb-2" style={{ fontWeight: 700 }}>Tạo tài khoản</h2>
-          <p className="text-sm text-[#6B7A8D] mb-8">
+          <h2 className="text-2xl text-[#1D4ED8] dark:text-[#2563EB] mb-2" style={{ fontWeight: 700 }}>Tạo tài khoản</h2>
+          <p className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-8">
             {step === 3 
               ? "Bước 3/3 — Xác thực email" 
               : `Bước ${step}/3 — ${step === 1 ? "Chọn vai trò" : "Thông tin doanh nghiệp"}`}
           </p>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm">
               {step === 3 
                 ? "Xác thực email thành công! Đang chuyển hướng sang trang đăng nhập..." 
                 : "Đăng ký thành công! Đang chuẩn bị chuyển bước xác thực..."}
@@ -190,37 +190,41 @@ export default function RegisterPage() {
                 <button
                   onClick={() => setSelectedRole("advertiser")}
                   className={`p-5 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    selectedRole === "advertiser" ? "border-[#06B6D4] bg-[#06B6D4]/5" : "border-[#E3E8EF] hover:border-[#06B6D4]/30"
+                    selectedRole === "advertiser" 
+                      ? "border-[#06B6D4] bg-[#06B6D4]/5 dark:bg-[#06B6D4]/10" 
+                      : "border-[#E3E8EF] dark:border-[#30363D] hover:border-[#06B6D4]/30 dark:hover:border-[#06B6D4]/40"
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                    selectedRole === "advertiser" ? "bg-[#06B6D4] text-white" : "bg-[#F0F9FF] text-[#6B7A8D]"
+                    selectedRole === "advertiser" ? "bg-[#06B6D4] text-white" : "bg-[#F0F9FF] dark:bg-[#161B22] text-[#6B7A8D] dark:text-[#8B949E]"
                   }`}>
                     <Megaphone className="w-5 h-5" />
                   </div>
-                  <p className="text-sm text-[#1D4ED8]" style={{ fontWeight: 600 }}>Nhà Quảng Cáo</p>
-                  <p className="text-xs text-[#6B7A8D] mt-1">Đặt bảng QC cho chiến dịch</p>
+                  <p className="text-sm text-[#1D4ED8] dark:text-[#3B82F6]" style={{ fontWeight: 600 }}>Nhà Quảng Cáo</p>
+                  <p className="text-xs text-[#6B7A8D] dark:text-[#8B949E] mt-1">Đặt bảng QC cho chiến dịch</p>
                 </button>
                 <button
                   onClick={() => setSelectedRole("owner")}
                   className={`p-5 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    selectedRole === "owner" ? "border-[#06B6D4] bg-[#06B6D4]/5" : "border-[#E3E8EF] hover:border-[#06B6D4]/30"
+                    selectedRole === "owner" 
+                      ? "border-[#06B6D4] bg-[#06B6D4]/5 dark:bg-[#06B6D4]/10" 
+                      : "border-[#E3E8EF] dark:border-[#30363D] hover:border-[#06B6D4]/30 dark:hover:border-[#06B6D4]/40"
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                    selectedRole === "owner" ? "bg-[#06B6D4] text-white" : "bg-[#F0F9FF] text-[#6B7A8D]"
+                    selectedRole === "owner" ? "bg-[#06B6D4] text-white" : "bg-[#F0F9FF] dark:bg-[#161B22] text-[#6B7A8D] dark:text-[#8B949E]"
                   }`}>
                     <Monitor className="w-5 h-5" />
                   </div>
-                  <p className="text-sm text-[#1D4ED8]" style={{ fontWeight: 600 }}>Chủ Bảng QC</p>
-                  <p className="text-xs text-[#6B7A8D] mt-1">Đăng & quản lý bảng QC</p>
+                  <p className="text-sm text-[#1D4ED8] dark:text-[#3B82F6]" style={{ fontWeight: 600 }}>Chủ Bảng QC</p>
+                  <p className="text-xs text-[#6B7A8D] dark:text-[#8B949E] mt-1">Đăng & quản lý bảng QC</p>
                 </button>
               </div>
               <button
                 onClick={() => selectedRole && setStep(2)}
                 disabled={!selectedRole}
                 className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg transition-colors mt-6 ${
-                  selectedRole ? "bg-[#1D4ED8] text-white hover:bg-[#3B82F6] cursor-pointer" : "bg-[#E3E8EF] text-[#6B7A8D] cursor-not-allowed"
+                  selectedRole ? "bg-[#1D4ED8] text-white hover:bg-[#3B82F6] cursor-pointer" : "bg-[#E3E8EF] dark:bg-[#30363D] text-[#6B7A8D] dark:text-[#8B949E] cursor-not-allowed"
                 }`}
               >
                 Tiếp Tục
@@ -233,87 +237,87 @@ export default function RegisterPage() {
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm text-[#6B7A8D] mb-1.5 block">Họ</label>
+                  <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Họ</label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <User className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       placeholder="Nguyễn"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                      className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-[#6B7A8D] mb-1.5 block">Tên</label>
+                  <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Tên</label>
                   <input
                     type="text"
                     placeholder="Văn A"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Tên Công Ty</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Tên Công Ty</label>
                 <div className="relative">
-                  <Building2 className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Building2 className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Công ty ABC"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Email Doanh Nghiệp</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Email Doanh Nghiệp</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     placeholder="ten@congty.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Số Điện Thoại</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Số Điện Thoại</label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Phone className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="tel"
                     placeholder="0901 234 567"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Mật Khẩu</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Mật Khẩu</label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="password"
                     placeholder="Tối thiểu 8 ký tự"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
                     required
                   />
                 </div>
               </div>
-              <label className="flex items-start gap-2 text-xs text-[#6B7A8D] cursor-pointer">
+              <label className="flex items-start gap-2 text-xs text-[#6B7A8D] dark:text-[#8B949E] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={agree}
@@ -326,7 +330,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="flex-1 py-3 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+                  className="flex-1 py-3 border border-[#E3E8EF] dark:border-[#30363D] text-[#6B7A8D] dark:text-[#8B949E] rounded-lg text-sm hover:bg-[#F0F9FF] dark:hover:bg-[#161B22] transition-colors cursor-pointer"
                 >
                   Quay Lại
                 </button>
@@ -347,22 +351,22 @@ export default function RegisterPage() {
                 <div className="w-12 h-12 bg-[#06B6D4]/10 rounded-full flex items-center justify-center mx-auto mb-3">
                   <KeyRound className="w-6 h-6 text-[#06B6D4]" />
                 </div>
-                <p className="text-sm text-[#6B7A8D] leading-relaxed">
-                  Chúng tôi đã gửi mã xác thực gồm 6 chữ số đến email <strong className="text-[#1D4ED8]">{email}</strong>. Vui lòng nhập mã để hoàn tất đăng ký.
+                <p className="text-sm text-[#6B7A8D] dark:text-[#8B949E] leading-relaxed">
+                  Chúng tôi đã gửi mã xác thực gồm 6 chữ số đến email <strong className="text-[#1D4ED8] dark:text-[#3B82F6]">{email}</strong>. Vui lòng nhập mã để hoàn tất đăng ký.
                 </p>
               </div>
 
               <div>
-                <label className="text-sm text-[#6B7A8D] mb-1.5 block">Mã Xác Thực (OTP)</label>
+                <label className="text-sm text-[#6B7A8D] dark:text-[#8B949E] mb-1.5 block">Mã Xác Thực (OTP)</label>
                 <div className="relative">
-                  <KeyRound className="w-4 h-4 text-[#6B7A8D] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <KeyRound className="w-4 h-4 text-[#6B7A8D] dark:text-[#8B949E] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     maxLength={6}
                     placeholder="123456"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
-                    className="w-full bg-[#F0F9FF] border border-[#E3E8EF] rounded-lg pl-10 pr-4 py-2.5 text-sm tracking-[0.5em] font-mono text-center outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all font-bold"
+                    className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm tracking-[0.5em] font-mono text-center outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all font-bold"
                     required
                   />
                 </div>
@@ -377,10 +381,10 @@ export default function RegisterPage() {
                   {loading ? "Đang xác thực..." : "Xác Thực Email"}
                 </button>
                 
-                <div className="text-center text-xs text-[#6B7A8D] mt-2">
+                <div className="text-center text-xs text-[#6B7A8D] dark:text-[#8B949E] mt-2">
                   Chưa nhận được mã?{" "}
                   {resendCountdown > 0 ? (
-                    <span className="text-[#6B7A8D]">Gửi lại sau {resendCountdown} giây</span>
+                    <span className="text-[#6B7A8D] dark:text-[#8B949E]">Gửi lại sau {resendCountdown} giây</span>
                   ) : (
                     <button
                       type="button"
@@ -396,7 +400,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="w-full py-3 border border-[#E3E8EF] rounded-lg text-sm text-[#6B7A8D] hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+                  className="w-full py-3 border border-[#E3E8EF] dark:border-[#30363D] text-[#6B7A8D] dark:text-[#8B949E] rounded-lg text-sm hover:bg-[#F0F9FF] dark:hover:bg-[#161B22] transition-colors cursor-pointer"
                 >
                   Quay Lại Thông Tin
                 </button>
@@ -404,7 +408,7 @@ export default function RegisterPage() {
             </form>
           )}
 
-          <p className="text-center text-sm text-[#6B7A8D] mt-8">
+          <p className="text-center text-sm text-[#6B7A8D] dark:text-[#8B949E] mt-8">
             Đã có tài khoản?{" "}
             <button onClick={() => navigate("/login")} className="text-[#06B6D4] hover:underline cursor-pointer" style={{ fontWeight: 500 }}>
               Đăng nhập

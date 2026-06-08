@@ -30,7 +30,8 @@ export function getBillboardRentalStatus(b: BillboardDto): RentalStatus {
 }
 
 export function resolveBillboardPosition(
-  b: BillboardDto
+  b: BillboardDto,
+  _index?: number
 ): { lat: number; lng: number } {
   return {
     lat: b.latitude || DANANG_CENTER.lat,
