@@ -409,8 +409,8 @@ public class DatabaseInitializer implements ApplicationRunner {
             Booking booking1 = Booking.builder()
                     .renter(renter)
                     .billboard(b1)
-                    .startDate(LocalDate.of(2026, 3, 1))
-                    .endDate(LocalDate.of(2026, 3, 31))
+                    .startDate(LocalDate.of(2026, 3, 1).atStartOfDay())
+                    .endDate(LocalDate.of(2026, 3, 31).atTime(23, 59, 59))
                     .totalPrice(BigDecimal.valueOf(85000000))
                     .serviceFee(BigDecimal.valueOf(4250000))
                     .locationSurcharge(BigDecimal.valueOf(10000000))
@@ -422,8 +422,8 @@ public class DatabaseInitializer implements ApplicationRunner {
             Booking booking2 = Booking.builder()
                     .renter(renter)
                     .billboard(b2)
-                    .startDate(LocalDate.of(2026, 3, 15))
-                    .endDate(LocalDate.of(2026, 4, 15))
+                    .startDate(LocalDate.of(2026, 3, 15).atStartOfDay())
+                    .endDate(LocalDate.of(2026, 4, 15).atTime(23, 59, 59))
                     .totalPrice(BigDecimal.valueOf(55000000))
                     .serviceFee(BigDecimal.valueOf(2750000))
                     .locationSurcharge(BigDecimal.valueOf(5000000))
@@ -435,8 +435,8 @@ public class DatabaseInitializer implements ApplicationRunner {
             Booking booking3 = Booking.builder()
                     .renter(renter)
                     .billboard(b3)
-                    .startDate(LocalDate.of(2026, 4, 1))
-                    .endDate(LocalDate.of(2026, 4, 30))
+                    .startDate(LocalDate.of(2026, 4, 1).atStartOfDay())
+                    .endDate(LocalDate.of(2026, 4, 30).atTime(23, 59, 59))
                     .totalPrice(BigDecimal.valueOf(68000000))
                     .serviceFee(BigDecimal.valueOf(3400000))
                     .locationSurcharge(BigDecimal.valueOf(8000000))
@@ -448,7 +448,7 @@ public class DatabaseInitializer implements ApplicationRunner {
             bookingRepository.saveAll(List.of(booking1, booking2, booking3));
 
             // Set availability dates for booking 1
-            for (LocalDate date = booking1.getStartDate(); !date.isAfter(booking1.getEndDate()); date = date.plusDays(1)) {
+            for (LocalDate date = booking1.getStartDate().toLocalDate(); !date.isAfter(booking1.getEndDate().toLocalDate()); date = date.plusDays(1)) {
                 b1.addAvailability(BillboardAvailability.builder()
                         .availableDate(date)
                         .status(AvailabilityStatus.BOOKED)
