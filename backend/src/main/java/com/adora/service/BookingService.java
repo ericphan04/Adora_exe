@@ -15,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,39 +57,61 @@ public class BookingService {
             throw new BadRequestException("You can only book approved billboards");
         }
 
-        LocalDate start = request.getStartDate();
-        LocalDate end = request.getEndDate();
+        LocalDateTime start = request.getStartDate();
+        LocalDateTime end = request.getEndDate();
 
-        if (start.isBefore(LocalDate.now())) {
-            throw new BadRequestException("Start date cannot be in the past");
+        if (start.isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Thời gian bắt đầu không được ở quá khứ");
         }
 
-        if (start.isAfter(end)) {
-            throw new BadRequestException("Start date must be before or equal to end date");
+        if (start.isAfter(end) || start.isEqual(end)) {
+            throw new BadRequestException("Thời gian bắt đầu phải trước thời gian kết thúc");
         }
 
-        // Check availability
+        // Tránh giờ lẻ: phút và giây phải bằng 00
+        if (start.getMinute() != 0 || start.getSecond() != 0 ||
+            end.getMinute() != 0 || end.getSecond() != 0) {
+            throw new BadRequestException("Thời gian đặt chỗ phải chọn theo giờ chẵn (phút và giây bằng 0)");
+        }
+
+        // Check if date is blocked by owner in BillboardAvailability
         List<BillboardAvailability> availabilities = availabilityRepository
-                .findByBillboardIdAndAvailableDateBetween(billboard.getId(), start, end);
-
+                .findByBillboardIdAndAvailableDateBetween(billboard.getId(), start.toLocalDate(), end.toLocalDate());
         for (BillboardAvailability avail : availabilities) {
-            if (avail.getStatus() == AvailabilityStatus.BOOKED || avail.getStatus() == AvailabilityStatus.BLOCKED) {
-                throw new BadRequestException("Billboard is not available on " + avail.getAvailableDate());
+            if (avail.getStatus() == AvailabilityStatus.BLOCKED) {
+                throw new BadRequestException("Bảng quảng cáo đã bị khóa vào ngày " + avail.getAvailableDate());
             }
         }
 
-        long daysCount = ChronoUnit.DAYS.between(start, end) + 1;
+        // Check overlapping bookings
+        long overlaps = bookingRepository.countOverlappingBookings(billboard.getId(), start, end);
+        if (overlaps > 0) {
+            throw new BadRequestException("Khung giờ bạn chọn đã bị trùng lịch đặt chỗ khác.");
+        }
+
+        long hoursCount = ChronoUnit.HOURS.between(start, end);
         BigDecimal dailyPrice = billboard.getPricePerDay();
-        BigDecimal totalPrice = dailyPrice.multiply(BigDecimal.valueOf(daysCount));
+        // Keep 10 decimals precision during division to avoid premature rounding errors
+        BigDecimal hourlyPrice = dailyPrice.divide(BigDecimal.valueOf(24), 10, RoundingMode.HALF_UP);
+        BigDecimal totalPriceRaw = hourlyPrice.multiply(BigDecimal.valueOf(hoursCount));
         
-        BigDecimal surcharge = billboard.getLocationSurcharge() != null ? 
+        // Round subtotal to nearest 1,000 VND
+        BigDecimal totalPrice = totalPriceRaw.divide(BigDecimal.valueOf(1000), 0, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(1000));
+        
+        BigDecimal surchargeRaw = billboard.getLocationSurcharge() != null ? 
                 billboard.getLocationSurcharge() : BigDecimal.ZERO;
+        BigDecimal surcharge = surchargeRaw.divide(BigDecimal.valueOf(1000), 0, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(1000));
         
-        BigDecimal finalAmount = totalPrice.add(surcharge);
+        BigDecimal beforeFee = totalPrice.add(surcharge);
         
-        // 5% Platform Commission
-        BigDecimal serviceFee = finalAmount.multiply(BigDecimal.valueOf(0.05))
-                .setScale(2, RoundingMode.HALF_UP);
+        // 5% Platform Commission, rounded to nearest 1,000 VND
+        BigDecimal serviceFee = beforeFee.multiply(BigDecimal.valueOf(0.05))
+                .divide(BigDecimal.valueOf(1000), 0, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(1000));
+        
+        BigDecimal finalAmount = beforeFee.add(serviceFee);
 
         Booking booking = Booking.builder()
                 .renter(renter)
@@ -104,29 +128,15 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Mark the availability as BOOKED (temporarily or pending approval)
-        // For simplicity, we mark dates as BOOKED in availability calendar upon booking creation.
-        // If rejected/cancelled, we will mark them back to AVAILABLE.
-        LocalDate current = start;
-        while (!current.isAfter(end)) {
-            final LocalDate currentDate = current;
-            BillboardAvailability avail = availabilities.stream()
-                    .filter(a -> a.getAvailableDate().equals(currentDate))
-                    .findFirst()
-                    .orElse(null);
-
-            if (avail == null) {
-                avail = BillboardAvailability.builder()
-                        .billboard(billboard)
-                        .availableDate(currentDate)
-                        .status(AvailabilityStatus.BOOKED)
-                        .build();
-            } else {
-                avail.setStatus(AvailabilityStatus.BOOKED);
-            }
-            availabilityRepository.save(avail);
-            current = current.plusDays(1);
-        }
+        // Notify owner of new booking request
+        notificationService.createNotification(
+                saved.getBillboard().getOwner(),
+                "Yêu cầu thuê bảng mới",
+                "Bạn nhận được yêu cầu thuê màn hình LED #" + saved.getId() + " (" + saved.getBillboard().getTitle() + ") từ " + saved.getRenter().getFullName(),
+                NotificationType.BOOKING_CREATED,
+                saved,
+                null
+        );
 
         return mapToDto(saved);
     }
@@ -176,7 +186,19 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         releaseAvailabilityDates(booking);
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify owner of cancellation
+        notificationService.createNotification(
+                saved.getBillboard().getOwner(),
+                "Yêu cầu đặt bảng bị hủy",
+                "Yêu cầu thuê màn hình LED #" + saved.getId() + " (" + saved.getBillboard().getTitle() + ") đã bị hủy bởi " + saved.getRenter().getFullName(),
+                NotificationType.BOOKING_CANCELLED,
+                saved,
+                null
+        );
+
+        return mapToDto(saved);
     }
 
     public BookingDto acceptBooking(Long id, Long ownerId) {
@@ -237,14 +259,36 @@ public class BookingService {
     }
 
     private void releaseAvailabilityDates(Booking booking) {
-        List<BillboardAvailability> availabilities = availabilityRepository
-                .findByBillboardIdAndAvailableDateBetween(
-                        booking.getBillboard().getId(), booking.getStartDate(), booking.getEndDate()
-                );
-        for (BillboardAvailability avail : availabilities) {
-            avail.setStatus(AvailabilityStatus.AVAILABLE);
-            availabilityRepository.save(avail);
+        // Bookings are tracked dynamically, no physical availability change needed
+    }
+
+    public List<BookedSlotDto> getBookedSlots(Long billboardId, LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+
+        List<Booking> bookings = bookingRepository.findActiveBookingsForBillboardOnDate(
+                billboardId, startOfDay, endOfDay
+        );
+
+        List<BookedSlotDto> slots = new ArrayList<>();
+        for (Booking b : bookings) {
+            LocalDateTime start = b.getStartDate();
+            LocalDateTime end = b.getEndDate();
+
+            LocalDateTime clampStart = start.isBefore(startOfDay) ? startOfDay : start;
+            LocalDateTime clampEnd = end.isAfter(endOfDay) ? endOfDay : end;
+
+            int startHour = clampStart.getHour();
+            int endHour = clampEnd.getHour();
+            if (clampEnd.toLocalDate().isAfter(date)) {
+                endHour = 24;
+            } else if (clampEnd.getMinute() > 0 || clampEnd.getSecond() > 0) {
+                endHour = clampEnd.getHour() + 1;
+            }
+
+            slots.add(new BookedSlotDto(startHour, endHour));
         }
+        return slots;
     }
 
     public BookingDto mapToDto(Booking entity) {

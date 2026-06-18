@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink, Info, Maximize, Lightbulb, Grid, CheckCircle, HelpCircle, Users, Calendar, X } from "lucide-react";
+import { MapPin, Star, Phone, ChevronLeft, ChevronRight, Heart, Share2, Monitor, Zap, Shield, Eye, ExternalLink, Info, Maximize, Lightbulb, Grid, CheckCircle, HelpCircle, Users, Calendar, X, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { BillboardGoogleMap } from "../components/map/BillboardGoogleMap";
 import { getBillboardRentalStatus, MAP_BILLBOARD_MOCKS } from "../utils/billboardMap";
 import { TopNav } from "../components/TopNav";
@@ -41,12 +41,32 @@ function calcBookingPrice(
   daysCount: number,
   locationSurcharge: number,
 ) {
-  const subtotal = pricePerDay * daysCount;
-  const surcharge = locationSurcharge || 0;
+  const subtotalRaw = pricePerDay * daysCount;
+  const subtotal = Math.round(subtotalRaw / 1000) * 1000;
+  const surchargeRaw = locationSurcharge || 0;
+  const surcharge = Math.round(surchargeRaw / 1000) * 1000;
   const beforeFee = subtotal + surcharge;
-  const serviceFee = Math.round(beforeFee * 0.05);
+  const serviceFee = Math.round((beforeFee * 0.05) / 1000) * 1000;
   return { subtotal, surcharge, serviceFee, total: beforeFee + serviceFee, daysCount };
 }
+
+const formatBrightness = (val: string | number | undefined | null) => {
+  if (!val) return "8,500 Nits";
+  const str = String(val);
+  if (str.toLowerCase().includes("nit")) {
+    return str.replace(/nits?/i, "Nits").trim();
+  }
+  return `${str} Nits`;
+};
+
+const formatRefreshRate = (val: string | number | undefined | null) => {
+  if (!val) return "3840 Hz";
+  const str = String(val);
+  if (str.toLowerCase().includes("hz")) {
+    return str.replace(/hz/i, " Hz").replace(/\s+/g, " ").trim();
+  }
+  return `${str} Hz`;
+};
 
 export default function BillboardDetailPage() {
   const navigate = useNavigate();
@@ -72,6 +92,10 @@ export default function BillboardDetailPage() {
   const [note, setNote] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [startHour, setStartHour] = useState<number>(8);
+  const [endHour, setEndHour] = useState<number>(12);
+  const [bookedSlots, setBookedSlots] = useState<{ startHour: number; endHour: number }[]>([]);
+  const [showTechSpecs, setShowTechSpecs] = useState(false);
 
   const handleMonthChange = useCallback((year: number, month: number) => {
     setCalendarYear(year);
@@ -79,6 +103,7 @@ export default function BillboardDetailPage() {
     setSelectedStartDay(null);
     setSelectedEndDay(null);
     setBookingError(null);
+    setBookedSlots([]);
   }, []);
 
   const handleToggleSaved = useCallback(() => {
@@ -200,36 +225,33 @@ export default function BillboardDetailPage() {
     return () => { active = false; };
   }, [billboardId]);
 
-  const handleDayClick = (day: number) => {
+  const handleDayClick = async (day: number) => {
     if (isPastDay(calendarYear, calendarMonth, day)) return;
 
-    if (selectedStartDay === null || (selectedStartDay !== null && selectedEndDay !== null)) {
-      setSelectedStartDay(day);
-      setSelectedEndDay(null);
-      setBookingError(null);
-      return;
-    }
+    setSelectedStartDay(day);
+    setSelectedEndDay(day);
+    setBookingError(null);
 
-    if (day < selectedStartDay) {
-      setSelectedStartDay(day);
-      setSelectedEndDay(null);
-      return;
-    }
-
-    let hasConflict = false;
-    for (let d = selectedStartDay; d <= day; d++) {
-      if (bookedDaysSet.has(d) || isPastDay(calendarYear, calendarMonth, d)) {
-        hasConflict = true;
-        break;
+    const dateStr = toIsoDate(calendarYear, calendarMonth, day);
+    try {
+      const res = await billboardApi.getBookedSlots(billboardId, dateStr);
+      if (res.success && res.data) {
+        setBookedSlots(res.data);
+      } else {
+        setBookedSlots([]);
       }
-    }
-    if (hasConflict) {
-      setBookingError("Khoảng thời gian chọn chứa ngày đã đặt hoặc đã qua. Vui lòng chọn khoảng khác.");
-    } else {
-      setSelectedEndDay(day);
-      setBookingError(null);
+    } catch (err) {
+      console.error("Failed to fetch booked slots", err);
+      setBookedSlots([]);
     }
   };
+
+  const hasOverlapConflict = useMemo(() => {
+    if (selectedStartDay == null) return false;
+    return bookedSlots.some(slot => {
+      return !(endHour <= slot.startHour || startHour >= slot.endHour);
+    });
+  }, [selectedStartDay, startHour, endHour, bookedSlots]);
 
   const handleBookingSubmit = async () => {
     if (!user) {
@@ -240,16 +262,21 @@ export default function BillboardDetailPage() {
       setBookingError("Chỉ có tài khoản nhà quảng cáo (Advertiser) mới được đặt bảng.");
       return;
     }
-    if (selectedStartDay === null || selectedEndDay === null) {
-      setBookingError("Vui lòng chọn ngày bắt đầu và ngày kết thúc trên lịch.");
+    if (selectedStartDay === null) {
+      setBookingError("Vui lòng chọn ngày đặt chỗ trên lịch.");
+      return;
+    }
+    if (hasOverlapConflict) {
+      setBookingError("Khung giờ bạn chọn đã bị trùng với lịch đặt trước. Vui lòng chọn khung giờ khác.");
       return;
     }
 
     setBookingLoading(true);
     setBookingError(null);
     try {
-      const startDate = toIsoDate(calendarYear, calendarMonth, selectedStartDay);
-      const endDate = toIsoDate(calendarYear, calendarMonth, selectedEndDay);
+      const dateStr = toIsoDate(calendarYear, calendarMonth, selectedStartDay);
+      const startDate = `${dateStr}T${String(startHour).padStart(2, "0")}:00:00`;
+      const endDate = `${dateStr}T${String(endHour).padStart(2, "0")}:00:00`;
 
       const response = await bookingApi.create({
         billboardId,
@@ -309,19 +336,29 @@ export default function BillboardDetailPage() {
 
 
 
-  const selectedDaysCount =
-    selectedStartDay != null && selectedEndDay != null
-      ? selectedEndDay - selectedStartDay + 1
-      : 0;
+  const selectedHoursCount = selectedStartDay != null ? endHour - startHour : 0;
 
-  const priceBreakdown =
-    selectedDaysCount > 0
-      ? calcBookingPrice(
-          billboard.pricePerDay,
-          selectedDaysCount,
-          billboard.locationSurcharge || 0,
-        )
-      : null;
+  const priceBreakdown = useMemo(() => {
+    if (selectedStartDay == null || hasOverlapConflict) return null;
+    
+    const hourlyPrice = billboard.pricePerDay / 24;
+    const subtotalRaw = hourlyPrice * selectedHoursCount;
+    const subtotal = Math.round(subtotalRaw / 1000) * 1000;
+    
+    const surchargeRaw = billboard.locationSurcharge || 0;
+    const surcharge = Math.round(surchargeRaw / 1000) * 1000;
+    
+    const beforeFee = subtotal + surcharge;
+    const serviceFee = Math.round((beforeFee * 0.05) / 1000) * 1000;
+    
+    return {
+      subtotal,
+      surcharge,
+      serviceFee,
+      total: beforeFee + serviceFee,
+      hoursCount: selectedHoursCount
+    };
+  }, [billboard, selectedStartDay, selectedHoursCount, hasOverlapConflict]);
 
   const prevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -558,14 +595,9 @@ export default function BillboardDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
                 <Maximize className="text-accent w-6 h-6" />
-                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Độ phân giải</span>
-                <span className="font-bold text-sm md:text-base truncate">{billboard.resolution || "4K UHD Premium"}</span>
-              </div>
-              <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
-                <Lightbulb className="text-accent w-6 h-6" />
-                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Độ sáng</span>
+                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Kích thước</span>
                 <span className="font-bold text-sm md:text-base truncate">
-                  {billboard.brightness ? `${billboard.brightness.toLocaleString()} Nits` : "8,500 Nits"}
+                  {billboard.width * billboard.height}m² ({billboard.width}m x {billboard.height}m)
                 </span>
               </div>
               <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
@@ -574,14 +606,19 @@ export default function BillboardDetailPage() {
                 <span className="font-bold text-sm md:text-base truncate">{billboard.screenType || "P3 Outdoor SMD"}</span>
               </div>
               <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
-                <Monitor className="text-accent w-6 h-6" />
-                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Kích thước</span>
+                <Users className="text-accent w-6 h-6" />
+                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Lượt tiếp cận/ngày</span>
                 <span className="font-bold text-sm md:text-base truncate">
-                  {billboard.width * billboard.height}m² ({billboard.width}m x {billboard.height}m)
+                  {billboard.dailyViews ? `${billboard.dailyViews.toLocaleString()}+` : "550,000+"}
                 </span>
               </div>
+              <div className="glass-card p-6 rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:border-accent/40 transition-all duration-300">
+                <Clock className="text-accent w-6 h-6" />
+                <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Thời gian hoạt động</span>
+                <span className="font-bold text-sm md:text-base truncate">{billboard.operatingHours || "16h/ngày"}</span>
+              </div>
             </div>
-
+ 
             {/* Location Detail & Description Card */}
             <div className="glass-card p-8 rounded-2xl space-y-6 shadow-md">
               <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
@@ -590,29 +627,38 @@ export default function BillboardDetailPage() {
               <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
                 {billboard.description}
               </p>
-              
-              <div className="grid md:grid-cols-2 gap-6 pt-6 border-t border-border/30">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-primary/10 rounded-xl">
-                    <Users className="text-primary w-6 h-6" />
+            </div>
+ 
+            {/* Collapsible Technical Specifications Section */}
+            <div className="glass-card p-6 rounded-2xl shadow-md space-y-4">
+              <button
+                type="button"
+                onClick={() => setShowTechSpecs(!showTechSpecs)}
+                className="w-full flex items-center justify-between font-bold text-slate-800 dark:text-foreground text-left focus:outline-none cursor-pointer bg-transparent border-none p-0"
+              >
+                <div className="flex items-center gap-2">
+                  <Zap className="text-accent w-5 h-5" />
+                  <span>Thông số kỹ thuật chi tiết</span>
+                </div>
+                {showTechSpecs ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+              </button>
+ 
+              {showTechSpecs && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border/30 animate-in fade-in duration-200">
+                  <div className="border border-border/50 rounded-xl p-4 bg-surface/20">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1">Độ phân giải</span>
+                    <p className="text-sm font-bold text-foreground">{billboard.resolution || "1920x1080"}</p>
                   </div>
-                  <div>
-                    <h4 className="text-lg font-bold text-foreground">
-                      {billboard.dailyViews ? `${billboard.dailyViews.toLocaleString()}+` : "550,000+"}
-                    </h4>
-                    <p className="text-muted-foreground text-xs md:text-sm">Lượt tiếp cận/ngày</p>
+                  <div className="border border-border/50 rounded-xl p-4 bg-surface/20">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1">Độ sáng</span>
+                    <p className="text-sm font-bold text-foreground">{formatBrightness(billboard.brightness)}</p>
+                  </div>
+                  <div className="border border-border/50 rounded-xl p-4 bg-surface/20">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1">Tần số quét</span>
+                    <p className="text-sm font-bold text-foreground">{formatRefreshRate(billboard.refreshRate)}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-accent/10 rounded-xl">
-                    <Zap className="text-accent w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-bold text-foreground">{billboard.refreshRate} Hz</h4>
-                    <p className="text-muted-foreground text-xs md:text-sm">Tần suất làm mới màn hình</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Google Interactive Map section */}
@@ -737,17 +783,68 @@ export default function BillboardDetailPage() {
                   </div>
                 </div>
 
-                {/* Campaign Notes */}
-                {selectedStartDay && selectedEndDay && (
-                  <div className="animate-in fade-in duration-300">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Ghi chú chiến dịch (Note)</label>
-                    <input
-                      type="text"
-                      placeholder="Thông điệp gửi chủ sở hữu..."
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      className="w-full bg-background border border-border/50 rounded-xl px-3.5 py-3 text-xs outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-foreground"
-                    />
+                {selectedStartDay && (
+                  <div className="space-y-4 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Giờ bắt đầu</label>
+                        <select
+                          value={startHour}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setStartHour(val);
+                            if (val >= endHour) {
+                              setEndHour(val + 1);
+                            }
+                          }}
+                          className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 text-sm outline-none focus:border-accent text-foreground font-semibold"
+                        >
+                          {Array.from({ length: 24 }).map((_, h) => {
+                            const isBooked = bookedSlots.some(slot => h >= slot.startHour && h < slot.endHour);
+                            return (
+                              <option key={h} value={h} disabled={isBooked}>
+                                {String(h).padStart(2, "0")}:00 {isBooked ? "(Đã bận)" : ""}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Giờ kết thúc</label>
+                        <select
+                          value={endHour}
+                          onChange={(e) => setEndHour(Number(e.target.value))}
+                          className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 text-sm outline-none focus:border-accent text-foreground font-semibold"
+                        >
+                          {Array.from({ length: 24 }).map((_, h) => {
+                            const hourVal = h + 1;
+                            const isBooked = bookedSlots.some(slot => h >= slot.startHour && h < slot.endHour);
+                            return (
+                              <option key={hourVal} value={hourVal} disabled={hourVal <= startHour || isBooked}>
+                                {String(hourVal).padStart(2, "0")}:00 {isBooked ? "(Đã bận)" : ""}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    </div>
+
+                    {hasOverlapConflict && (
+                      <div className="p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold leading-relaxed">
+                        Khoảng giờ bạn chọn bị trùng với một lịch đã đặt. Vui lòng chọn khung giờ khác.
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Ghi chú chiến dịch (Note)</label>
+                      <input
+                        type="text"
+                        placeholder="Thông điệp gửi chủ sở hữu..."
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        className="w-full bg-background border border-border/50 rounded-xl px-3.5 py-3 text-xs outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-foreground"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -758,7 +855,7 @@ export default function BillboardDetailPage() {
                   <>
                     <div className="flex justify-between text-xs md:text-sm">
                       <span className="text-muted-foreground font-medium">
-                        Giá thuê ({priceBreakdown.daysCount} ngày)
+                        Giá thuê ({priceBreakdown.hoursCount} giờ)
                       </span>
                       <span className="text-foreground font-semibold">
                         {priceBreakdown.subtotal.toLocaleString("vi-VN")}₫
@@ -788,7 +885,7 @@ export default function BillboardDetailPage() {
                 ) : (
                   <div className="text-center py-4 text-xs text-muted-foreground font-semibold">
                     <Calendar className="w-5 h-5 text-accent mx-auto mb-2 animate-bounce" />
-                    Chọn khoảng ngày trên lịch để tính giá thuê
+                    Chọn ngày trên lịch và khung giờ để tính giá thuê
                   </div>
                 )}
               </div>
@@ -797,7 +894,7 @@ export default function BillboardDetailPage() {
               <div className="space-y-3">
                 <button
                   onClick={handleBookingSubmit}
-                  disabled={bookingLoading || (!!user && user.role !== "RENTER")}
+                  disabled={bookingLoading || (!!user && user.role !== "RENTER") || hasOverlapConflict || selectedStartDay == null}
                   className="w-full py-4 bg-primary text-white hover:bg-primary/95 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] shadow-[0_4px_20px_rgba(29,78,216,0.3)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Calendar className="w-4 h-4" />
@@ -807,9 +904,11 @@ export default function BillboardDetailPage() {
                       ? "ĐĂNG NHẬP ĐỂ ĐẶT LỊCH"
                       : user.role !== "RENTER"
                         ? "CHỈ DÀNH CHO NHÀ QUẢNG CÁO"
-                        : selectedStartDay && selectedEndDay
-                          ? `ĐẶT LỊCH NGAY (${selectedDaysCount} ngày)`
-                          : "ĐẶT LỊCH NGAY (CHỌN LỊCH)"}
+                        : hasOverlapConflict
+                          ? "TRÙNG LỊCH (CHỌN KHUNG GIỜ)"
+                          : selectedStartDay
+                            ? `ĐẶT LỊCH NGAY (${selectedHoursCount} giờ)`
+                            : "ĐẶT LỊCH NGAY (CHỌN NGÀY)"}
                 </button>
                 
                 <button

@@ -16,8 +16,8 @@ public class BookingDto {
     private Long id;
     private UserDto renter;
     private BillboardDto billboard;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private BigDecimal totalPrice;
     private BigDecimal serviceFee;
     private BigDecimal locationSurcharge;

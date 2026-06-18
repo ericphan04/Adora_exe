@@ -166,7 +166,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("16h/ngày")
                     .pricePerDay(BigDecimal.valueOf(3000000))
                     .pricePerMonth(BigDecimal.valueOf(85000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.1))
+                    .locationSurcharge(BigDecimal.valueOf(500000))
                     .status(BillboardStatus.APPROVED)
                     .dailyViews(120000)
                     .isFeatured(true)
@@ -195,7 +195,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("16h/ngày")
                     .pricePerDay(BigDecimal.valueOf(2000000))
                     .pricePerMonth(BigDecimal.valueOf(55000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.05))
+                    .locationSurcharge(BigDecimal.valueOf(200000))
                     .status(BillboardStatus.APPROVED)
                     .dailyViews(80000)
                     .isFeatured(true)
@@ -222,7 +222,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("16h/ngày")
                     .pricePerDay(BigDecimal.valueOf(2500000))
                     .pricePerMonth(BigDecimal.valueOf(68000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.0))
+                    .locationSurcharge(BigDecimal.valueOf(0))
                     .status(BillboardStatus.APPROVED)
                     .dailyViews(110000)
                     .isFeatured(true)
@@ -250,7 +250,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("18h/ngày")
                     .pricePerDay(BigDecimal.valueOf(4000000))
                     .pricePerMonth(BigDecimal.valueOf(120000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.15))
+                    .locationSurcharge(BigDecimal.valueOf(800000))
                     .status(BillboardStatus.PENDING)
                     .dailyViews(150000)
                     .isFeatured(false)
@@ -276,7 +276,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("14h/ngày")
                     .pricePerDay(BigDecimal.valueOf(1400000))
                     .pricePerMonth(BigDecimal.valueOf(42000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.0))
+                    .locationSurcharge(BigDecimal.valueOf(0))
                     .status(BillboardStatus.APPROVED)
                     .dailyViews(65000)
                     .isFeatured(false)
@@ -302,7 +302,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("16h/ngày")
                     .pricePerDay(BigDecimal.valueOf(1750000))
                     .pricePerMonth(BigDecimal.valueOf(52000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.05))
+                    .locationSurcharge(BigDecimal.valueOf(200000))
                     .status(BillboardStatus.APPROVED)
                     .dailyViews(75000)
                     .isFeatured(false)
@@ -328,7 +328,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("16h/ngày")
                     .pricePerDay(BigDecimal.valueOf(2600000))
                     .pricePerMonth(BigDecimal.valueOf(78000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.1))
+                    .locationSurcharge(BigDecimal.valueOf(500000))
                     .status(BillboardStatus.APPROVED)
                     .dailyViews(120000)
                     .isFeatured(false)
@@ -354,7 +354,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("16h/ngày")
                     .pricePerDay(BigDecimal.valueOf(1300000))
                     .pricePerMonth(BigDecimal.valueOf(38000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.0))
+                    .locationSurcharge(BigDecimal.valueOf(0))
                     .status(BillboardStatus.APPROVED)
                     .dailyViews(50000)
                     .isFeatured(false)
@@ -380,7 +380,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .operatingHours("16h/ngày")
                     .pricePerDay(BigDecimal.valueOf(1500000))
                     .pricePerMonth(BigDecimal.valueOf(45000000))
-                    .locationSurcharge(BigDecimal.valueOf(1.0))
+                    .locationSurcharge(BigDecimal.valueOf(0))
                     .status(BillboardStatus.APPROVED)
                     .dailyViews(60000)
                     .isFeatured(false)
@@ -558,8 +558,30 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Trần Phú", new MapPatch(16.0805, 108.2230, null)
         );
 
+        // 1. Patch existing billboards to convert old multiplier surcharges to flat VND and round to nearest 1,000 VND
         for (Billboard b : billboardRepository.findAll()) {
             boolean changed = false;
+            BigDecimal surcharge = b.getLocationSurcharge();
+            if (surcharge != null) {
+                if (surcharge.compareTo(BigDecimal.valueOf(2)) <= 0) {
+                    double val = surcharge.doubleValue();
+                    BigDecimal newSurcharge;
+                    if (Math.abs(val - 1.1) < 0.01) {
+                        newSurcharge = BigDecimal.valueOf(500000);
+                    } else if (Math.abs(val - 1.05) < 0.01) {
+                        newSurcharge = BigDecimal.valueOf(200000);
+                    } else if (Math.abs(val - 1.15) < 0.01) {
+                        newSurcharge = BigDecimal.valueOf(800000);
+                    } else {
+                        newSurcharge = BigDecimal.ZERO;
+                    }
+                    b.setLocationSurcharge(newSurcharge);
+                    changed = true;
+                } else if (surcharge.scale() > 0 || surcharge.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO) != 0) {
+                    b.setLocationSurcharge(surcharge.divide(BigDecimal.valueOf(1000), 0, java.math.RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(1000)));
+                    changed = true;
+                }
+            }
             if (b.getFormattedAddress() == null) {
                 b.setFormattedAddress(b.getAddress() + ", " + b.getCity());
                 b.setAddressDetail("");
@@ -592,6 +614,83 @@ public class DatabaseInitializer implements ApplicationRunner {
                 billboardRepository.save(b);
             }
         }
+
+        // 2. Patch existing bookings to round their prices and ensure finalAmount matches totalPrice + surcharge + serviceFee
+        for (Booking booking : bookingRepository.findAll()) {
+            boolean changed = false;
+            BigDecimal tp = booking.getTotalPrice();
+            BigDecimal sf = booking.getServiceFee();
+            BigDecimal ls = booking.getLocationSurcharge();
+            BigDecimal fa = booking.getFinalAmount();
+
+            if (tp != null && (tp.scale() > 0 || tp.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO) != 0)) {
+                booking.setTotalPrice(tp.divide(BigDecimal.valueOf(1000), 0, java.math.RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(1000)));
+                changed = true;
+            }
+
+            if (ls != null) {
+                if (ls.compareTo(BigDecimal.valueOf(2)) <= 0) {
+                    double val = ls.doubleValue();
+                    BigDecimal newSurcharge;
+                    if (Math.abs(val - 1.1) < 0.01) {
+                        newSurcharge = BigDecimal.valueOf(500000);
+                    } else if (Math.abs(val - 1.05) < 0.01) {
+                        newSurcharge = BigDecimal.valueOf(200000);
+                    } else if (Math.abs(val - 1.15) < 0.01) {
+                        newSurcharge = BigDecimal.valueOf(800000);
+                    } else {
+                        newSurcharge = BigDecimal.ZERO;
+                    }
+                    booking.setLocationSurcharge(newSurcharge);
+                    changed = true;
+                } else if (ls.scale() > 0 || ls.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO) != 0) {
+                    booking.setLocationSurcharge(ls.divide(BigDecimal.valueOf(1000), 0, java.math.RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(1000)));
+                    changed = true;
+                }
+            }
+
+            if (sf != null && (sf.scale() > 0 || sf.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO) != 0)) {
+                booking.setServiceFee(sf.divide(BigDecimal.valueOf(1000), 0, java.math.RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(1000)));
+                changed = true;
+            }
+
+            BigDecimal expectedFinal = (booking.getTotalPrice() != null ? booking.getTotalPrice() : BigDecimal.ZERO)
+                    .add(booking.getLocationSurcharge() != null ? booking.getLocationSurcharge() : BigDecimal.ZERO)
+                    .add(booking.getServiceFee() != null ? booking.getServiceFee() : BigDecimal.ZERO);
+
+            if (fa == null || !fa.equals(expectedFinal) || fa.scale() > 0 || fa.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO) != 0) {
+                booking.setFinalAmount(expectedFinal);
+                changed = true;
+            }
+
+            if (changed) {
+                bookingRepository.save(booking);
+            }
+        }
+
+        // 3. Patch existing payments to match rounded bookings
+        for (Payment payment : paymentRepository.findAll()) {
+            boolean changed = false;
+            Booking bk = payment.getBooking();
+            if (bk != null) {
+                if (payment.getAmount() == null || !payment.getAmount().equals(bk.getFinalAmount())) {
+                    payment.setAmount(bk.getFinalAmount());
+                    changed = true;
+                }
+                if (payment.getPlatformCommission() == null || !payment.getPlatformCommission().equals(bk.getServiceFee())) {
+                    payment.setPlatformCommission(bk.getServiceFee());
+                    changed = true;
+                }
+                BigDecimal expectedRevenue = bk.getFinalAmount().subtract(bk.getServiceFee());
+                if (payment.getOwnerRevenue() == null || !payment.getOwnerRevenue().equals(expectedRevenue)) {
+                    payment.setOwnerRevenue(expectedRevenue);
+                    changed = true;
+                }
+                if (changed) {
+                    paymentRepository.save(payment);
+                }
+            }
+        }
     }
 
     private void seedNewBillboards() {
@@ -621,7 +720,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Màn hình LED lớn tại vòng xoay Phạm Văn Đồng - Ngô Quyền, đón đầu lượng giao thông từ cầu Sông Hàn ra bãi biển Mỹ Khê.",
                 "Vòng xoay Phạm Văn Đồng - Ngô Quyền, An Hải Bắc, Sơn Trà, Đà Nẵng", "Sơn Trà",
                 16.0740, 108.2445, 12.0, 6.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
-                "16h/ngày", 3200000, 95000000, 1.1, 110000,
+                "16h/ngày", 3200000, 95000000, 500000.0, 110000,
                 "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 2. Sơn Trà - Low
@@ -629,7 +728,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Bảng Led quảng cáo tầm thấp tại dải phân cách đường Võ Văn Kiệt, tiếp cận người đi bộ và lưu lượng xe đi ra biển Mỹ Khê.",
                 "Đường Võ Văn Kiệt, Phước Mỹ, Sơn Trà, Đà Nẵng", "Sơn Trà",
                 16.0645, 108.2415, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
-                "16h/ngày", 1400000, 42000000, 1.0, 45000,
+                "16h/ngày", 1400000, 42000000, 0.0, 45000,
                 "https://images.unsplash.com/photo-1626785774573-4b799315345d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 3. Thanh Khê - High
@@ -637,7 +736,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Bảng quảng cáo LED ngoài trời tại nút giao thông ngã tư Điện Biên Phủ - Nguyễn Tri Phương, nơi có mật độ giao thông cực kỳ cao.",
                 "Ngã tư Điện Biên Phủ - Nguyễn Tri Phương, Chính Gián, Thanh Khê, Đà Nẵng", "Thanh Khê",
                 16.0655, 108.1970, 14.0, 7.0, "1920x1080", "6500 nits", "3840Hz", "Outdoor LED",
-                "16h/ngày", 3000000, 88000000, 1.05, 115000,
+                "16h/ngày", 3000000, 88000000, 200000.0, 115000,
                 "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 4. Thanh Khê - Low
@@ -645,7 +744,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Màn hình LED dọc tuyến đường ven biển Nguyễn Tất Thành, phù hợp cho các chiến dịch quảng bá địa phương.",
                 "Đường Nguyễn Tất Thành, Xuân Hà, Thanh Khê, Đà Nẵng", "Thanh Khê",
                 16.0758, 108.1835, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
-                "16h/ngày", 1300000, 38000000, 1.0, 35000,
+                "16h/ngày", 1300000, 38000000, 0.0, 35000,
                 "https://images.unsplash.com/photo-1506744038136-46273834b3fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 5. Ngũ Hành Sơn - High
@@ -653,7 +752,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Vị trí đắc địa mặt tiền biển Võ Nguyên Giáp, tiếp cận lượng lớn khách du lịch trong nước và quốc tế.",
                 "Đường Võ Nguyên Giáp, Khuê Mỹ, Ngũ Hành Sơn, Đà Nẵng", "Ngũ Hành Sơn",
                 16.0544, 108.2477, 12.0, 6.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
-                "16h/ngày", 3100000, 90000000, 1.1, 95000,
+                "16h/ngày", 3100000, 90000000, 500000.0, 95000,
                 "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 6. Ngũ Hành Sơn - Low
@@ -661,7 +760,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Màn hình LED kỹ thuật số nằm trên trục đường chính Lê Văn Hiến kết nối Đà Nẵng và Hội An.",
                 "Đường Lê Văn Hiến, Hòa Hải, Ngũ Hành Sơn, Đà Nẵng", "Ngũ Hành Sơn",
                 15.9920, 108.2610, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
-                "14h/ngày", 1200000, 35000000, 1.0, 30000,
+                "14h/ngày", 1200000, 35000000, 0.0, 30000,
                 "https://images.unsplash.com/photo-1519046904884-53103b34b206?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 7. Liên Chiểu - High
@@ -669,7 +768,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Nằm ngay trục đường giao thông huyết mạch Tôn Đức Thắng, gần bến xe trung tâm thành phố Đà Nẵng.",
                 "Đường Tôn Đức Thắng, Hòa Minh, Liên Chiểu, Đà Nẵng", "Liên Chiểu",
                 16.0615, 108.1685, 10.0, 5.0, "1920x1080", "6000 nits", "3840Hz", "Outdoor LED",
-                "16h/ngày", 2200000, 65000000, 1.05, 75000,
+                "16h/ngày", 2200000, 65000000, 200000.0, 75000,
                 "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 8. Liên Chiểu - Low
@@ -677,7 +776,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Màn hình quảng cáo trước khu đô thị công nghệ cao Nguyễn Lương Bằng, gần các trường đại học lớn.",
                 "Đường Nguyễn Lương Bằng, Hòa Khánh Bắc, Liên Chiểu, Đà Nẵng", "Liên Chiểu",
                 16.0750, 108.1520, 8.0, 4.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
-                "16h/ngày", 950000, 28000000, 1.0, 25000,
+                "16h/ngày", 950000, 28000000, 0.0, 25000,
                 "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 9. Cẩm Lệ - High
@@ -685,7 +784,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Màn hình LED lớn ốp tường tại đại lộ Nguyễn Hữu Thọ, tiếp cận luồng giao thông từ các quận phía Nam vào trung tâm.",
                 "Đường Nguyễn Hữu Thọ, Khuê Trung, Cẩm Lệ, Đà Nẵng", "Cẩm Lệ",
                 16.0270, 108.2095, 10.0, 5.0, "1920x1080", "5500 nits", "3840Hz", "Building LED",
-                "18h/ngày", 2000000, 60000000, 1.05, 70000,
+                "18h/ngày", 2000000, 60000000, 200000.0, 70000,
                 "https://images.unsplash.com/photo-1472214222555-d404758b1c42?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
 
         // 10. Cẩm Lệ - Low
@@ -693,7 +792,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                 "Bảng quảng cáo LED tầm trung trên quốc lộ Cách Mạng Tháng Tám hướng đi cầu vượt Hòa Cầm.",
                 "Đường Cách Mạng Tháng Tám, Hòa Thọ Đông, Cẩm Lệ, Đà Nẵng", "Cẩm Lệ",
                 16.0290, 108.2160, 10.0, 5.0, "1280x720", "5000 nits", "3840Hz", "Street LED",
-                "16h/ngày", 1000000, 30000000, 1.0, 40000,
+                "16h/ngày", 1000000, 30000000, 0.0, 40000,
                 "https://images.unsplash.com/photo-1469474968028-56623f02e42e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080");
     }
 

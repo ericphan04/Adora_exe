@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { Monitor, BarChart3, DollarSign, Clock, Check, X, Eye, Edit2, Trash2, AlertTriangle, Plus, MapPin, Sun, Moon, Settings, LogOut } from "lucide-react";
+import { Monitor, BarChart3, DollarSign, Clock, Check, X, Eye, Edit2, Trash2, AlertTriangle, Plus, MapPin, Sun, Moon, Settings, LogOut, Bell, BellOff, CheckCircle2, XCircle, Calendar, CreditCard } from "lucide-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { MobileBottomNav } from "../components/MobileBottomNav";
 import { KpiCard } from "../components/KpiCard";
@@ -9,6 +9,7 @@ import { DataTable } from "../components/DataTable";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "../context/AuthContext";
 import { useThemeContext } from "../context/ThemeContext";
+import { useNotifications } from "../context/NotificationContext";
 import ownerApi, { CreateBillboardRequest } from "../../api/ownerApi";
 import axiosClient from "../../api/axiosClient";
 import { OwnerDashboardDto } from "../../types/dashboard";
@@ -178,6 +179,8 @@ export default function OwnerDashboard() {
   const { user, logout } = useAuth();
   const confirm = useConfirm();
   const { theme, resolvedTheme, toggleTheme } = useThemeContext();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const [dashboardData, setDashboardData] = useState<OwnerDashboardDto | null>(null);
   const [billboards, setBillboards] = useState<BillboardDto[]>([]);
@@ -192,10 +195,82 @@ export default function OwnerDashboard() {
       if (!target.closest(".profile-dropdown-trigger")) {
         setShowProfileDropdown(false);
       }
+      if (!target.closest(".notification-dropdown-trigger")) {
+        setShowNotifications(false);
+      }
     };
     document.addEventListener("click", handleOutsideClick);
     return () => document.removeEventListener("click", handleOutsideClick);
   }, []);
+
+  const renderNotificationIcon = (type: string) => {
+    switch (type) {
+      case "PAYMENT_SUCCESS":
+        return (
+          <div className="w-8 h-8 rounded-full bg-green-50 text-green-500 border border-green-100 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "BOOKING_PAID":
+        return (
+          <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 border border-emerald-100 flex items-center justify-center shrink-0">
+            <CreditCard className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "BOOKING_ACCEPTED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 border border-blue-100 flex items-center justify-center shrink-0">
+            <Calendar className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "PAYMENT_FAILED":
+      case "BOOKING_REJECTED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0">
+            <XCircle className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "BOOKING_CREATED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-teal-50 text-teal-500 border border-teal-100 flex items-center justify-center shrink-0">
+            <Calendar className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "BOOKING_CANCELLED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center shrink-0">
+            <XCircle className="w-4.5 h-4.5" />
+          </div>
+        );
+      default:
+        return (
+          <div className="w-8 h-8 rounded-full bg-slate-50 text-slate-500 border border-slate-100 flex items-center justify-center shrink-0">
+            <Bell className="w-4.5 h-4.5" />
+          </div>
+        );
+    }
+  };
+
+  const formatRelativeTime = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Vừa xong";
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
 
   const initials = (user?.fullName || "OS")
     .split(" ")
@@ -1200,6 +1275,104 @@ export default function OwnerDashboard() {
               >
                 {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
+
+              {/* Notifications */}
+              <div className="relative notification-dropdown-trigger">
+                <button
+                  type="button"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="p-2 border border-border/50 rounded-lg text-muted-foreground hover:text-accent hover:bg-surface/50 transition-colors cursor-pointer active:scale-95 flex items-center justify-center bg-transparent relative"
+                  title="Thông báo"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#EF4444]"></span>
+                    </span>
+                  )}
+                </button>
+
+                {/* Dropdown Panel */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 md:w-96 bg-card border border-border rounded-xl shadow-lg z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* Header */}
+                    <div className="p-4 border-b border-border flex items-center justify-between bg-muted/50 backdrop-blur-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-foreground">Thông báo</span>
+                        {unreadCount > 0 && (
+                          <span className="bg-destructive/10 text-destructive text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            {unreadCount} mới
+                          </span>
+                        )}
+                      </div>
+                      {unreadCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={markAllAsRead}
+                          className="text-xs text-primary hover:text-primary-hover font-semibold transition-colors cursor-pointer border-none bg-transparent"
+                        >
+                          Đọc tất cả
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Scrollable list */}
+                    <div className="max-h-80 overflow-y-auto divide-y divide-border">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center flex flex-col items-center justify-center text-muted-foreground">
+                          <BellOff className="w-8 h-8 mb-2 text-muted-foreground/60" />
+                          <p className="text-xs font-semibold">Bạn không có thông báo nào</p>
+                          <p className="text-[10px] text-muted-foreground/80 mt-0.5">Mọi cập nhật trạng thái sẽ hiển thị ở đây</p>
+                        </div>
+                      ) : (
+                        notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            onClick={() => {
+                              markAsRead(notif.id);
+                              setShowNotifications(false);
+                              if (notif.type === "BOOKING_PAID") {
+                                navigate("/owner/revenue");
+                              } else if (
+                                notif.type === "BOOKING_CREATED" ||
+                                notif.type === "BOOKING_CANCELLED"
+                              ) {
+                                navigate("/owner");
+                              } else {
+                                navigate("/advertiser/bookings");
+                              }
+                            }}
+                            className={`p-4 flex gap-3 hover:bg-primary-light transition-colors cursor-pointer relative text-left ${
+                              !notif.isRead ? "bg-primary-light/30" : ""
+                            }`}
+                          >
+                            {renderNotificationIcon(notif.type)}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start gap-2">
+                                <span className={`text-xs block truncate ${
+                                  !notif.isRead ? "font-bold text-foreground" : "font-semibold text-muted-foreground"
+                                }`}>
+                                  {notif.title}
+                                </span>
+                                {!notif.isRead && (
+                                  <span className="w-1.5 h-1.5 bg-primary rounded-full shrink-0 mt-1.5" />
+                                )}
+                              </div>
+                              <span className="text-[11px] text-muted-foreground mt-0.5 block line-clamp-2 leading-relaxed">
+                                {notif.message}
+                              </span>
+                              <span className="text-[9px] text-muted-foreground/75 mt-1.5 block">
+                                {formatRelativeTime(notif.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {user && (
                 <div className="relative profile-dropdown-trigger">

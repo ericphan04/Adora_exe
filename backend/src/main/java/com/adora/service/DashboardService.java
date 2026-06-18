@@ -49,7 +49,7 @@ public class DashboardService {
         BigDecimal totalSpending = paymentRepository.sumSpendingByRenterId(renterId);
 
         List<BookingDto> upcomingBookings = bookingRepository.findByRenterIdAndStatusInAndStartDateAfter(
-                renterId, List.of(BookingStatus.ACCEPTED, BookingStatus.PAID), LocalDate.now()).stream()
+                renterId, List.of(BookingStatus.ACCEPTED, BookingStatus.PAID), java.time.LocalDateTime.now()).stream()
                 .map(bookingService::mapToDto)
                 .collect(Collectors.toList());
 
@@ -79,8 +79,8 @@ public class DashboardService {
                     booking.getStatus() == BookingStatus.RUNNING || 
                     booking.getStatus() == BookingStatus.COMPLETED) {
 
-                    LocalDate start = booking.getStartDate();
-                    LocalDate end = booking.getEndDate();
+                    LocalDate start = booking.getStartDate().toLocalDate();
+                    LocalDate end = booking.getEndDate().toLocalDate();
 
                     // Check overlap between [start, end] and [monthStart, monthEnd]
                     LocalDate overlapStart = start.isAfter(monthStart) ? start : monthStart;

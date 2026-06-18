@@ -91,6 +91,18 @@ public class NotificationService {
                         emailService.sendBookingRejectedEmail(email, name, booking.getId(), billboardTitle);
                     }
                     break;
+                case BOOKING_CREATED:
+                    if (booking != null) {
+                        String renterName = booking.getRenter() != null ? booking.getRenter().getFullName() : "Khách hàng";
+                        emailService.sendBookingCreatedEmail(email, name, renterName, booking.getId(), billboardTitle);
+                    }
+                    break;
+                case BOOKING_CANCELLED:
+                    if (booking != null) {
+                        String renterName = booking.getRenter() != null ? booking.getRenter().getFullName() : "Khách hàng";
+                        emailService.sendBookingCancelledEmail(email, name, renterName, booking.getId(), billboardTitle);
+                    }
+                    break;
             }
         } catch (Exception e) {
             // Capture email exceptions so core transitions are never blocked

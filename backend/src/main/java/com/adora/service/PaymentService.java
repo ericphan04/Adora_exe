@@ -55,7 +55,7 @@ public class PaymentService {
         }
 
         BigDecimal finalAmount = booking.getFinalAmount();
-        BigDecimal platformCommission = finalAmount.multiply(BigDecimal.valueOf(0.05)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal platformCommission = booking.getServiceFee();
         BigDecimal ownerRevenue = finalAmount.subtract(platformCommission);
 
         // Generate txnRef code

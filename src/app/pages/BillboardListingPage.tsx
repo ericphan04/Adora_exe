@@ -159,7 +159,7 @@ export default function BillboardListingPage() {
           operatingHours: "16h/ngày",
           pricePerDay: Math.round(priceVal / 30),
           pricePerMonth: priceVal,
-          locationSurcharge: 1.05,
+          locationSurcharge: 200000,
           status: "APPROVED",
           dailyViews: b.trafficIndex === "High" ? 120000 : b.trafficIndex === "Medium" ? 75000 : 25000,
           isFeatured: false,

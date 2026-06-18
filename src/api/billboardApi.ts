@@ -27,6 +27,9 @@ const billboardApi = {
   getReviews: (id: number): Promise<ApiResponse<ReviewDto[]>> => {
     return axiosClient.get(`/api/billboards/${id}/reviews`);
   },
+  getBookedSlots: (id: number, date: string): Promise<ApiResponse<{ startHour: number; endHour: number }[]>> => {
+    return axiosClient.get(`/api/billboards/${id}/booked-slots`, { params: { date } });
+  },
 };
 
 export default billboardApi;

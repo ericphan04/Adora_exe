@@ -23,19 +23,22 @@ public class BillboardService {
     private final BillboardImageRepository imageRepository;
     private final BillboardAvailabilityRepository availabilityRepository;
     private final BillboardFeatureRepository featureRepository;
+    private final BookingRepository bookingRepository;
 
     public BillboardService(BillboardRepository billboardRepository,
                             BillboardCategoryRepository categoryRepository,
                             UserRepository userRepository,
                             BillboardImageRepository imageRepository,
                             BillboardAvailabilityRepository availabilityRepository,
-                            BillboardFeatureRepository featureRepository) {
+                            BillboardFeatureRepository featureRepository,
+                            BookingRepository bookingRepository) {
         this.billboardRepository = billboardRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.imageRepository = imageRepository;
         this.availabilityRepository = availabilityRepository;
         this.featureRepository = featureRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     public List<BillboardDto> getAllPublicBillboards(
@@ -393,6 +396,52 @@ public class BillboardService {
                             .status(avail.getStatus())
                             .build())
                     .collect(Collectors.toList());
+        }
+
+        // Dynamically compute fully-booked dates (24 hours booked)
+        if (entity.getId() != null && bookingRepository != null) {
+            List<Booking> activeBookings = bookingRepository.findActiveBookingsForBillboardOnDate(
+                    entity.getId(), 
+                    LocalDate.now().atStartOfDay(), 
+                    LocalDate.now().plusYears(1).atTime(23, 59, 59)
+            );
+            
+            java.util.Map<LocalDate, Integer> bookedHours = new java.util.HashMap<>();
+            for (Booking b : activeBookings) {
+                LocalDateTime start = b.getStartDate();
+                LocalDateTime end = b.getEndDate();
+                LocalDate startD = start.toLocalDate();
+                LocalDate endD = end.toLocalDate();
+
+                if (startD.equals(endD)) {
+                    long hours = java.time.temporal.ChronoUnit.HOURS.between(start, end);
+                    bookedHours.put(startD, bookedHours.getOrDefault(startD, 0) + (int) hours);
+                } else {
+                    long hours1 = java.time.temporal.ChronoUnit.HOURS.between(start, startD.plusDays(1).atStartOfDay());
+                    bookedHours.put(startD, bookedHours.getOrDefault(startD, 0) + (int) hours1);
+                    
+                    LocalDate curr = startD.plusDays(1);
+                    while (curr.isBefore(endD)) {
+                        bookedHours.put(curr, bookedHours.getOrDefault(curr, 0) + 24);
+                        curr = curr.plusDays(1);
+                    }
+
+                    long hoursLast = java.time.temporal.ChronoUnit.HOURS.between(endD.atStartOfDay(), end);
+                    bookedHours.put(endD, bookedHours.getOrDefault(endD, 0) + (int) hoursLast);
+                }
+            }
+
+            for (java.util.Map.Entry<LocalDate, Integer> entry : bookedHours.entrySet()) {
+                if (entry.getValue() >= 24) {
+                    boolean exists = availDtos.stream().anyMatch(a -> a.getAvailableDate().equals(entry.getKey()));
+                    if (!exists) {
+                        availDtos.add(BillboardAvailabilityDto.builder()
+                                .availableDate(entry.getKey())
+                                .status(com.adora.entity.AvailabilityStatus.BOOKED)
+                                .build());
+                    }
+                }
+            }
         }
 
         return BillboardDto.builder()

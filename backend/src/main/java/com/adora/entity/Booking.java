@@ -30,11 +30,11 @@ public class Booking {
     @JoinColumn(name = "billboard_id", nullable = false)
     private Billboard billboard;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    @Column(name = "start_time", nullable = false)
+    private LocalDateTime startDate;
 
-    @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
+    @Column(name = "end_time", nullable = false)
+    private LocalDateTime endDate;
 
     @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;

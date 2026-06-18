@@ -3,7 +3,7 @@ package com.adora.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -16,10 +16,10 @@ public class CreateBookingRequest {
     private Long billboardId;
 
     @NotNull(message = "Start date is required")
-    private LocalDate startDate;
+    private LocalDateTime startDate;
 
     @NotNull(message = "End date is required")
-    private LocalDate endDate;
+    private LocalDateTime endDate;
 
     private String note;
 }

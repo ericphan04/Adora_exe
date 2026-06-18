@@ -8,6 +8,7 @@ import com.adora.security.UserPrincipal;
 import com.adora.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,9 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+
+    @Value("${adora.client-url}")
+    private String clientUrl;
 
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
@@ -77,10 +81,10 @@ public class PaymentController {
         try {
             PaymentDto payment = paymentService.processCallback(params);
             // Redirect user back to frontend checkout status page
-            return new RedirectView("http://localhost:5173/payment/status?success=true&bookingId=" + payment.getBookingId());
+            return new RedirectView(clientUrl + "/payment/status?success=true&bookingId=" + payment.getBookingId());
         } catch (Exception e) {
             // Redirect with success=false if signature or process fails
-            return new RedirectView("http://localhost:5173/payment/status?success=false&error=" + e.getMessage());
+            return new RedirectView(clientUrl + "/payment/status?success=false&error=" + e.getMessage());
         }
     }
 }

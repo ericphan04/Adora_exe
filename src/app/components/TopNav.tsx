@@ -103,6 +103,18 @@ export function TopNav() {
             <XCircle className="w-4.5 h-4.5" />
           </div>
         );
+      case "BOOKING_CREATED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-teal-50 text-teal-500 border border-teal-100 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
+            <Calendar className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "BOOKING_CANCELLED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 border border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20 flex items-center justify-center shrink-0">
+            <XCircle className="w-4.5 h-4.5" />
+          </div>
+        );
       default:
         return (
           <div className="w-8 h-8 rounded-full bg-slate-50 text-slate-500 border border-slate-100 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20 flex items-center justify-center shrink-0">
@@ -118,7 +130,11 @@ export function TopNav() {
     setShowNotifications(false);
 
     // Dynamic routing depending on who needs to see the changes
-    if (notif.type === "BOOKING_PAID") {
+    if (
+      notif.type === "BOOKING_PAID" || 
+      notif.type === "BOOKING_CREATED" || 
+      notif.type === "BOOKING_CANCELLED"
+    ) {
       navigate("/owner");
     } else {
       navigate("/advertiser");

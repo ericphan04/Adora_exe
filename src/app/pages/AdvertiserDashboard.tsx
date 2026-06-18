@@ -135,6 +135,18 @@ export default function AdvertiserDashboard() {
             <XCircle className="w-4.5 h-4.5" />
           </div>
         );
+      case "BOOKING_CREATED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-teal-50 text-teal-500 border border-teal-100 flex items-center justify-center shrink-0">
+            <Calendar className="w-4.5 h-4.5" />
+          </div>
+        );
+      case "BOOKING_CANCELLED":
+        return (
+          <div className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center shrink-0">
+            <XCircle className="w-4.5 h-4.5" />
+          </div>
+        );
       default:
         return (
           <div className="w-8 h-8 rounded-full bg-slate-50 text-slate-500 border border-slate-100 flex items-center justify-center shrink-0">
@@ -531,6 +543,11 @@ export default function AdvertiserDashboard() {
                                   setShowNotifications(false);
                                   if (notif.type === "BOOKING_PAID") {
                                     navigate("/owner/revenue");
+                                  } else if (
+                                    notif.type === "BOOKING_CREATED" ||
+                                    notif.type === "BOOKING_CANCELLED"
+                                  ) {
+                                    navigate("/owner");
                                   } else {
                                     navigate("/advertiser/bookings");
                                   }

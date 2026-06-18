@@ -2,6 +2,7 @@ package com.adora.service;
 
 import com.adora.config.R2Config;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -21,11 +22,16 @@ public class UploadService {
     private final S3Client s3Client;
     private final R2Config r2Config;
     private final Path localUploadDir = Paths.get("uploads").toAbsolutePath().normalize();
+    private final String uploadBaseUrl;
 
     @Autowired
-    public UploadService(@Autowired(required = false) S3Client s3Client, R2Config r2Config) {
+    public UploadService(
+            @Autowired(required = false) S3Client s3Client,
+            R2Config r2Config,
+            @Value("${adora.upload.base-url}") String uploadBaseUrl) {
         this.s3Client = s3Client;
         this.r2Config = r2Config;
+        this.uploadBaseUrl = uploadBaseUrl;
         
         // Ensure local uploads directory exists
         try {
@@ -83,7 +89,11 @@ public class UploadService {
             System.out.println("File saved locally (fallback): " + targetLocation);
             
             // Return local public URL
-            return "http://localhost:8085/uploads/" + fileName;
+            String baseUrl = uploadBaseUrl;
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            return baseUrl + "/uploads/" + fileName;
         } catch (IOException e) {
             throw new RuntimeException("Could not store file locally. Error: " + e.getMessage(), e);
         }

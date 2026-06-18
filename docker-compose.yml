@@ -40,7 +40,9 @@ services:
       - R2_ACCESS_KEY=${R2_ACCESS_KEY:-your-access-key}
       - R2_SECRET_KEY=${R2_SECRET_KEY:-your-secret-key}
       - R2_BUCKET_NAME=${R2_BUCKET_NAME:-billboard}
-      - R2_PUBLIC_URL=${R2_PUBLIC_URL:-https://pub-f57aad0e4caab95af1c52c46175ca7a6.r2.dev}
+      - R2_PUBLIC_URL=${R2_PUBLIC_URL:-https://r2.ericphan4.online}
+      - CLIENT_URL=${CLIENT_URL:-https://adora.io.vn}
+      - VNP_RETURN_URL=${VNP_RETURN_URL:-https://adora.io.vn/api/payments/callback}
     ports:
       - "8085:8085"
     volumes:

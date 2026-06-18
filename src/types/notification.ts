@@ -3,7 +3,9 @@ export type NotificationType =
   | 'PAYMENT_FAILED'
   | 'BOOKING_PAID'
   | 'BOOKING_ACCEPTED'
-  | 'BOOKING_REJECTED';
+  | 'BOOKING_REJECTED'
+  | 'BOOKING_CREATED'
+  | 'BOOKING_CANCELLED';
 
 export interface NotificationDto {
   id: number;

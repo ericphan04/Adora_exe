@@ -156,6 +156,10 @@ R2_ACCESS_KEY=dien_access_key_r2
 R2_SECRET_KEY=dien_secret_key_r2
 R2_BUCKET_NAME=billboard
 R2_PUBLIC_URL=https://pub-f57aad0e4caab95af1c52c46175ca7a6.r2.dev
+
+# Frontend Client URL & VNPay callback for redirect logic
+CLIENT_URL=https://adora.io.vn
+VNP_RETURN_URL=https://adora.io.vn/api/payments/callback
 ```
 
 ### Bước 4.4: Khởi động hệ thống bằng Docker Compose

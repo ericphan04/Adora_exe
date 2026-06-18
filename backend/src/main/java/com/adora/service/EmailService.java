@@ -21,6 +21,9 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String mailUsername;
 
+    @Value("${adora.client-url}")
+    private String clientUrl;
+
     @Autowired
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -104,7 +107,7 @@ public class EmailService {
                 "    </div>" +
                 "    <p style=\"font-size: 14px; color: #64748b;\">Lịch hiển thị quảng cáo của bạn đã được cập nhật chính thức. Bạn có thể theo dõi và quản lý chiến dịch trong trang quản lý của ADORA.</p>" +
                 "    <div style=\"text-align: center; margin: 36px 0 12px 0;\">" +
-                "      <a href=\"http://localhost:5173/advertiser\" style=\"background-color: #1D4ED8; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(29, 78, 216, 0.15);\">Tru cập Trang Quản Lý</a>" +
+                "      <a href=\"" + clientUrl + "/advertiser\" style=\"background-color: #1D4ED8; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(29, 78, 216, 0.15);\">Tru cập Trang Quản Lý</a>" +
                 "    </div>" +
                 "  </div>" +
                 "  <div style=\"background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-t: 1px solid #f1f5f9;\">" +
@@ -137,7 +140,7 @@ public class EmailService {
                 "    </div>" +
                 "    <p style=\"font-size: 14px; color: #64748b;\">Nếu có sự cố phát sinh từ ngân hàng, vui lòng kiểm tra lại số dư tài khoản của bạn hoặc thử thanh toán lại trong trang cá nhân ADORA.</p>" +
                 "    <div style=\"text-align: center; margin: 36px 0 12px 0;\">" +
-                "      <a href=\"http://localhost:5173/advertiser\" style=\"background-color: #EF4444; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.15);\">Thanh Toán Lại</a>" +
+                "      <a href=\"" + clientUrl + "/advertiser\" style=\"background-color: #EF4444; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.15);\">Thanh Toán Lại</a>" +
                 "    </div>" +
                 "  </div>" +
                 "  <div style=\"background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-t: 1px solid #f1f5f9;\">" +
@@ -171,7 +174,7 @@ public class EmailService {
                 "    </div>" +
                 "    <p style=\"font-size: 14px; color: #64748b;\">Quý khách vui lòng chuẩn bị phát hình ảnh quảng cáo theo đúng thời gian trong lịch trình của đơn đặt bảng quảng cáo. Doanh thu của đơn hàng này đã được cộng vào tài khoản quản lý của bạn.</p>" +
                 "    <div style=\"text-align: center; margin: 36px 0 12px 0;\">" +
-                "      <a href=\"http://localhost:5173/owner\" style=\"background-color: #10B981; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.15);\">Truy cập Chủ Bảng</a>" +
+                "      <a href=\"" + clientUrl + "/owner\" style=\"background-color: #10B981; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.15);\">Truy cập Chủ Bảng</a>" +
                 "    </div>" +
                 "  </div>" +
                 "  <div style=\"background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-t: 1px solid #f1f5f9;\">" +
@@ -198,7 +201,7 @@ public class EmailService {
                 "      Vui lòng hoàn tất thanh toán trong vòng 24 giờ để chính thức giữ chỗ và kích hoạt lịch chiếu chiến dịch của bạn." +
                 "    </p>" +
                 "    <div style=\"text-align: center; margin: 36px 0 12px 0;\">" +
-                "      <a href=\"http://localhost:5173/advertiser\" style=\"background-color: #1D4ED8; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(29, 78, 216, 0.15);\">Thanh Toán Ngay</a>" +
+                "      <a href=\"" + clientUrl + "/advertiser\" style=\"background-color: #1D4ED8; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(29, 78, 216, 0.15);\">Thanh Toán Ngay</a>" +
                 "    </div>" +
                 "  </div>" +
                 "  <div style=\"background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-t: 1px solid #f1f5f9;\">" +
@@ -224,7 +227,59 @@ public class EmailService {
                 "      Số ngày đặt của bạn trên lịch hiển thị đã được giải phóng trở lại trạng thái sẵn sàng thuê. Bạn có thể tìm kiếm và thuê một màn hình LED tương tự khác phù hợp với chiến dịch của bạn trên ADORA." +
                 "    </p>" +
                 "    <div style=\"text-align: center; margin: 36px 0 12px 0;\">" +
-                "      <a href=\"http://localhost:5173/billboards\" style=\"background-color: #475569; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(71, 85, 105, 0.15);\">Tìm Bảng Quảng Cáo Khác</a>" +
+                "      <a href=\"" + clientUrl + "/billboards\" style=\"background-color: #475569; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(71, 85, 105, 0.15);\">Tìm Bảng Quảng Cáo Khác</a>" +
+                "    </div>" +
+                "  </div>" +
+                "  <div style=\"background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-t: 1px solid #f1f5f9;\">" +
+                "    © 2026 ADORA LED Billboard Rental Marketplace. All rights reserved." +
+                "  </div>" +
+                "</div>";
+
+        sendHtmlEmailHelper(toEmail, subject, htmlContent);
+    }
+
+    @Async
+    public void sendBookingCreatedEmail(String toEmail, String ownerName, String renterName, Long bookingId, String billboardName) {
+        String subject = "[ADORA] Yêu cầu thuê bảng mới #" + bookingId;
+        String htmlContent = "<div style=\"font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);\">" +
+                "  <div style=\"background: linear-gradient(135deg, #0f766e, #0d9488); padding: 32px 24px; text-align: center; color: white;\">" +
+                "    <h1 style=\"margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;\">ADORA MARKETPLACE</h1>" +
+                "    <p style=\"margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;\">Yêu cầu đặt bảng mới</p>" +
+                "  </div>" +
+                "  <div style=\"padding: 32px 24px; color: #1e293b; line-height: 1.6; background-color: #ffffff;\">" +
+                "    <p style=\"margin-top: 0; font-size: 16px;\">Xin chào <strong>" + ownerName + "</strong>,</p>" +
+                "    <p style=\"font-size: 15px;\">Bạn nhận được yêu cầu thuê mới cho màn hình LED <strong>" + billboardName + "</strong> (Mã đơn đặt: <strong>#ADR-" + bookingId + "</strong>) từ nhà quảng cáo <strong>" + renterName + "</strong>.</p>" +
+                "    <p style=\"font-size: 15px; font-weight: 700; color: #0f766e; background-color: #f0fdfa; padding: 12px; border-radius: 8px; border-left: 4px solid #0d9488;\">" +
+                "      Vui lòng truy cập trang quản lý chủ bảng để duyệt hoặc từ chối yêu cầu đặt bảng này." +
+                "    </p>" +
+                "    <div style=\"text-align: center; margin: 36px 0 12px 0;\">" +
+                "      <a href=\"" + clientUrl + "/owner\" style=\"background-color: #0d9488; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(13, 148, 136, 0.15);\">Xem Yêu Cầu Thuê</a>" +
+                "    </div>" +
+                "  </div>" +
+                "  <div style=\"background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-t: 1px solid #f1f5f9;\">" +
+                "    © 2026 ADORA LED Billboard Rental Marketplace. All rights reserved." +
+                "  </div>" +
+                "</div>";
+
+        sendHtmlEmailHelper(toEmail, subject, htmlContent);
+    }
+
+    @Async
+    public void sendBookingCancelledEmail(String toEmail, String ownerName, String renterName, Long bookingId, String billboardName) {
+        String subject = "[ADORA] Thông báo hủy yêu cầu đặt bảng #" + bookingId;
+        String htmlContent = "<div style=\"font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);\">" +
+                "  <div style=\"background: linear-gradient(135deg, #be123c, #e11d48); padding: 32px 24px; text-align: center; color: white;\">" +
+                "    <h1 style=\"margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;\">ADORA MARKETPLACE</h1>" +
+                "    <p style=\"margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;\">Yêu cầu đặt bảng bị hủy</p>" +
+                "  </div>" +
+                "  <div style=\"padding: 32px 24px; color: #1e293b; line-height: 1.6; background-color: #ffffff;\">" +
+                "    <p style=\"margin-top: 0; font-size: 16px;\">Xin chào <strong>" + ownerName + "</strong>,</p>" +
+                "    <p style=\"font-size: 15px;\">Yêu cầu thuê màn hình LED <strong>" + billboardName + "</strong> (Mã đơn đặt: <strong>#ADR-" + bookingId + "</strong>) đã bị hủy bởi nhà quảng cáo <strong>" + renterName + "</strong>.</p>" +
+                "    <p style=\"font-size: 14px; color: #64748b;\">" +
+                "      Khung giờ đặt của bảng này đã được giải phóng trở lại trạng thái sẵn sàng cho các nhà quảng cáo khác thuê." +
+                "    </p>" +
+                "    <div style=\"text-align: center; margin: 36px 0 12px 0;\">" +
+                "      <a href=\"" + clientUrl + "/owner\" style=\"background-color: #e11d48; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px rgba(225, 29, 72, 0.15);\">Truy cập Chủ Bảng</a>" +
                 "    </div>" +
                 "  </div>" +
                 "  <div style=\"background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-t: 1px solid #f1f5f9;\">" +
