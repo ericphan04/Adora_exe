@@ -20,7 +20,7 @@ public class VnPayConfig {
     @Value("${vnp.hashSecret:YJIY0MNU5P8T80EGSPJTP1XP830KVFBG}")
     private String hashSecret;
 
-    @Value("${vnp.returnUrl:http://localhost:8085/api/payments/callback}")
+    @Value("${vnp.returnUrl:https://adora.io.vn/api/payments/callback}")
     private String returnUrl;
 
     public String getPayUrl() {
