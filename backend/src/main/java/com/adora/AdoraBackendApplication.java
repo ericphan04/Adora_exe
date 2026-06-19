@@ -1,7 +1,10 @@
 package com.adora;
 
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
@@ -31,4 +34,17 @@ public class AdoraBackendApplication {
         }
         SpringApplication.run(AdoraBackendApplication.class, args);
     }
+
+    @Bean
+    public CommandLineRunner dropNotificationCheckConstraint(JdbcTemplate jdbcTemplate) {
+        return args -> {
+            try {
+                jdbcTemplate.execute("ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check");
+                System.out.println("Successfully checked/dropped constraint notifications_type_check");
+            } catch (Exception e) {
+                System.err.println("Failed to drop constraint notifications_type_check: " + e.getMessage());
+            }
+        };
+    }
 }
+
