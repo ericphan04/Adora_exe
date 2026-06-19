@@ -303,6 +303,30 @@ export default function BillboardDetailPage() {
     }
   };
 
+  const selectedHoursCount = selectedStartDay != null ? endHour - startHour : 0;
+
+  const priceBreakdown = useMemo(() => {
+    if (!billboard || selectedStartDay == null || hasOverlapConflict) return null;
+    
+    const hourlyPrice = billboard.pricePerDay / 24;
+    const subtotalRaw = hourlyPrice * selectedHoursCount;
+    const subtotal = Math.round(subtotalRaw / 1000) * 1000;
+    
+    const surchargeRaw = billboard.locationSurcharge || 0;
+    const surcharge = Math.round(surchargeRaw / 1000) * 1000;
+    
+    const beforeFee = subtotal + surcharge;
+    const serviceFee = Math.round((beforeFee * 0.05) / 1000) * 1000;
+    
+    return {
+      subtotal,
+      surcharge,
+      serviceFee,
+      total: beforeFee + serviceFee,
+      hoursCount: selectedHoursCount
+    };
+  }, [billboard, selectedStartDay, selectedHoursCount, hasOverlapConflict]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -333,32 +357,6 @@ export default function BillboardDetailPage() {
       </div>
     );
   }
-
-
-
-  const selectedHoursCount = selectedStartDay != null ? endHour - startHour : 0;
-
-  const priceBreakdown = useMemo(() => {
-    if (selectedStartDay == null || hasOverlapConflict) return null;
-    
-    const hourlyPrice = billboard.pricePerDay / 24;
-    const subtotalRaw = hourlyPrice * selectedHoursCount;
-    const subtotal = Math.round(subtotalRaw / 1000) * 1000;
-    
-    const surchargeRaw = billboard.locationSurcharge || 0;
-    const surcharge = Math.round(surchargeRaw / 1000) * 1000;
-    
-    const beforeFee = subtotal + surcharge;
-    const serviceFee = Math.round((beforeFee * 0.05) / 1000) * 1000;
-    
-    return {
-      subtotal,
-      surcharge,
-      serviceFee,
-      total: beforeFee + serviceFee,
-      hoursCount: selectedHoursCount
-    };
-  }, [billboard, selectedStartDay, selectedHoursCount, hasOverlapConflict]);
 
   const prevImage = (e: React.MouseEvent) => {
     e.stopPropagation();

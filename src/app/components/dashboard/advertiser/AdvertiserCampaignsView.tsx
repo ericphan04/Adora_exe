@@ -321,8 +321,8 @@ function CampaignWizard({ onClose, onSuccess, bookings = [] }: { onClose: () => 
       const promises = selectedBillboards.map(billboardId => {
         return bookingApi.create({
           billboardId,
-          startDate,
-          endDate,
+          startDate: `${startDate}T00:00:00`,
+          endDate: `${endDate}T00:00:00`,
           note: noteMeta,
         });
       });
