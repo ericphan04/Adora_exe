@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router";
 
 export function Footer() {
   return (
@@ -17,28 +18,28 @@ export function Footer() {
           <div>
             <h4 className="text-sm mb-4 text-foreground" style={{ fontWeight: 600 }}>Sàn Giao Dịch</h4>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Tìm Bảng Quảng Cáo</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Đăng Bảng Quảng Cáo</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Bảng Giá</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Cách Hoạt Động</a></li>
+              <li><Link to="/billboards" className="hover:text-primary transition-colors">Tìm Bảng Quảng Cáo</Link></li>
+              <li><Link to="/register" className="hover:text-primary transition-colors">Đăng Bảng Quảng Cáo</Link></li>
+              <li><Link to="/" className="hover:text-primary transition-colors">Bảng Giá</Link></li>
+              <li><Link to="/" className="hover:text-primary transition-colors">Cách Hoạt Động</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="text-sm mb-4 text-foreground" style={{ fontWeight: 600 }}>Công Ty</h4>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Về Chúng Tôi</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Tuyển Dụng</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Liên Hệ</a></li>
+              <li><Link to="/" className="hover:text-primary transition-colors">Về Chúng Tôi</Link></li>
+              <li><Link to="/" className="hover:text-primary transition-colors">Tuyển Dụng</Link></li>
+              <li><Link to="/" className="hover:text-primary transition-colors">Blog</Link></li>
+              <li><Link to="/" className="hover:text-primary transition-colors">Liên Hệ</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="text-sm mb-4 text-foreground" style={{ fontWeight: 600 }}>Pháp Lý</h4>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Chính Sách Bảo Mật</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Điều Khoản Dịch Vụ</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Chính Sách Cookie</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Chính Sách Hoàn Tiền</a></li>
+              <li><Link to="/privacy-policy" className="hover:text-primary transition-colors">Chính Sách Bảo Mật</Link></li>
+              <li><Link to="/terms-of-service" className="hover:text-primary transition-colors">Điều Khoản Dịch Vụ</Link></li>
+              <li><Link to="/cookie-policy" className="hover:text-primary transition-colors">Chính Sách Cookie</Link></li>
+              <li><Link to="/refund-policy" className="hover:text-primary transition-colors">Chính Sách Hoàn Tiền</Link></li>
             </ul>
           </div>
         </div>

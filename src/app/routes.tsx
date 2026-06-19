@@ -11,6 +11,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PaymentStatusPage from "./pages/PaymentStatusPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import PolicyPage from "./pages/PolicyPage";
+
 const ProtectedAdvertiser = () => (
   <ProtectedRoute allowedRoles={["RENTER"]}>
     <AdvertiserDashboard />
@@ -43,5 +45,9 @@ export const router = createBrowserRouter([
   { path: "/admin", Component: ProtectedAdmin },
   { path: "/admin/*", Component: ProtectedAdmin },
   { path: "/payment/status", Component: PaymentStatusPage },
+  { path: "/privacy-policy", Component: () => <PolicyPage defaultTab="privacy" /> },
+  { path: "/terms-of-service", Component: () => <PolicyPage defaultTab="terms" /> },
+  { path: "/cookie-policy", Component: () => <PolicyPage defaultTab="cookie" /> },
+  { path: "/refund-policy", Component: () => <PolicyPage defaultTab="refund" /> },
 ]);
 
