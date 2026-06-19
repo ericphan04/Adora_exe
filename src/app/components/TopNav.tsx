@@ -155,7 +155,7 @@ export function TopNav() {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
         <div className="flex items-center gap-8">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-xl text-primary tracking-tight cursor-pointer font-black bg-transparent border-none">
-            <img src="/logo.png" className="w-8 h-8 rounded-lg shadow-sm border border-primary/10 bg-white" alt="ADORA logo" />
+            <img src="/logo.png" className="w-8 h-8 rounded-lg shadow-sm border border-primary/10" alt="ADORA logo" />
             <span>ADORA</span>
           </button>
           <nav className="hidden md:flex items-center gap-6">

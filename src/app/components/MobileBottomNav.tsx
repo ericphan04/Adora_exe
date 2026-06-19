@@ -178,7 +178,7 @@ export function MobileBottomNav() {
               <div className="flex items-center gap-3">
                 <img
                   src="/logo.png"
-                  className="w-9 h-9 rounded-lg shadow-md border border-primary/10 bg-white shrink-0"
+                  className="w-9 h-9 rounded-lg shadow-md border border-primary/10 shrink-0"
                   alt="ADORA logo"
                 />
                 <div>
