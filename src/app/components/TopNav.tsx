@@ -9,10 +9,13 @@ import {
   XCircle, 
   Calendar, 
   CreditCard, 
-  BellOff 
+  BellOff,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNotifications } from "../context/NotificationContext";
+import { useThemeContext } from "../context/ThemeContext";
 import { NotificationDto } from "../../types/notification";
 import { MobileBottomNav } from "./MobileBottomNav";
 
@@ -21,6 +24,7 @@ export function TopNav() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { resolvedTheme, toggleTheme } = useThemeContext();
   
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -165,7 +169,18 @@ export function TopNav() {
             </button>
           </nav>
         </div>
+
         <div className="flex items-center gap-3">
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-9 h-9 rounded-lg hover:bg-primary-light flex items-center justify-center text-muted-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-none"
+            aria-label="Toggle theme"
+          >
+            {resolvedTheme === "dark" ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+          </button>
+
           {/* Dynamic Notification Bell Button */}
           {user && (
             <div className="relative notification-dropdown-trigger">

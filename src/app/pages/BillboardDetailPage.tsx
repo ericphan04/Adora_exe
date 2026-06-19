@@ -685,12 +685,12 @@ export default function BillboardDetailPage() {
                 <span className="px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-semibold border border-accent/30 flex items-center gap-1.5 backdrop-blur-md shadow-sm">
                   <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse"></span> TRỰC TUYẾN
                 </span>
-                <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold">
+                <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold">
                   {billboard.district}, {billboard.city}
                 </span>
               </div>
-              <h1 className="text-2xl md:text-4xl font-extrabold text-slate-800 tracking-tight">{billboard.title}</h1>
-              <p className="text-slate-500 text-sm md:text-base leading-relaxed flex items-start gap-1.5">
+              <h1 className="text-2xl md:text-4xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">{billboard.title}</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base leading-relaxed flex items-start gap-1.5">
                 <MapPin className="w-4.5 h-4.5 text-slate-400 shrink-0 mt-0.5" />
                 {billboard.address}
               </p>
