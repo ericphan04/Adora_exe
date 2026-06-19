@@ -21,8 +21,9 @@ interface DashboardSidebarProps {
 const navItems: Record<string, NavItem[]> = {
   advertiser: [
     { icon: <LayoutDashboard className="w-5 h-5" />, label: "Tổng Quan", path: "/advertiser" },
+    { icon: <Plus className="w-5 h-5" />, label: "Đặt Chỗ Mới", path: "/advertiser/new-booking" },
+    { icon: <BookOpen className="w-5 h-5" />, label: "Lịch Sử Đặt Chỗ", path: "/advertiser/bookings" },
     { icon: <Map className="w-5 h-5" />, label: "Bản đồ LED", path: "/advertiser/map" },
-    { icon: <BookOpen className="w-5 h-5" />, label: "Đặt Chỗ", path: "/advertiser/bookings" },
     { icon: <Megaphone className="w-5 h-5" />, label: "Chiến Dịch", path: "/advertiser/campaigns" },
     { icon: <Heart className="w-5 h-5" />, label: "Đã Lưu", path: "/advertiser/saved" },
     { icon: <FileText className="w-5 h-5" />, label: "Hóa Đơn", path: "/advertiser/invoices" },

@@ -25,6 +25,7 @@ import { PaymentDto } from "../../types/payment";
 import { mockRenterDashboard } from "../data/advertiserMockData";
 import { AdvertiserOverviewView } from "../components/dashboard/advertiser/AdvertiserOverviewView";
 import { AdvertiserBookingsView } from "../components/dashboard/advertiser/AdvertiserBookingsView";
+import { AdvertiserNewBookingView } from "../components/dashboard/advertiser/AdvertiserNewBookingView";
 import { AdvertiserSavedView } from "../components/dashboard/advertiser/AdvertiserSavedView";
 import { AdvertiserCampaignsView } from "../components/dashboard/advertiser/AdvertiserCampaignsView";
 import { AdvertiserInvoicesView } from "../components/dashboard/advertiser/AdvertiserInvoicesView";
@@ -40,6 +41,10 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   bookings: {
     title: "Quản Lý Đặt Chỗ",
     subtitle: "Theo dõi, thanh toán và quản lý mọi lượt đặt bảng QC.",
+  },
+  "new-booking": {
+    title: "Đặt Chỗ Mới",
+    subtitle: "Tìm kiếm bảng quảng cáo còn trống và đặt chỗ nhanh chóng.",
   },
   saved: {
     title: "Bảng QC Đã Lưu",
@@ -181,6 +186,7 @@ export default function AdvertiserDashboard() {
 
   const view = useMemo(() => {
     const path = location.pathname;
+    if (path.startsWith("/advertiser/new-booking")) return "new-booking";
     if (path.startsWith("/advertiser/bookings")) return "bookings";
     if (path.startsWith("/advertiser/saved")) return "saved";
     if (path.startsWith("/advertiser/campaigns")) return "campaigns";
@@ -659,6 +665,12 @@ export default function AdvertiserDashboard() {
               onPayBooking={handlePayBooking}
               onReviewBooking={handleOpenReview}
               onReportBooking={handleOpenComplaint}
+            />
+          )}
+
+          {view === "new-booking" && (
+            <AdvertiserNewBookingView
+              bookings={bookings}
             />
           )}
 
