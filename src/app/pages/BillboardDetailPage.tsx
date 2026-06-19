@@ -327,6 +327,11 @@ export default function BillboardDetailPage() {
     };
   }, [billboard, selectedStartDay, selectedHoursCount, hasOverlapConflict]);
 
+  // Reference priceBreakdown before early returns to prevent compiler/bundler reordering hook calls
+  if (loading && priceBreakdown !== undefined) {
+    (window as any)._tmpPrice = priceBreakdown;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col">
