@@ -38,6 +38,7 @@ import { BillboardGoogleMap } from "../../map/BillboardGoogleMap";
 import { notify, apiErrorMessage } from "../../../utils/notify";
 import billboardApi from "../../../../api/billboardApi";
 import bookingApi from "../../../../api/bookingApi";
+import { parseBookingTime } from "../../../utils/calendar";
 
 interface AdvertiserCampaignsViewProps {
   bookings: BookingDto[];
@@ -1357,10 +1358,24 @@ export function AdvertiserCampaignsView({
                               <StatusBadge variant={statusConf.variant} label={statusConf.label} />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 text-[10px] text-muted-foreground border-t border-border/30 pt-2">
-                              <div>Thời gian: <strong className="text-foreground">{b.startDate} - {b.endDate}</strong></div>
-                              <div className="text-right">Kích thước: <strong className="text-foreground">{b.billboard?.width}m × {b.billboard?.height}m</strong></div>
-                              <div>Thực thanh toán: <strong className="text-primary">{(b.finalAmount || b.totalPrice || 0).toLocaleString("vi-VN")}₫</strong></div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-muted-foreground border-t border-border/30 pt-2">
+                              <div>
+                                {(() => {
+                                  const timeInfo = parseBookingTime(b.startDate, b.endDate);
+                                  return (
+                                    <div className="flex flex-col gap-0.5">
+                                      <span>Thời gian: <strong className="text-foreground">{timeInfo.detailLabel}</strong></span>
+                                      <span className={`self-start px-2 py-0.5 rounded-full text-[8px] font-bold border mt-0.5 ${timeInfo.modeColor}`}>
+                                        {timeInfo.modeLabel}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                              <div className="space-y-1 text-left sm:text-right">
+                                <div>Kích thước: <strong className="text-foreground">{b.billboard?.width}m × {b.billboard?.height}m</strong></div>
+                                <div>Thực thanh toán: <strong className="text-primary">{(b.finalAmount || b.totalPrice || 0).toLocaleString("vi-VN")}₫</strong></div>
+                              </div>
                             </div>
 
                             {/* Booking Action buttons */}

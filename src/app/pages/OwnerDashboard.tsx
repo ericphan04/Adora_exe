@@ -22,7 +22,7 @@ import { MiniMonthCalendar } from "../components/dashboard/MiniMonthCalendar";
 import { useConfirm } from "../context/ConfirmContext";
 import { notify, apiErrorMessage } from "../utils/notify";
 import { getBookingMonthEvents } from "../utils/bookingEvents";
-import { getTodayParts } from "../utils/calendar";
+import { getTodayParts, parseBookingTime } from "../utils/calendar";
 import { MessagesView } from "../components/messages/MessagesView";
 import LocationPicker from "../components/map/LocationPicker";
 import { BillboardGoogleMap } from "../components/map/BillboardGoogleMap";
@@ -1151,7 +1151,17 @@ export default function OwnerDashboard() {
     {
       key: "dates",
       label: "Thời Gian",
-      render: (_: any, row: BookingDto) => <span>{formatDate(row.startDate)} - {formatDate(row.endDate)}</span>
+      render: (_: any, row: BookingDto) => {
+        const timeInfo = parseBookingTime(row.startDate, row.endDate);
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <span className="font-semibold text-xs text-foreground">{timeInfo.timeLabel}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${timeInfo.modeColor}`}>
+              {timeInfo.modeLabel}
+            </span>
+          </div>
+        );
+      }
     },
     {
       key: "finalAmount",
@@ -2011,8 +2021,18 @@ export default function OwnerDashboard() {
                           <div key={idx} className="bg-surface/30 border border-border/85 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
                             <div className="space-y-1">
                               <p className="font-bold text-foreground">{b.billboard?.title}</p>
-                              <p className="text-[10px] text-muted-foreground">{formatDate(b.startDate)} - {formatDate(b.endDate)}</p>
-                              <p className="text-[10px] text-muted-foreground font-semibold">Giá trị thuê: <span className="text-foreground">{b.finalAmount?.toLocaleString("vi-VN")}₫</span></p>
+                              {(() => {
+                                const timeInfo = parseBookingTime(b.startDate, b.endDate);
+                                return (
+                                  <div className="flex flex-col gap-0.5 mt-0.5">
+                                    <span className="text-[10px] font-medium text-foreground">{timeInfo.detailLabel}</span>
+                                    <span className={`self-start px-2 py-0.5 rounded-full text-[8px] font-bold border mt-0.5 ${timeInfo.modeColor}`}>
+                                      {timeInfo.modeLabel}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                              <p className="text-[10px] text-muted-foreground font-semibold mt-1">Giá trị thuê: <span className="text-foreground">{b.finalAmount?.toLocaleString("vi-VN")}₫</span></p>
                             </div>
                             <div className="flex items-center gap-2 self-end sm:self-center">
                               {(() => {
@@ -2482,16 +2502,39 @@ export default function OwnerDashboard() {
               <div className="space-y-2">
                 <h4 className="font-bold text-primary border-l-2 border-primary pl-2 uppercase tracking-wider text-[10px]">Thời gian & chi phí thuê</h4>
                 <div className="bg-muted/20 border border-border/30 rounded-xl p-3.5 space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="block text-[10px] text-muted-foreground uppercase">Ngày bắt đầu</span>
-                      <span className="font-bold text-foreground">{formatDate(selectedBookingDetail.startDate)}</span>
-                    </div>
-                    <div>
-                      <span className="block text-[10px] text-muted-foreground uppercase">Ngày kết thúc</span>
-                      <span className="font-bold text-foreground">{formatDate(selectedBookingDetail.endDate)}</span>
-                    </div>
-                  </div>
+                  {(() => {
+                    const timeInfo = parseBookingTime(selectedBookingDetail.startDate, selectedBookingDetail.endDate);
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center bg-card rounded-xl p-3 border border-border/40">
+                          <div>
+                            <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Hình thức thuê</span>
+                            <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold border ${timeInfo.modeColor}`}>
+                              {timeInfo.modeLabel}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Thời lượng</span>
+                            <span className="text-xs font-bold text-foreground">{timeInfo.detailLabel}</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 pt-1">
+                          <div>
+                            <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Bắt đầu</span>
+                            <span className="font-bold text-foreground">
+                              {new Date(selectedBookingDetail.startDate).toLocaleString("vi-VN")}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Kết thúc</span>
+                            <span className="font-bold text-foreground">
+                              {new Date(selectedBookingDetail.endDate).toLocaleString("vi-VN")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div className="pt-2.5 border-t border-border/30 space-y-2 text-xs">
                     <div className="flex justify-between">

@@ -86,3 +86,58 @@ export function formatDisplayDate(iso: string) {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
 }
+
+export function parseBookingTime(startDateStr: string, endDateStr: string) {
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+  
+  const startHour = start.getHours();
+  const startMin = start.getMinutes();
+  const endHour = end.getHours();
+  const endMin = end.getMinutes();
+  
+  const isDaily = startHour === 0 && startMin === 0 && endHour === 0 && endMin === 0;
+  
+  const formatDate = (d: Date) => {
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  
+  const formatTime = (d: Date) => {
+    const h = String(d.getHours()).padStart(2, "0");
+    const m = String(d.getMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
+  };
+  
+  if (isDaily) {
+    // For end date, subtract 1 day to show the actual final rental day because backend stores T00:00:00 of next day
+    const actualEnd = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+    const startFmt = formatDate(start);
+    const endFmt = formatDate(actualEnd);
+    const days = Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+    
+    return {
+      isDaily: true,
+      modeLabel: "Theo Ngày",
+      modeColor: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20",
+      timeLabel: startFmt === endFmt ? startFmt : `${startFmt} - ${endFmt}`,
+      detailLabel: startFmt === endFmt ? `${startFmt} (1 ngày)` : `${startFmt} - ${endFmt} (${days} ngày)`
+    };
+  } else {
+    const dateFmt = formatDate(start);
+    const startVal = formatTime(start);
+    const endVal = formatTime(end);
+    const hours = Math.round((end.getTime() - start.getTime()) / (60 * 60 * 1000));
+    
+    return {
+      isDaily: false,
+      modeLabel: "Theo Giờ",
+      modeColor: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20",
+      timeLabel: `${dateFmt} (${startVal} - ${endVal})`,
+      detailLabel: `${dateFmt} • Khung giờ: ${startVal} - ${endVal} (${hours} giờ)`
+    };
+  }
+}
+

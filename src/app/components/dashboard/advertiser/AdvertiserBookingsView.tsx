@@ -8,11 +8,13 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  MapPin,
 } from "lucide-react";
 import { DataTable } from "../../DataTable";
 import { StatusBadge } from "../../StatusBadge";
 import { BookingDto } from "../../../../types/booking";
 import { formatAdvertiserDate, mapBookingStatus } from "../../../utils/advertiser";
+import { parseBookingTime } from "../../../utils/calendar";
 import { KpiCard } from "../../KpiCard";
 
 interface AdvertiserBookingsViewProps {
@@ -34,6 +36,7 @@ export function AdvertiserBookingsView({
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [selectedBooking, setSelectedBooking] = useState<BookingDto | null>(null);
 
   const stats = useMemo(
     () => ({
@@ -60,20 +63,25 @@ export function AdvertiserBookingsView({
     });
   }, [bookings, searchTerm, statusFilter]);
 
-  const tableData = filteredBookings.map((b) => ({
-    id: b.id,
-    billboardId: b.billboard?.id,
-    code: `#${b.id}`,
-    billboard: b.billboard?.title ?? "—",
-    location: b.billboard
-      ? `${b.billboard.district}, ${b.billboard.city}`
-      : "—",
-    startDate: formatAdvertiserDate(b.startDate),
-    endDate: formatAdvertiserDate(b.endDate),
-    status: b.status,
-    rawStatus: b.status,
-    payment: b.finalAmount.toLocaleString("vi-VN") + "₫",
-  }));
+  const tableData = filteredBookings.map((b) => {
+    const timeInfo = parseBookingTime(b.startDate, b.endDate);
+    return {
+      id: b.id,
+      billboardId: b.billboard?.id,
+      code: `#${b.id}`,
+      billboard: b.billboard?.title ?? "—",
+      location: b.billboard
+        ? `${b.billboard.district}, ${b.billboard.city}`
+        : "—",
+      mode: timeInfo.modeLabel,
+      modeColor: timeInfo.modeColor,
+      time: timeInfo.timeLabel,
+      status: b.status,
+      rawStatus: b.status,
+      payment: b.finalAmount.toLocaleString("vi-VN") + "₫",
+      rawBooking: b,
+    };
+  });
 
   const columns = [
     {
@@ -84,20 +92,40 @@ export function AdvertiserBookingsView({
     },
     {
       key: "billboard",
-      label: "Bảng QC",
+      label: "Bảng QC / Vị trí",
       className: "font-semibold text-primary",
-      render: (v: string) => <span>{v}</span>,
+      render: (v: string, row: any) => (
+        <div>
+          <span 
+            className="block font-bold hover:text-primary transition-colors cursor-pointer" 
+            onClick={() => setSelectedBooking(row.rawBooking)}
+          >
+            {v}
+          </span>
+          <span className="text-[10px] text-muted-foreground block mt-0.5">{row.location}</span>
+        </div>
+      ),
     },
-    { key: "location", label: "Vị trí", className: "text-foreground" },
     {
-      key: "time",
-      label: "Thời gian",
-      className: "text-xs text-muted-foreground",
-      render: (_: unknown, row: { startDate: string; endDate: string }) => (
-        <span>
-          {row.startDate} – {row.endDate}
+      key: "mode",
+      label: "Hình thức",
+      render: (v: string, row: any) => (
+        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${row.modeColor}`}>
+          {v}
         </span>
       ),
+    },
+    {
+      key: "time",
+      label: "Thời gian thuê",
+      className: "text-xs text-foreground font-medium",
+      render: (v: string) => <span>{v}</span>,
+    },
+    {
+      key: "payment",
+      label: "Tổng tiền",
+      className: "font-bold text-primary",
+      render: (v: string) => <span>{v}</span>,
     },
     {
       key: "status",
@@ -108,25 +136,15 @@ export function AdvertiserBookingsView({
       },
     },
     {
-      key: "payment",
-      label: "Tổng tiền",
-      className: "font-bold text-primary",
-      render: (v: string) => <span>{v}</span>,
-    },
-    {
       key: "actions",
       label: "Thao tác",
-      render: (_: unknown, row: { id: number; rawStatus: string; billboardId?: number }) => (
+      render: (_: unknown, row: any) => (
         <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1">
           <button
             type="button"
-            className="flex-shrink-0 w-7 h-7 rounded-md hover:bg-surface/50 flex items-center justify-center text-muted-foreground cursor-pointer"
-            title="Chi tiết bảng QC"
-            onClick={() =>
-              row.billboardId
-                ? navigate(`/billboard/${row.billboardId}`)
-                : navigate("/billboards")
-            }
+            className="flex-shrink-0 w-7 h-7 rounded-md hover:bg-surface flex items-center justify-center text-muted-foreground cursor-pointer border border-border/40"
+            title="Chi tiết đơn đặt"
+            onClick={() => setSelectedBooking(row.rawBooking)}
           >
             <Eye className="w-3.5 h-3.5" />
           </button>
@@ -233,6 +251,144 @@ export function AdvertiserBookingsView({
           <DataTable columns={columns} data={tableData} />
         )}
       </div>
+
+      {/* ====== BOOKING DETAIL MODAL ====== */}
+      {selectedBooking && (() => {
+        const timeInfo = parseBookingTime(selectedBooking.startDate, selectedBooking.endDate);
+        const { variant, label } = mapBookingStatus(selectedBooking.status);
+        const bb = selectedBooking.billboard;
+        const thumb = bb?.images?.find(i => i.isThumbnail)?.imageUrl || bb?.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1572945281861-68b1227368e5?w=600";
+        
+        return (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+            onClick={() => setSelectedBooking(null)}
+          >
+            <div 
+              className="bg-card text-card-foreground rounded-3xl max-w-2xl w-full border border-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-border flex items-center justify-between bg-muted/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                    #{selectedBooking.id}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-foreground">Chi Tiết Đơn Đặt Chỗ</h3>
+                    <p className="text-xs text-muted-foreground">Khởi tạo ngày: {selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleDateString("vi-VN") : "—"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${timeInfo.modeColor}`}>
+                    {timeInfo.modeLabel}
+                  </span>
+                  <StatusBadge variant={variant} label={label} />
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 overflow-y-auto space-y-6">
+                {/* Billboard section */}
+                {bb && (
+                  <div className="flex gap-4 items-start p-4 bg-surface/50 border border-border/40 rounded-2xl">
+                    <img src={thumb} alt={bb.title} className="w-24 h-16 object-cover rounded-xl border border-border/50 shrink-0" />
+                    <div>
+                      <h4 className="font-extrabold text-foreground text-sm line-clamp-1">{bb.title}</h4>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                        <MapPin className="w-3.5 h-3.5 shrink-0" /> {bb.district}, {bb.city}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Kích thước: {bb.width}m × {bb.height}m | {bb.screenType}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rental details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border border-border/40 rounded-2xl space-y-2">
+                    <h5 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Thời gian thuê</h5>
+                    <p className="text-sm font-bold text-foreground">{timeInfo.detailLabel}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Bắt đầu: {new Date(selectedBooking.startDate).toLocaleString("vi-VN")}<br/>
+                      Kết thúc: {new Date(selectedBooking.endDate).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                  <div className="p-4 border border-border/40 rounded-2xl space-y-2">
+                    <h5 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Ghi chú từ khách hàng</h5>
+                    <p className="text-xs text-foreground italic leading-relaxed bg-muted/40 p-2.5 rounded-xl border border-border/20">
+                      {selectedBooking.note ? `"${selectedBooking.note}"` : "Không có ghi chú."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Financial invoice breakdown */}
+                <div className="p-5 border border-border/55 rounded-2xl space-y-3">
+                  <h5 className="text-xs font-bold text-primary uppercase tracking-wider">Chi Tiết Thanh Toán</h5>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Giá thuê ({timeInfo.isDaily ? "ngày" : "giờ"})</span>
+                      <span className="font-semibold text-foreground">
+                        {timeInfo.isDaily 
+                          ? `${(bb?.pricePerDay ?? 0).toLocaleString("vi-VN")}₫ / ngày`
+                          : `${(selectedBooking.totalPrice / Math.round((new Date(selectedBooking.endDate).getTime() - new Date(selectedBooking.startDate).getTime()) / (60 * 60 * 1000))).toLocaleString("vi-VN")}₫ / giờ`
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Tạm tính tiền thuê</span>
+                      <span className="font-semibold text-foreground">{selectedBooking.totalPrice.toLocaleString("vi-VN")}₫</span>
+                    </div>
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Phí dịch vụ hệ thống</span>
+                      <span className="font-semibold text-foreground">{selectedBooking.serviceFee.toLocaleString("vi-VN")}₫</span>
+                    </div>
+                    {selectedBooking.locationSurcharge > 0 && (
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span>Phụ phí vị trí</span>
+                        <span className="font-semibold text-foreground">{selectedBooking.locationSurcharge.toLocaleString("vi-VN")}₫</span>
+                      </div>
+                    )}
+                    <div className="h-px bg-border my-2" />
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-sm text-foreground">Tổng số tiền thanh toán</span>
+                      <span className="font-extrabold text-base text-primary">{selectedBooking.finalAmount.toLocaleString("vi-VN")}₫</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="p-4 border-t border-border bg-muted/10 flex justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedBooking(null)}
+                  className="rounded-xl border border-border px-4 py-2 text-xs font-bold text-muted-foreground hover:bg-surface cursor-pointer"
+                >
+                  Đóng
+                </button>
+                {selectedBooking.status === "PENDING" && (
+                  <button
+                    type="button"
+                    onClick={() => { onCancelBooking(selectedBooking.id); setSelectedBooking(null); }}
+                    className="rounded-xl bg-destructive text-white px-4 py-2 text-xs font-bold hover:bg-destructive/90 cursor-pointer"
+                  >
+                    Hủy Đặt Chỗ
+                  </button>
+                )}
+                {selectedBooking.status === "ACCEPTED" && (
+                  <button
+                    type="button"
+                    onClick={() => { onPayBooking(selectedBooking.id); setSelectedBooking(null); }}
+                    className="rounded-xl bg-emerald-600 text-white px-4 py-2 text-xs font-bold hover:bg-emerald-700 cursor-pointer"
+                  >
+                    Thanh Toán Ngay
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
