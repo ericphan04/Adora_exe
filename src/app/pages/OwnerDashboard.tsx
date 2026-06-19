@@ -1061,9 +1061,45 @@ export default function OwnerDashboard() {
           const end = new Date(b.endDate);
           return start.getHours() === 0 && start.getMinutes() === 0 && end.getHours() === 0 && end.getMinutes() === 0;
         });
+        
+        let timeLabel = "";
         const startFmt = formatDate(row.startDate);
         const endFmt = formatDate(row.endDate);
-        const timeLabel = startFmt === endFmt ? startFmt : `${startFmt} - ${endFmt}`;
+        const dateRange = startFmt === endFmt ? startFmt : `${startFmt} - ${endFmt}`;
+        
+        if (isAllDaily) {
+          timeLabel = dateRange;
+        } else {
+          // Hourly booking
+          if (row.bookings.length === 1) {
+            const b = row.bookings[0];
+            const start = new Date(b.startDate);
+            const end = new Date(b.endDate);
+            const startHour = String(start.getHours()).padStart(2, "0");
+            const startMin = String(start.getMinutes()).padStart(2, "0");
+            const endHour = String(end.getHours()).padStart(2, "0");
+            const endMin = String(end.getMinutes()).padStart(2, "0");
+            timeLabel = `${startFmt} (${startHour}:${startMin} - ${endHour}:${endMin})`;
+          } else {
+            // Check if all bookings are on the same day
+            const sameDay = row.bookings.every((b: BookingDto) => {
+              return formatDate(b.startDate) === startFmt;
+            });
+            if (sameDay) {
+              const hourSlots = row.bookings.map((b: BookingDto) => {
+                const s = new Date(b.startDate);
+                const e = new Date(b.endDate);
+                const sh = String(s.getHours()).padStart(2, "0");
+                const eh = String(e.getHours()).padStart(2, "0");
+                return `${sh}h-${eh}h`;
+              }).join(", ");
+              timeLabel = `${startFmt} (${hourSlots})`;
+            } else {
+              timeLabel = `${dateRange} (${row.bookings.length} khung giờ)`;
+            }
+          }
+        }
+        
         return (
           <div className="flex flex-col gap-1 items-start">
             <span className="font-semibold text-xs text-foreground">{timeLabel}</span>
@@ -1997,8 +2033,24 @@ export default function OwnerDashboard() {
                             });
                             const startFmt = formatDate(selectedCampaignDetail.startDate);
                             const endFmt = formatDate(selectedCampaignDetail.endDate);
-                            const timeLabel = startFmt === endFmt ? startFmt : `${startFmt} - ${endFmt}`;
-                            return `${timeLabel} (${isAllDaily ? "Theo Ngày" : "Theo Giờ"})`;
+                            const dateRange = startFmt === endFmt ? startFmt : `${startFmt} - ${endFmt}`;
+                            
+                            if (isAllDaily) {
+                              return `${dateRange} (Theo Ngày)`;
+                            } else {
+                              if (selectedCampaignDetail.bookings.length === 1) {
+                                const b = selectedCampaignDetail.bookings[0];
+                                const start = new Date(b.startDate);
+                                const end = new Date(b.endDate);
+                                const sh = String(start.getHours()).padStart(2, "0");
+                                const sm = String(start.getMinutes()).padStart(2, "0");
+                                const eh = String(end.getHours()).padStart(2, "0");
+                                const em = String(end.getMinutes()).padStart(2, "0");
+                                return `${startFmt} (${sh}:${sm} - ${eh}:${em}) (Theo Giờ)`;
+                              } else {
+                                return `${dateRange} (${selectedCampaignDetail.bookings.length} khung giờ) (Theo Giờ)`;
+                              }
+                            }
                           })()}
                         </span>
                       </div>
@@ -2555,7 +2607,13 @@ export default function OwnerDashboard() {
                             <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Bắt đầu</span>
                             <span className="font-bold text-foreground">
                               {timeInfo.isDaily 
-                                ? formatDate(selectedBookingDetail.startDate) 
+                                ? (() => {
+                                    const d = new Date(selectedBookingDetail.startDate);
+                                    const day = String(d.getDate()).padStart(2, "0");
+                                    const month = String(d.getMonth() + 1).padStart(2, "0");
+                                    const year = d.getFullYear();
+                                    return `${day}/${month}/${year}`;
+                                  })()
                                 : new Date(selectedBookingDetail.startDate).toLocaleDateString("vi-VN", {
                                     day: "2-digit",
                                     month: "2-digit",
@@ -2571,7 +2629,13 @@ export default function OwnerDashboard() {
                             <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Kết thúc</span>
                             <span className="font-bold text-foreground">
                               {timeInfo.isDaily 
-                                ? formatDate(new Date(new Date(selectedBookingDetail.endDate).getTime() - 24 * 60 * 60 * 1000).toISOString()) 
+                                ? (() => {
+                                    const actualEnd = new Date(new Date(selectedBookingDetail.endDate).getTime() - 24 * 60 * 60 * 1000);
+                                    const day = String(actualEnd.getDate()).padStart(2, "0");
+                                    const month = String(actualEnd.getMonth() + 1).padStart(2, "0");
+                                    const year = actualEnd.getFullYear();
+                                    return `${day}/${month}/${year}`;
+                                  })()
                                 : new Date(selectedBookingDetail.endDate).toLocaleDateString("vi-VN", {
                                     day: "2-digit",
                                     month: "2-digit",
