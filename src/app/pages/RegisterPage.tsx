@@ -130,7 +130,7 @@ export default function RegisterPage() {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#06B6D4]/10 rounded-full blur-3xl" />
         <div className="relative z-10 text-center text-white max-w-md">
           <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center mx-auto mb-8">
-            <img src="/logo.png" className="w-12 h-12 object-contain rounded-lg" alt="ADORA logo" />
+            <img src="/logo.png" className="w-12 h-12 object-contain rounded-lg bg-white" alt="ADORA logo" />
           </div>
           <h1 className="text-4xl mb-4" style={{ fontWeight: 800 }}>Tham Gia ADORA</h1>
           <p className="text-lg text-white/70 leading-relaxed mb-10">
