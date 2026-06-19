@@ -66,7 +66,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
       <div className="flex flex-col px-4 py-6 border-b border-border/20 relative">
         {!collapsed ? (
           <div className="flex items-center gap-3">
-            <img src="/logo.png" className="w-8 h-8 rounded-lg shadow-md shrink-0 border border-primary/10" alt="ADORA logo" />
+            <img src="/logo.png?v=3" className="w-8 h-8 rounded-lg shadow-md shrink-0 border border-primary/10" alt="ADORA logo" />
             <div>
               <h1 className="text-xl font-extrabold text-primary tracking-tighter leading-none">ADORA LED</h1>
               <p className="text-muted-foreground text-[9px] uppercase font-bold tracking-wider mt-1">
@@ -76,7 +76,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
           </div>
         ) : (
           <div className="flex justify-center py-1">
-            <img src="/logo.png" className="w-8 h-8 rounded-lg shadow-sm" alt="ADORA logo" />
+            <img src="/logo.png?v=3" className="w-8 h-8 rounded-lg shadow-sm" alt="ADORA logo" />
           </div>
         )}
         <button
