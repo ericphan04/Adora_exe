@@ -225,33 +225,110 @@ export default function BillboardDetailPage() {
     return () => { active = false; };
   }, [billboardId]);
 
+  const [bookingMode, setBookingMode] = useState<"hour" | "day">("hour");
+  const [isSelectingEndHour, setIsSelectingEndHour] = useState(false);
+
+  const handleBookingModeChange = (mode: "hour" | "day") => {
+    setBookingMode(mode);
+    setSelectedStartDay(null);
+    setSelectedEndDay(null);
+    setBookingError(null);
+    setBookedSlots([]);
+    setIsSelectingEndHour(false);
+  };
+
+  const handleHourClick = (h: number) => {
+    const isBooked = bookedSlots.some(slot => h >= slot.startHour && h < slot.endHour);
+    if (isBooked) return;
+
+    if (!isSelectingEndHour) {
+      setStartHour(h);
+      setEndHour(h + 1);
+      setIsSelectingEndHour(true);
+    } else {
+      if (h >= startHour) {
+        // Check if there are booked slots in between
+        let hasBookedBetween = false;
+        for (let i = startHour; i <= h; i++) {
+          if (bookedSlots.some(slot => i >= slot.startHour && i < slot.endHour)) {
+            hasBookedBetween = true;
+            break;
+          }
+        }
+        if (hasBookedBetween) {
+          notify.error("Không thể chọn khung giờ chứa giờ đã bận.");
+          setStartHour(h);
+          setEndHour(h + 1);
+        } else {
+          setEndHour(h + 1);
+          setIsSelectingEndHour(false);
+        }
+      } else {
+        setStartHour(h);
+        setEndHour(h + 1);
+      }
+    }
+  };
+
   const handleDayClick = async (day: number) => {
     if (isPastDay(calendarYear, calendarMonth, day)) return;
 
-    setSelectedStartDay(day);
-    setSelectedEndDay(day);
-    setBookingError(null);
-
-    const dateStr = toIsoDate(calendarYear, calendarMonth, day);
-    try {
-      const res = await billboardApi.getBookedSlots(billboardId, dateStr);
-      if (res.success && res.data) {
-        setBookedSlots(res.data);
+    if (bookingMode === "day") {
+      if (selectedStartDay === null || (selectedStartDay !== null && selectedEndDay !== null)) {
+        setSelectedStartDay(day);
+        setSelectedEndDay(null);
+        setBookingError(null);
       } else {
+        if (day >= selectedStartDay) {
+          // Check if there are booked days in between
+          let hasBookedBetween = false;
+          for (let d = selectedStartDay; d <= day; d++) {
+            if (bookedDaysSet.has(d)) {
+              hasBookedBetween = true;
+              break;
+            }
+          }
+          if (hasBookedBetween) {
+            setBookingError("Không thể chọn khoảng ngày chứa ngày đã được đặt.");
+            setSelectedStartDay(day);
+            setSelectedEndDay(null);
+          } else {
+            setSelectedEndDay(day);
+            setBookingError(null);
+          }
+        } else {
+          setSelectedStartDay(day);
+          setSelectedEndDay(null);
+          setBookingError(null);
+        }
+      }
+    } else {
+      setSelectedStartDay(day);
+      setSelectedEndDay(day);
+      setBookingError(null);
+
+      const dateStr = toIsoDate(calendarYear, calendarMonth, day);
+      try {
+        const res = await billboardApi.getBookedSlots(billboardId, dateStr);
+        if (res.success && res.data) {
+          setBookedSlots(res.data);
+        } else {
+          setBookedSlots([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch booked slots", err);
         setBookedSlots([]);
       }
-    } catch (err) {
-      console.error("Failed to fetch booked slots", err);
-      setBookedSlots([]);
     }
   };
 
   const hasOverlapConflict = useMemo(() => {
     if (selectedStartDay == null) return false;
+    if (bookingMode === "day") return false;
     return bookedSlots.some(slot => {
       return !(endHour <= slot.startHour || startHour >= slot.endHour);
     });
-  }, [selectedStartDay, startHour, endHour, bookedSlots]);
+  }, [selectedStartDay, startHour, endHour, bookedSlots, bookingMode]);
 
   const handleBookingSubmit = async () => {
     if (!user) {
@@ -266,7 +343,7 @@ export default function BillboardDetailPage() {
       setBookingError("Vui lòng chọn ngày đặt chỗ trên lịch.");
       return;
     }
-    if (hasOverlapConflict) {
+    if (bookingMode === "hour" && hasOverlapConflict) {
       setBookingError("Khung giờ bạn chọn đã bị trùng với lịch đặt trước. Vui lòng chọn khung giờ khác.");
       return;
     }
@@ -274,9 +351,28 @@ export default function BillboardDetailPage() {
     setBookingLoading(true);
     setBookingError(null);
     try {
-      const dateStr = toIsoDate(calendarYear, calendarMonth, selectedStartDay);
-      const startDate = `${dateStr}T${String(startHour).padStart(2, "0")}:00:00`;
-      const endDate = `${dateStr}T${String(endHour).padStart(2, "0")}:00:00`;
+      let startDate = "";
+      let endDate = "";
+
+      if (bookingMode === "day") {
+        const startStr = toIsoDate(calendarYear, calendarMonth, selectedStartDay);
+        const endDayVal = selectedEndDay ?? selectedStartDay;
+        const endStr = toIsoDate(calendarYear, calendarMonth, endDayVal);
+
+        const [y, m, d] = endStr.split("-").map(Number);
+        const nextDayDate = new Date(y, m - 1, d + 1);
+        const nextDayYear = nextDayDate.getFullYear();
+        const nextDayMonth = String(nextDayDate.getMonth() + 1).padStart(2, "0");
+        const nextDayDay = String(nextDayDate.getDate()).padStart(2, "0");
+        const nextDayStr = `${nextDayYear}-${nextDayMonth}-${nextDayDay}`;
+
+        startDate = `${startStr}T00:00:00`;
+        endDate = `${nextDayStr}T00:00:00`;
+      } else {
+        const dateStr = toIsoDate(calendarYear, calendarMonth, selectedStartDay);
+        startDate = `${dateStr}T${String(startHour).padStart(2, "0")}:00:00`;
+        endDate = `${dateStr}T${String(endHour).padStart(2, "0")}:00:00`;
+      }
 
       const response = await bookingApi.create({
         billboardId,
@@ -306,26 +402,32 @@ export default function BillboardDetailPage() {
   const selectedHoursCount = selectedStartDay != null ? endHour - startHour : 0;
 
   const priceBreakdown = useMemo(() => {
-    if (!billboard || selectedStartDay == null || hasOverlapConflict) return null;
+    if (!billboard || selectedStartDay == null) return null;
     
-    const hourlyPrice = billboard.pricePerDay / 24;
-    const subtotalRaw = hourlyPrice * selectedHoursCount;
-    const subtotal = Math.round(subtotalRaw / 1000) * 1000;
-    
-    const surchargeRaw = billboard.locationSurcharge || 0;
-    const surcharge = Math.round(surchargeRaw / 1000) * 1000;
-    
-    const beforeFee = subtotal + surcharge;
-    const serviceFee = Math.round((beforeFee * 0.05) / 1000) * 1000;
-    
-    return {
-      subtotal,
-      surcharge,
-      serviceFee,
-      total: beforeFee + serviceFee,
-      hoursCount: selectedHoursCount
-    };
-  }, [billboard, selectedStartDay, selectedHoursCount, hasOverlapConflict]);
+    if (bookingMode === "day") {
+      const daysCount = selectedEndDay != null ? (selectedEndDay - selectedStartDay + 1) : 1;
+      return calcBookingPrice(billboard.pricePerDay, daysCount, billboard.locationSurcharge || 0);
+    } else {
+      if (hasOverlapConflict) return null;
+      const hourlyPrice = billboard.pricePerDay / 24;
+      const subtotalRaw = hourlyPrice * selectedHoursCount;
+      const subtotal = Math.round(subtotalRaw / 1000) * 1000;
+      
+      const surchargeRaw = billboard.locationSurcharge || 0;
+      const surcharge = Math.round(surchargeRaw / 1000) * 1000;
+      
+      const beforeFee = subtotal + surcharge;
+      const serviceFee = Math.round((beforeFee * 0.05) / 1000) * 1000;
+      
+      return {
+        subtotal,
+        surcharge,
+        serviceFee,
+        total: beforeFee + serviceFee,
+        hoursCount: selectedHoursCount
+      };
+    }
+  }, [billboard, selectedStartDay, selectedEndDay, selectedHoursCount, hasOverlapConflict, bookingMode]);
 
   // Reference priceBreakdown before early returns to prevent compiler/bundler reordering hook calls
   if (loading && priceBreakdown !== undefined) {
@@ -762,10 +864,38 @@ export default function BillboardDetailPage() {
                 </div>
               </div>
 
+              {/* Tab Selector for Booking Mode */}
+              <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => handleBookingModeChange("hour")}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    bookingMode === "hour"
+                      ? "bg-white dark:bg-[#1C2128] text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Đặt theo giờ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBookingModeChange("day")}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    bookingMode === "day"
+                      ? "bg-white dark:bg-[#1C2128] text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Đặt theo ngày
+                </button>
+              </div>
+
               {/* Booking Calendar Input Simulation */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Lịch Trống Màn Hình</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 block">
+                    {bookingMode === "day" ? "Chọn khoảng ngày thuê" : "Lịch Trống Màn Hình"}
+                  </label>
                   
                   {bookingError && (
                     <div className="mb-3 p-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium">
@@ -788,51 +918,75 @@ export default function BillboardDetailPage() {
 
                 {selectedStartDay && (
                   <div className="space-y-4 animate-in fade-in duration-300">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Giờ bắt đầu</label>
-                        <select
-                          value={startHour}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            setStartHour(val);
-                            if (val >= endHour) {
-                              setEndHour(val + 1);
-                            }
-                          }}
-                          className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 text-sm outline-none focus:border-accent text-foreground font-semibold"
-                        >
+                    {bookingMode === "day" ? (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-xl space-y-1">
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Khoảng ngày thuê</div>
+                        <div className="text-sm font-bold text-primary flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4 text-accent" />
+                          {selectedEndDay != null
+                            ? `Từ ngày ${selectedStartDay} đến ${selectedEndDay} (Tổng: ${selectedEndDay - selectedStartDay + 1} ngày)`
+                            : `Ngày bắt đầu: ${selectedStartDay} (Chọn thêm ngày kết thúc trên lịch)`}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                            Chọn Khung Giờ (Lưới 24h)
+                          </label>
+                          {startHour !== null && endHour !== null && (
+                            <span className="text-[11px] font-bold text-accent">
+                              {String(startHour).padStart(2, "0")}:00 - {String(endHour).padStart(2, "0")}:00 ({endHour - startHour}h)
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-4 gap-1.5 max-h-60 overflow-y-auto p-1 border border-border/30 rounded-xl bg-background/30 scrollbar-thin">
                           {Array.from({ length: 24 }).map((_, h) => {
                             const isBooked = bookedSlots.some(slot => h >= slot.startHour && h < slot.endHour);
+                            const isSelected = h >= startHour && h < endHour;
+                            
                             return (
-                              <option key={h} value={h} disabled={isBooked}>
-                                {String(h).padStart(2, "0")}:00 {isBooked ? "(Đã bận)" : ""}
-                              </option>
+                              <button
+                                key={h}
+                                type="button"
+                                onClick={() => handleHourClick(h)}
+                                disabled={isBooked}
+                                className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all flex flex-col items-center justify-center cursor-pointer ${
+                                  isBooked
+                                    ? "bg-red-50 border-red-200 text-red-400 dark:bg-red-950/20 dark:border-red-900/30 dark:text-red-800 cursor-not-allowed opacity-60"
+                                    : isSelected
+                                      ? "bg-primary border-primary text-white shadow-md active:scale-95"
+                                      : "bg-emerald-50/50 hover:bg-emerald-100/80 border-emerald-100 text-emerald-800 dark:bg-emerald-950/15 dark:hover:bg-emerald-950/30 dark:border-emerald-900/20 dark:text-emerald-500 active:scale-95"
+                                }`}
+                              >
+                                <span>{String(h).padStart(2, "0")}:00</span>
+                                <span className={`text-[8px] font-semibold mt-0.5 ${isBooked ? "text-red-400" : isSelected ? "text-white/80" : "text-emerald-600/80"}`}>
+                                  {isBooked ? "ĐÃ BẬN" : isSelected ? "CHỌN" : "TRỐNG"}
+                                </span>
+                              </button>
                             );
                           })}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Giờ kết thúc</label>
-                        <select
-                          value={endHour}
-                          onChange={(e) => setEndHour(Number(e.target.value))}
-                          className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 text-sm outline-none focus:border-accent text-foreground font-semibold"
-                        >
-                          {Array.from({ length: 24 }).map((_, h) => {
-                            const hourVal = h + 1;
-                            const isBooked = bookedSlots.some(slot => h >= slot.startHour && h < slot.endHour);
-                            return (
-                              <option key={hourVal} value={hourVal} disabled={hourVal <= startHour || isBooked}>
-                                {String(hourVal).padStart(2, "0")}:00 {isBooked ? "(Đã bận)" : ""}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
-                    </div>
+                        </div>
 
-                    {hasOverlapConflict && (
+                        <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-900/40" />
+                            Trống
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded bg-primary border border-primary" />
+                            Đang chọn
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded bg-red-50 dark:bg-red-950/25 border border-red-200 dark:border-red-900/40" />
+                            Đã bận
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {bookingMode === "hour" && hasOverlapConflict && (
                       <div className="p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold leading-relaxed">
                         Khoảng giờ bạn chọn bị trùng với một lịch đã đặt. Vui lòng chọn khung giờ khác.
                       </div>
@@ -858,7 +1012,9 @@ export default function BillboardDetailPage() {
                   <>
                     <div className="flex justify-between text-xs md:text-sm">
                       <span className="text-muted-foreground font-medium">
-                        Giá thuê ({priceBreakdown.hoursCount} giờ)
+                        {priceBreakdown.daysCount !== undefined
+                          ? `Giá thuê (${priceBreakdown.daysCount} ngày)`
+                          : `Giá thuê (${priceBreakdown.hoursCount} giờ)`}
                       </span>
                       <span className="text-foreground font-semibold">
                         {priceBreakdown.subtotal.toLocaleString("vi-VN")}₫
@@ -907,10 +1063,12 @@ export default function BillboardDetailPage() {
                       ? "ĐĂNG NHẬP ĐỂ ĐẶT LỊCH"
                       : user.role !== "RENTER"
                         ? "CHỈ DÀNH CHO NHÀ QUẢNG CÁO"
-                        : hasOverlapConflict
+                        : bookingMode === "hour" && hasOverlapConflict
                           ? "TRÙNG LỊCH (CHỌN KHUNG GIỜ)"
                           : selectedStartDay
-                            ? `ĐẶT LỊCH NGAY (${selectedHoursCount} giờ)`
+                            ? bookingMode === "day"
+                              ? `ĐẶT LỊCH NGAY (${selectedEndDay ? selectedEndDay - selectedStartDay + 1 : 1} ngày)`
+                              : `ĐẶT LỊCH NGAY (${selectedHoursCount} giờ)`
                             : "ĐẶT LỊCH NGAY (CHỌN NGÀY)"}
                 </button>
                 
