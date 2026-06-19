@@ -1055,7 +1055,24 @@ export default function OwnerDashboard() {
     {
       key: "dates",
       label: "Thời Gian",
-      render: (_: any, row: any) => <span>{formatDate(row.startDate)} - {formatDate(row.endDate)}</span>
+      render: (_: any, row: any) => {
+        const isAllDaily = row.bookings.every((b: BookingDto) => {
+          const start = new Date(b.startDate);
+          const end = new Date(b.endDate);
+          return start.getHours() === 0 && start.getMinutes() === 0 && end.getHours() === 0 && end.getMinutes() === 0;
+        });
+        const startFmt = formatDate(row.startDate);
+        const endFmt = formatDate(row.endDate);
+        const timeLabel = startFmt === endFmt ? startFmt : `${startFmt} - ${endFmt}`;
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <span className="font-semibold text-xs text-foreground">{timeLabel}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${isAllDaily ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20" : "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20"}`}>
+              {isAllDaily ? "Theo Ngày" : "Theo Giờ"}
+            </span>
+          </div>
+        );
+      }
     },
     {
       key: "totalAmount",
@@ -1969,7 +1986,22 @@ export default function OwnerDashboard() {
                     <div className="bg-surface/50 rounded-xl p-4 border border-border space-y-2 text-xs">
                       <h4 className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Thông tin chung</h4>
                       <div className="flex justify-between gap-2"><span className="text-muted-foreground">Tên chiến dịch:</span><span className="font-semibold text-foreground text-right">{selectedCampaignDetail.campaignName}</span></div>
-                      <div className="flex justify-between gap-2"><span className="text-muted-foreground">Thời gian:</span><span className="font-semibold text-foreground">{formatDate(selectedCampaignDetail.startDate)} - {formatDate(selectedCampaignDetail.endDate)}</span></div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Thời gian:</span>
+                        <span className="font-semibold text-foreground">
+                          {(() => {
+                            const isAllDaily = selectedCampaignDetail.bookings.every((b: BookingDto) => {
+                              const start = new Date(b.startDate);
+                              const end = new Date(b.endDate);
+                              return start.getHours() === 0 && start.getMinutes() === 0 && end.getHours() === 0 && end.getMinutes() === 0;
+                            });
+                            const startFmt = formatDate(selectedCampaignDetail.startDate);
+                            const endFmt = formatDate(selectedCampaignDetail.endDate);
+                            const timeLabel = startFmt === endFmt ? startFmt : `${startFmt} - ${endFmt}`;
+                            return `${timeLabel} (${isAllDaily ? "Theo Ngày" : "Theo Giờ"})`;
+                          })()}
+                        </span>
+                      </div>
                       <div className="flex justify-between gap-2"><span className="text-muted-foreground">Tổng ngân sách:</span><span className="font-bold text-primary">{selectedCampaignDetail.totalAmount.toLocaleString("vi-VN")}₫</span></div>
                       <div className="flex justify-between gap-2">
                         <span className="text-muted-foreground">Trạng thái:</span>
@@ -2522,13 +2554,33 @@ export default function OwnerDashboard() {
                           <div>
                             <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Bắt đầu</span>
                             <span className="font-bold text-foreground">
-                              {new Date(selectedBookingDetail.startDate).toLocaleString("vi-VN")}
+                              {timeInfo.isDaily 
+                                ? formatDate(selectedBookingDetail.startDate) 
+                                : new Date(selectedBookingDetail.startDate).toLocaleDateString("vi-VN", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric"
+                                  }) + " " + new Date(selectedBookingDetail.startDate).toLocaleTimeString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit"
+                                  })
+                              }
                             </span>
                           </div>
                           <div>
                             <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Kết thúc</span>
                             <span className="font-bold text-foreground">
-                              {new Date(selectedBookingDetail.endDate).toLocaleString("vi-VN")}
+                              {timeInfo.isDaily 
+                                ? formatDate(new Date(new Date(selectedBookingDetail.endDate).getTime() - 24 * 60 * 60 * 1000).toISOString()) 
+                                : new Date(selectedBookingDetail.endDate).toLocaleDateString("vi-VN", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric"
+                                  }) + " " + new Date(selectedBookingDetail.endDate).toLocaleTimeString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit"
+                                  })
+                              }
                             </span>
                           </div>
                         </div>

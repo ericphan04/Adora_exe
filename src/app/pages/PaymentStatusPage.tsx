@@ -4,6 +4,7 @@ import { CheckCircle, XCircle, ArrowLeft, Calendar, CreditCard, FileText, Loader
 import bookingApi from "../../api/bookingApi";
 import { BookingDto } from "../../types/booking";
 import { apiErrorMessage } from "../utils/notify";
+import { parseBookingTime } from "../utils/calendar";
 
 export default function PaymentStatusPage() {
   const [searchParams] = useSearchParams();
@@ -131,7 +132,10 @@ export default function PaymentStatusPage() {
                       <Calendar className="w-3.5 h-3.5 inline mr-1 text-slate-400" /> Thời gian thuê
                     </span>
                     <span className="text-xs font-medium text-slate-600 block">
-                      {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
+                      {(() => {
+                        const timeInfo = parseBookingTime(booking.startDate, booking.endDate);
+                        return timeInfo.detailLabel;
+                      })()}
                     </span>
                   </div>
                   <div>
