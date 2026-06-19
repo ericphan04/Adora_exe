@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router";
+import { Mail, Facebook } from "lucide-react";
 
 export function Footer() {
   return (
@@ -8,12 +9,19 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div>
             <h3 className="text-xl mb-4 tracking-tight text-primary font-black">ADORA</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed mb-4">
               Sàn giao dịch bảng quảng cáo LED số hàng đầu. Giá minh bạch. Cập nhật theo thời gian thực. Thanh toán an toàn.
             </p>
-            <p className="text-muted-foreground text-sm mt-4">
-              Liên hệ: <a href="mailto:adora@gmail.com" className="hover:text-primary transition-colors font-medium">adora@gmail.com</a>
-            </p>
+            <div className="space-y-2">
+              <a href="mailto:contact.adoravn@gmail.com" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Mail className="w-4 h-4 shrink-0" />
+                <span>contact.adoravn@gmail.com</span>
+              </a>
+              <a href="https://www.facebook.com/profile.php?id=61590208394601&sk=about" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Facebook className="w-4 h-4 shrink-0 text-[#1877F2]" />
+                <span>Facebook: ADORA LED</span>
+              </a>
+            </div>
           </div>
           <div>
             <h4 className="text-sm mb-4 text-foreground" style={{ fontWeight: 600 }}>Sàn Giao Dịch</h4>
@@ -46,7 +54,12 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground/60">&copy; 2026 ADORA. Bảo lưu mọi quyền.</p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground/60">
-            <a href="mailto:adora@gmail.com" className="hover:text-primary transition-colors font-medium">Email: adora@gmail.com</a>
+            <a href="mailto:contact.adoravn@gmail.com" className="hover:text-primary transition-colors font-medium flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5" /> contact.adoravn@gmail.com
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=61590208394601&sk=about" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors font-medium flex items-center gap-1.5">
+              <Facebook className="w-3.5 h-3.5" /> Facebook
+            </a>
           </div>
         </div>
       </div>

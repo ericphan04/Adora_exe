@@ -74,10 +74,10 @@ export default function PolicyPage({ defaultTab = "privacy" }: PolicyPageProps) 
             <div className="p-5 bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl border border-primary/10 shadow-sm text-center">
               <p className="text-xs text-muted-foreground font-semibold">Cần giải đáp thắc mắc pháp lý?</p>
               <a 
-                href="mailto:legal@adora.io.vn" 
+                href="mailto:contact.adoravn@gmail.com" 
                 className="mt-2 text-xs text-primary hover:text-primary-hover font-bold inline-block"
               >
-                legal@adora.io.vn
+                contact.adoravn@gmail.com
               </a>
             </div>
           </aside>
