@@ -28,16 +28,24 @@ export function Footer() {
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               <li><Link to="/billboards" className="hover:text-primary transition-colors">Tìm Bảng Quảng Cáo</Link></li>
               <li><Link to="/register" className="hover:text-primary transition-colors">Đăng Bảng Quảng Cáo</Link></li>
-              <li><Link to="/" className="hover:text-primary transition-colors">Bảng Giá</Link></li>
-              <li><Link to="/" className="hover:text-primary transition-colors">Cách Hoạt Động</Link></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    window.dispatchEvent(new CustomEvent("open-user-guide"));
+                  }}
+                  className="hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0 text-left text-sm text-muted-foreground font-normal"
+                >
+                  Cách Hoạt Động
+                </button>
+              </li>
             </ul>
           </div>
           <div>
             <h4 className="text-sm mb-4 text-foreground" style={{ fontWeight: 600 }}>Công Ty</h4>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               <li><Link to="/" className="hover:text-primary transition-colors">Về Chúng Tôi</Link></li>
-              <li><Link to="/" className="hover:text-primary transition-colors">Tuyển Dụng</Link></li>
-              <li><Link to="/" className="hover:text-primary transition-colors">Blog</Link></li>
               <li><Link to="/" className="hover:text-primary transition-colors">Liên Hệ</Link></li>
             </ul>
           </div>

@@ -47,6 +47,12 @@ export function TopNav() {
     return () => document.removeEventListener("click", handleOutsideClick);
   }, []);
 
+  useEffect(() => {
+    const handleOpenGuide = () => setShowGuide(true);
+    window.addEventListener("open-user-guide", handleOpenGuide);
+    return () => window.removeEventListener("open-user-guide", handleOpenGuide);
+  }, []);
+
   const getDashboardPath = () => {
     if (!user) return "/";
     if (user.role === "ADMIN") return "/admin";
@@ -165,11 +171,8 @@ export function TopNav() {
             <button onClick={() => navigate("/billboards/map")} className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-none">
               Bản Đồ
             </button>
-            <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-none">
+            <button onClick={() => setShowGuide(true)} className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-none">
               Cách Hoạt Động
-            </button>
-            <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-none">
-              Bảng Giá
             </button>
           </nav>
         </div>
