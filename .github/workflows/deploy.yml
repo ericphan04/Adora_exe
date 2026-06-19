@@ -29,11 +29,12 @@ jobs:
             # Di chuyển tới thư mục chứa dự án trên VM
             cd ${{ secrets.GCP_WORK_DIR }}
             
-            # Kéo code mới nhất từ nhánh tương ứng
-            git pull
+            # Đồng bộ sạch với GitHub, xóa bỏ hoàn toàn sửa đổi thủ công trên VPS để tránh kẹt CI/CD
+            git fetch --all
+            git reset --hard origin/main
             
             # Build lại image Docker và chạy ngầm (chỉ downtime vài giây khi container restart)
-            docker compose up -d --build
+            docker compose up -d --build frontend
             
             # Dọn dẹp các Docker image cũ không còn sử dụng để tránh đầy ổ cứng VM
             docker image prune -f
