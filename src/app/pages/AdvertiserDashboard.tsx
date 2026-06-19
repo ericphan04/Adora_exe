@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, Link } from "react-router";
 import {
   AlertTriangle, Search, Moon, Sun, Bell, Menu,
   BellOff, CheckCircle2, XCircle, Calendar, CreditCard, Star,
@@ -715,10 +715,10 @@ export default function AdvertiserDashboard() {
                 <span className="text-xs text-muted-foreground">© 2026 ADORA LED Marketplace. All rights reserved.</span>
               </div>
               <div className="flex gap-6">
-                <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="#">Privacy Policy</a>
-                <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="#">Terms of Service</a>
-                <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="#">API Docs</a>
-                <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="#">Contact Support</a>
+                <Link className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" to="/privacy-policy">Privacy Policy</Link>
+                <Link className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" to="/terms-of-service">Terms of Service</Link>
+                <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="mailto:contact.adoravn@gmail.com">Contact Support</a>
+                <a className="text-xs text-muted-foreground hover:text-accent underline transition-opacity" href="https://www.facebook.com/profile.php?id=61590208394601&sk=about" target="_blank" rel="noopener noreferrer">Facebook</a>
               </div>
             </div>
           </footer>

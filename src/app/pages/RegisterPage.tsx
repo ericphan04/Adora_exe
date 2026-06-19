@@ -313,6 +313,7 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-[#F0F9FF] dark:bg-[#161B22] border border-[#E3E8EF] dark:border-[#30363D] text-foreground rounded-lg pl-10 pr-4 py-2.5 text-sm outline-none focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4]/20 transition-all"
+                    autoComplete="new-password"
                     required
                   />
                 </div>
