@@ -47,6 +47,9 @@ const ownerApi = {
   deleteBillboard: (id: number): Promise<ApiResponse<void>> => {
     return axiosClient.delete(`/api/owner/billboards/${id}`);
   },
+  requestDeletion: (id: number): Promise<ApiResponse<BillboardDto>> => {
+    return axiosClient.post(`/api/owner/billboards/${id}/request-deletion`);
+  },
   addBillboardImage: (id: number, data: { imageUrl: string; isThumbnail: boolean }): Promise<ApiResponse<BillboardDto>> => {
     return axiosClient.post(`/api/owner/billboards/${id}/images`, data);
   },

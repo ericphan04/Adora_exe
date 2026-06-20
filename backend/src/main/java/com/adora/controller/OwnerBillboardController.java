@@ -67,6 +67,18 @@ public class OwnerBillboardController {
                 .build());
     }
 
+    @PostMapping("/{id}/request-deletion")
+    public ResponseEntity<ApiResponse<BillboardDto>> requestDeletion(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        BillboardDto billboard = billboardService.requestDeletion(id, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.<BillboardDto>builder()
+                .success(true)
+                .message("Request to delete billboard submitted to Admin")
+                .data(billboard)
+                .build());
+    }
+
     @PostMapping("/{id}/images")
     public ResponseEntity<ApiResponse<BillboardDto>> addBillboardImage(
             @PathVariable Long id,

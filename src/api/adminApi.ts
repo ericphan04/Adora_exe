@@ -43,6 +43,15 @@ const adminApi = {
   deleteBillboard: (id: number): Promise<ApiResponse<void>> => {
     return axiosClient.delete(`/api/admin/billboards/${id}`);
   },
+  getPendingDeletionBillboards: (): Promise<ApiResponse<BillboardDto[]>> => {
+    return axiosClient.get('/api/admin/billboards/pending-deletion');
+  },
+  approveDeletion: (id: number): Promise<ApiResponse<void>> => {
+    return axiosClient.patch(`/api/admin/billboards/${id}/approve-deletion`);
+  },
+  rejectDeletion: (id: number): Promise<ApiResponse<BillboardDto>> => {
+    return axiosClient.patch(`/api/admin/billboards/${id}/reject-deletion`);
+  },
   getBookings: (): Promise<ApiResponse<BookingDto[]>> => {
     return axiosClient.get('/api/admin/bookings');
   },

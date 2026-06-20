@@ -4,5 +4,6 @@ public enum BillboardStatus {
     PENDING,
     APPROVED,
     REJECTED,
-    HIDDEN
+    HIDDEN,
+    PENDING_DELETION
 }

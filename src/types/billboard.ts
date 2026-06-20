@@ -1,6 +1,6 @@
 import { User } from './user';
 
-export type BillboardStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN';
+export type BillboardStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'HIDDEN' | 'PENDING_DELETION';
 
 export interface BillboardCategoryDto {
   id: number;

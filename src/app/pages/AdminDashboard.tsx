@@ -217,8 +217,8 @@ export default function AdminDashboard() {
   const [userRole, setUserRole] = useState<Role | "">("");
   const [userStatus, setUserStatus] = useState<UserStatus | "">("");
 
-  // Billboard listing mode (All vs Pending)
-  const [billboardFilterMode, setBillboardFilterMode] = useState<"ALL" | "PENDING">("ALL");
+  // Billboard listing mode (All vs Pending vs Deleting)
+  const [billboardFilterMode, setBillboardFilterMode] = useState<"ALL" | "PENDING" | "PENDING_DELETION">("ALL");
 
   // Report status filter
   const [reportFilterStatus, setReportFilterStatus] = useState<ReportStatus | "">("");
@@ -318,12 +318,12 @@ export default function AdminDashboard() {
     });
   }, [users, userKeyword, userRole, userStatus]);
 
-  // Filtered Billboards based on mode (All / Pending)
+  // Filtered Billboards based on mode (All / Pending / Deleting)
   const filteredBillboards = useMemo(() => {
-    // Sort logic: PENDING status goes first, then sorted by createdAt descending
+    // Sort logic: PENDING or PENDING_DELETION status goes first, then sorted by createdAt descending
     const sorted = [...billboards].sort((a, b) => {
-      const aPending = a.status === "PENDING" ? 1 : 0;
-      const bPending = b.status === "PENDING" ? 1 : 0;
+      const aPending = (a.status === "PENDING" || a.status === "PENDING_DELETION") ? 1 : 0;
+      const bPending = (b.status === "PENDING" || b.status === "PENDING_DELETION") ? 1 : 0;
       if (aPending !== bPending) {
         return bPending - aPending;
       }
@@ -334,6 +334,9 @@ export default function AdminDashboard() {
 
     if (billboardFilterMode === "PENDING") {
       return sorted.filter(bb => bb.status === "PENDING");
+    }
+    if (billboardFilterMode === "PENDING_DELETION") {
+      return sorted.filter(bb => bb.status === "PENDING_DELETION");
     }
     return sorted;
   }, [billboards, billboardFilterMode]);
@@ -486,6 +489,60 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleApproveDeletion = async (id: number) => {
+    const ok = await confirm({
+      title: "Duyệt yêu cầu gỡ bảng",
+      description: "Xác nhận duyệt yêu cầu gỡ bảng này? Bảng quảng cáo và toàn bộ dữ liệu liên quan sẽ bị xóa khỏi hệ thống.",
+      variant: "destructive",
+      confirmLabel: "Duyệt gỡ",
+    });
+    if (!ok) return;
+    if (isUsingFallback) {
+      setBillboards(prev => prev.filter(bb => bb.id !== id));
+      notify.success("Đã duyệt gỡ bảng quảng cáo", "Chế độ mô phỏng");
+      return;
+    }
+
+    try {
+      const res = await adminApi.approveDeletion(id);
+      if (res.success) {
+        notify.success("Duyệt yêu cầu gỡ bảng thành công");
+        loadAllData();
+      } else {
+        notify.error(res.message || "Thao tác thất bại.");
+      }
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi phê duyệt gỡ bảng."));
+    }
+  };
+
+  const handleRejectDeletion = async (id: number) => {
+    const ok = await confirm({
+      title: "Từ chối yêu cầu gỡ bảng",
+      description: "Xác nhận khôi phục bảng quảng cáo này về trạng thái Đã Duyệt hoạt động bình thường?",
+      variant: "default",
+      confirmLabel: "Từ chối gỡ",
+    });
+    if (!ok) return;
+    if (isUsingFallback) {
+      setBillboards(prev => prev.map(bb => bb.id === id ? { ...bb, status: "APPROVED" } : bb));
+      notify.success("Đã khôi phục bảng quảng cáo", "Chế độ mô phỏng");
+      return;
+    }
+
+    try {
+      const res = await adminApi.rejectDeletion(id);
+      if (res.success) {
+        notify.success("Đã từ chối yêu cầu gỡ bảng và khôi phục trạng thái hoạt động");
+        loadAllData();
+      } else {
+        notify.error(res.message || "Thao tác thất bại.");
+      }
+    } catch (err: unknown) {
+      notify.error(apiErrorMessage(err, "Lỗi thao tác."));
+    }
+  };
+
   // Report Resolutions
   const handleResolveReport = async (id: number) => {
     const ok = await confirm({
@@ -614,6 +671,7 @@ export default function AdminDashboard() {
         if (v === "APPROVED") { variant = "active"; label = "Đã duyệt"; }
         else if (v === "REJECTED") { variant = "unavailable"; label = "Từ chối"; }
         else if (v === "HIDDEN") { variant = "expired"; label = "Đã ẩn"; }
+        else if (v === "PENDING_DELETION") { variant = "unavailable"; label = "Yêu cầu gỡ"; }
         return <StatusBadge variant={variant} label={label} />;
       }
     },
@@ -652,6 +710,24 @@ export default function AdminDashboard() {
             >
               Ẩn Tin
             </button>
+          )}
+          {row.status === "PENDING_DELETION" && (
+            <>
+              <button
+                onClick={() => handleApproveDeletion(row.id)}
+                className="text-xs bg-rose-500/10 text-rose-600 px-2.5 py-1.5 rounded-md hover:bg-rose-500/20 font-bold border border-rose-500/20 cursor-pointer animate-pulse"
+                title="Duyệt yêu cầu gỡ bảng này khỏi hệ thống"
+              >
+                Duyệt gỡ
+              </button>
+              <button
+                onClick={() => handleRejectDeletion(row.id)}
+                className="text-xs bg-slate-500/10 text-slate-600 px-2.5 py-1.5 rounded-md hover:bg-slate-500/20 font-bold border border-slate-500/20 cursor-pointer"
+                title="Bác bỏ yêu cầu gỡ, giữ lại bảng"
+              >
+                Khôi phục
+              </button>
+            </>
           )}
           <button
             onClick={() => handleDeleteBillboard(row.id)}
@@ -1053,6 +1129,16 @@ export default function AdminDashboard() {
                   }`}
                 >
                   Chờ Duyệt ({billboards.filter(b => b.status === "PENDING").length})
+                </button>
+                <button
+                  onClick={() => setBillboardFilterMode("PENDING_DELETION")}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    billboardFilterMode === "PENDING_DELETION"
+                      ? "bg-rose-500 text-white"
+                      : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                  }`}
+                >
+                  Yêu Cầu Gỡ ({billboards.filter(b => b.status === "PENDING_DELETION").length})
                 </button>
               </div>
             </div>

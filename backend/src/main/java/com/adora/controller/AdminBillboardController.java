@@ -77,4 +77,33 @@ public class AdminBillboardController {
                 .message("Billboard deleted successfully")
                 .build());
     }
+
+    @GetMapping("/pending-deletion")
+    public ResponseEntity<ApiResponse<List<BillboardDto>>> getPendingDeletionBillboards() {
+        List<BillboardDto> billboards = billboardService.getAdminBillboards(BillboardStatus.PENDING_DELETION);
+        return ResponseEntity.ok(ApiResponse.<List<BillboardDto>>builder()
+                .success(true)
+                .message("Fetched pending deletion billboards successfully")
+                .data(billboards)
+                .build());
+    }
+
+    @PatchMapping("/{id}/approve-deletion")
+    public ResponseEntity<ApiResponse<Void>> approveDeletion(@PathVariable Long id) {
+        billboardService.deleteBillboard(id, null);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Billboard deletion approved and deleted successfully")
+                .build());
+    }
+
+    @PatchMapping("/{id}/reject-deletion")
+    public ResponseEntity<ApiResponse<BillboardDto>> rejectDeletion(@PathVariable Long id) {
+        BillboardDto billboard = billboardService.updateStatus(id, BillboardStatus.APPROVED);
+        return ResponseEntity.ok(ApiResponse.<BillboardDto>builder()
+                .success(true)
+                .message("Billboard deletion rejected and status restored to APPROVED")
+                .data(billboard)
+                .build());
+    }
 }

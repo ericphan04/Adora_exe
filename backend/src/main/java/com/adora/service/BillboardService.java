@@ -222,6 +222,20 @@ public class BillboardService {
 
         // 1. Tìm tất cả bookings liên quan đến billboard
         List<Booking> bookings = bookingRepository.findByBillboardId(id);
+
+        // Nếu là Owner xóa, kiểm tra xem có hợp đồng đang hoạt động/tương lai không
+        if (ownerId != null) {
+            boolean hasActiveBookings = bookings.stream().anyMatch(b -> 
+                b.getStatus() != BookingStatus.CANCELLED && 
+                b.getStatus() != BookingStatus.REJECTED && 
+                b.getStatus() != BookingStatus.COMPLETED &&
+                b.getEndDate().isAfter(LocalDateTime.now())
+            );
+            if (hasActiveBookings) {
+                throw new BadRequestException("Không thể xóa bảng quảng cáo do đang có hợp đồng hoạt động hoặc đã lên lịch. Vui lòng gửi yêu cầu gỡ bảng lên Admin duyệt.");
+            }
+        }
+
         List<Long> bookingIds = bookings.stream().map(Booking::getId).collect(Collectors.toList());
 
         if (!bookingIds.isEmpty()) {
@@ -260,6 +274,18 @@ public class BillboardService {
 
         // 8. Xóa billboard (cascade xóa images, features, availabilities)
         billboardRepository.delete(billboard);
+    }
+
+    public BillboardDto requestDeletion(Long id, Long ownerId) {
+        Billboard billboard = billboardRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Billboard not found with id: " + id));
+
+        if (!billboard.getOwner().getId().equals(ownerId)) {
+            throw new BadRequestException("You can only request deletion for your own billboard");
+        }
+
+        billboard.setStatus(BillboardStatus.PENDING_DELETION);
+        return mapToDto(billboardRepository.save(billboard));
     }
 
     public BillboardDto addImage(Long id, AddImageRequest request, Long ownerId) {
