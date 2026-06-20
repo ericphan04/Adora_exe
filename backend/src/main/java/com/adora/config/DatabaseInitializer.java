@@ -130,7 +130,8 @@ public class DatabaseInitializer implements ApplicationRunner {
 
         // 3. Seed Billboards
         List<Billboard> existingBillboards = billboardRepository.findAll();
-        if (existingBillboards.isEmpty() || existingBillboards.stream().noneMatch(b -> b.getTitle().equalsIgnoreCase("Cầu Rồng LED"))) {
+        boolean wasEmpty = existingBillboards.isEmpty();
+        if (wasEmpty) {
             List<BillboardCategory> categories = categoryRepository.findAll();
             BillboardCategory highwayCat = categories.stream()
                     .filter(c -> c.getName().contains("Highways"))
@@ -403,7 +404,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         }
 
         // 4. Seed Bookings
-        if (bookingRepository.count() == 0) {
+        if (wasEmpty && bookingRepository.count() == 0) {
             List<Billboard> billboards = billboardRepository.findAll();
             Billboard b1 = billboards.stream().filter(b -> b.getTitle().contains("Cầu Rồng")).findFirst().orElse(billboards.get(0));
             Billboard b2 = billboards.stream().filter(b -> b.getTitle().contains("Bạch Đằng")).findFirst().orElse(billboards.get(0));
@@ -461,7 +462,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         }
 
         // 5. Seed Payments
-        if (paymentRepository.count() == 0) {
+        if (wasEmpty && paymentRepository.count() == 0) {
             List<Booking> bookings = bookingRepository.findAll();
             Booking booking1 = bookings.stream().filter(b -> b.getStatus() == BookingStatus.PAID).findFirst().orElse(null);
             if (booking1 != null) {
@@ -480,7 +481,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         }
 
         // 6. Seed Reviews
-        if (reviewRepository.count() == 0) {
+        if (wasEmpty && reviewRepository.count() == 0) {
             List<Booking> bookings = bookingRepository.findAll();
             Booking booking1 = bookings.stream().filter(b -> b.getStatus() == BookingStatus.PAID).findFirst().orElse(null);
             if (booking1 != null) {
@@ -496,7 +497,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         }
 
         // 7. Seed Dispute Reports
-        if (reportRepository.count() == 0) {
+        if (wasEmpty && reportRepository.count() == 0) {
             List<Billboard> billboards = billboardRepository.findAll();
             if (!billboards.isEmpty()) {
                 Billboard b1 = billboards.get(0);
@@ -512,7 +513,7 @@ public class DatabaseInitializer implements ApplicationRunner {
         }
 
         // 8. Seed sample conversations (renter ↔ owner)
-        if (conversationRepository.count() == 0) {
+        if (wasEmpty && conversationRepository.count() == 0) {
             List<Booking> bookings = bookingRepository.findAll();
             if (!bookings.isEmpty()) {
                 Booking bk = bookings.get(0);
@@ -545,10 +546,14 @@ public class DatabaseInitializer implements ApplicationRunner {
         }
 
         // 9. Backfill map coordinates & demo videos for existing billboards
-        patchBillboardMapData();
+        if (wasEmpty) {
+            patchBillboardMapData();
+        }
 
         // 10. Seed new billboards for surrounding districts
-        seedNewBillboards();
+        if (wasEmpty) {
+            seedNewBillboards();
+        }
 
         // 11. Seed Landing Page Config
         if (landingPageConfigRepository.count() == 0) {
