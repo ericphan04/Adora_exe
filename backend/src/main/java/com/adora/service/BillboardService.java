@@ -246,9 +246,14 @@ public class BillboardService {
         List<com.adora.entity.Review> reviews = reviewRepository.findByBillboardId(id);
         reviewRepository.deleteAll(reviews);
 
-        // 6. Xóa conversations (cascade tự xóa messages bên trong)
-        List<com.adora.entity.Conversation> conversations = conversationRepository.findByBillboardId(id);
-        conversationRepository.deleteAll(conversations);
+        // 6. Xóa conversations (cascade tự xóa messages bên trong) liên quan đến billboard hoặc các bookings của billboard
+        List<com.adora.entity.Conversation> conversations = new ArrayList<>();
+        conversations.addAll(conversationRepository.findByBillboardId(id));
+        if (!bookingIds.isEmpty()) {
+            conversations.addAll(conversationRepository.findByBookingIdIn(bookingIds));
+        }
+        List<com.adora.entity.Conversation> uniqueConversations = conversations.stream().distinct().collect(Collectors.toList());
+        conversationRepository.deleteAll(uniqueConversations);
 
         // 7. Xóa bookings
         bookingRepository.deleteAll(bookings);

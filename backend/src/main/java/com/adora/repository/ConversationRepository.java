@@ -18,6 +18,8 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     List<Conversation> findByBillboardId(Long billboardId);
 
+    List<Conversation> findByBookingIdIn(List<Long> bookingIds);
+
     Optional<Conversation> findByRenterIdAndOwnerIdAndBookingId(Long renterId, Long ownerId, Long bookingId);
 
     Optional<Conversation> findByRenterIdAndOwnerIdAndBookingIsNullAndBillboardId(Long renterId, Long ownerId, Long billboardId);
