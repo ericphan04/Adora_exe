@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByRenterId(Long renterId);
+    List<Booking> findByBillboardId(Long billboardId);
     List<Booking> findByBillboardOwnerId(Long ownerId);
 
     // Renter Dashboard Optimizations

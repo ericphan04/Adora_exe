@@ -25,6 +25,7 @@ public class BillboardService {
     private final BillboardAvailabilityRepository availabilityRepository;
     private final BillboardFeatureRepository featureRepository;
     private final BookingRepository bookingRepository;
+    private final ReviewRepository reviewRepository;
 
     public BillboardService(BillboardRepository billboardRepository,
                             BillboardCategoryRepository categoryRepository,
@@ -32,7 +33,8 @@ public class BillboardService {
                             BillboardImageRepository imageRepository,
                             BillboardAvailabilityRepository availabilityRepository,
                             BillboardFeatureRepository featureRepository,
-                            BookingRepository bookingRepository) {
+                            BookingRepository bookingRepository,
+                            ReviewRepository reviewRepository) {
         this.billboardRepository = billboardRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
@@ -40,6 +42,7 @@ public class BillboardService {
         this.availabilityRepository = availabilityRepository;
         this.featureRepository = featureRepository;
         this.bookingRepository = bookingRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     public List<BillboardDto> getAllPublicBillboards(
@@ -203,6 +206,16 @@ public class BillboardService {
         if (ownerId != null && !billboard.getOwner().getId().equals(ownerId)) {
             throw new BadRequestException("You can only delete your own billboard");
         }
+
+        // 1. Xóa reviews trước (tham chiếu booking_id + billboard_id)
+        List<com.adora.entity.Review> reviews = reviewRepository.findByBillboardId(id);
+        reviewRepository.deleteAll(reviews);
+
+        // 2. Xóa tất cả bookings của billboard này
+        List<Booking> bookings = bookingRepository.findByBillboardId(id);
+        bookingRepository.deleteAll(bookings);
+
+        // 3. Xóa billboard (cascade xóa images, features, availabilities)
         billboardRepository.delete(billboard);
     }
 
