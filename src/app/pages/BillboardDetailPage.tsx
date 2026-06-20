@@ -97,6 +97,38 @@ export default function BillboardDetailPage() {
   const [bookedSlots, setBookedSlots] = useState<{ startHour: number; endHour: number }[]>([]);
   const [showTechSpecs, setShowTechSpecs] = useState(false);
 
+  // Spot package: "30x15" = 30 lần/giờ – 15s/spot | "15x20" = 15 lần/giờ – 20s/spot
+  type SpotPackage = "30x15" | "15x20";
+  const SPOT_PACKAGES: { id: SpotPackage; label: string; desc: string; badge: string; details: { icon: string; text: string }[] }[] = [
+    {
+      id: "30x15",
+      label: "30 lần/giờ – 15s/spot",
+      desc: "Tần suất cao, hiển thị dày đặc",
+      badge: "PHỔ BIẾN",
+      details: [
+        { icon: "⚡", text: "Quảng cáo phát 30 lần mỗi giờ — trung bình 2 phút/lần" },
+        { icon: "⏱️", text: "Mỗi lượt phát kéo dài 15 giây" },
+        { icon: "📺", text: "Tổng ~480 lượt phát/ngày (tính trên 16h hoạt động)" },
+        { icon: "🎯", text: "Phù hợp: thương hiệu FMCG, khuyến mãi ngắn hạn, sản phẩm mới" },
+        { icon: "✅", text: "Lý tưởng để tăng độ nhận diện thương hiệu nhanh chóng" },
+      ],
+    },
+    {
+      id: "15x20",
+      label: "15 lần/giờ – 20s/spot",
+      desc: "Thời lượng dài hơn, nội dung phong phú",
+      badge: "PREMIUM",
+      details: [
+        { icon: "🎬", text: "Quảng cáo phát 15 lần mỗi giờ — trung bình 4 phút/lần" },
+        { icon: "⏱️", text: "Mỗi lượt phát kéo dài 20 giây — thêm 5 giây kể câu chuyện" },
+        { icon: "📺", text: "Tổng ~240 lượt phát/ngày (tính trên 16h hoạt động)" },
+        { icon: "🎯", text: "Phù hợp: bất động sản, ô tô, dịch vụ tài chính, thương hiệu cao cấp" },
+        { icon: "✅", text: "Lý tưởng để truyền tải thông điệp chi tiết, tạo ấn tượng sâu" },
+      ],
+    },
+  ];
+  const [spotPackage, setSpotPackage] = useState<SpotPackage>("30x15");
+
   const handleMonthChange = useCallback((year: number, month: number) => {
     setCalendarYear(year);
     setCalendarMonth(month);
@@ -374,11 +406,14 @@ export default function BillboardDetailPage() {
         endDate = `${dateStr}T${String(endHour).padStart(2, "0")}:00:00`;
       }
 
+      const spotLabel = spotPackage === "30x15" ? "30 lần/giờ – 15s/spot" : "15 lần/giờ – 20s/spot";
+      const fullNote = [note.trim(), `[Gói spot: ${spotLabel}]`].filter(Boolean).join(" | ");
+
       const response = await bookingApi.create({
         billboardId,
         startDate,
         endDate,
-        note: note.trim() || undefined,
+        note: fullNote || undefined,
       });
 
       if (response.success) {
@@ -796,7 +831,8 @@ export default function BillboardDetailPage() {
                 </div>
                 <div className="border border-border/50 rounded-xl p-4 bg-surface/20">
                   <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1">Thời lượng phát</span>
-                  <p className="text-sm font-bold text-foreground">15s / lượt (60 - 120 lượt/ngày)</p>
+                  <p className="text-sm font-bold text-foreground">15s hoặc 20s/spot</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">30 lần/giờ (15s) · 15 lần/giờ (20s)</p>
                 </div>
               </div>
               <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3.5 text-xs text-amber-800 dark:text-amber-300">
@@ -991,6 +1027,67 @@ export default function BillboardDetailPage() {
                         Khoảng giờ bạn chọn bị trùng với một lịch đã đặt. Vui lòng chọn khung giờ khác.
                       </div>
                     )}
+
+                    {/* ── Spot Package Selector ─────────────────────────── */}
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 block flex items-center gap-1.5">
+                        <Zap className="w-3 h-3 text-accent" /> Chọn Gói Spot
+                      </label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {SPOT_PACKAGES.map((pkg) => (
+                          <button
+                            key={pkg.id}
+                            type="button"
+                            onClick={() => setSpotPackage(pkg.id)}
+                            className={`relative w-full text-left px-4 py-3 rounded-xl border-2 transition-all cursor-pointer ${
+                              spotPackage === pkg.id
+                                ? "border-accent bg-accent/10 shadow-[0_0_12px_rgba(6,182,212,0.15)]"
+                                : "border-border/50 bg-surface/20 hover:border-accent/50 hover:bg-surface/40"
+                            }`}
+                          >
+                            <span
+                              className={`absolute top-2 right-2 text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
+                                pkg.id === "30x15"
+                                  ? "bg-primary/15 text-primary"
+                                  : "bg-amber-400/15 text-amber-500"
+                              }`}
+                            >
+                              {pkg.badge}
+                            </span>
+                            <p className={`text-xs font-bold leading-snug ${ spotPackage === pkg.id ? "text-accent" : "text-foreground" }`}>
+                              {pkg.label}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{pkg.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Explanation panel for selected package */}
+                      {(() => {
+                        const selected = SPOT_PACKAGES.find(p => p.id === spotPackage)!;
+                        return (
+                          <div className={`mt-2 rounded-xl p-4 border transition-all duration-300 ${
+                            spotPackage === "30x15"
+                              ? "bg-primary/5 border-primary/20"
+                              : "bg-amber-400/5 border-amber-400/20"
+                          }`}>
+                            <p className={`text-[10px] font-extrabold uppercase tracking-wider mb-2.5 ${
+                              spotPackage === "30x15" ? "text-primary" : "text-amber-500"
+                            }`}>
+                              📋 Chi tiết gói · {selected.label}
+                            </p>
+                            <ul className="space-y-1.5">
+                              {selected.details.map((d, i) => (
+                                <li key={i} className="flex items-start gap-2 text-[11px] text-foreground/80 leading-snug">
+                                  <span className="text-[13px] shrink-0 mt-[-1px]">{d.icon}</span>
+                                  <span>{d.text}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })()}
+                    </div>
 
                     <div>
                       <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Ghi chú chiến dịch (Note)</label>
