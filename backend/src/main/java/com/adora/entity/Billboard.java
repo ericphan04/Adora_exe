@@ -84,6 +84,10 @@ public class Billboard {
     @Column(name = "location_surcharge")
     private BigDecimal locationSurcharge;
 
+    @Column(name = "premium_surcharge")
+    private BigDecimal premiumSurcharge;
+
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BillboardStatus status;

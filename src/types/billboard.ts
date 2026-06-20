@@ -51,7 +51,9 @@ export interface BillboardDto {
   pricePerDay: number;
   pricePerMonth: number;
   locationSurcharge: number;
+  premiumSurcharge?: number;
   status: BillboardStatus;
+
   dailyViews: number;
   isFeatured: boolean;
   createdAt?: string;

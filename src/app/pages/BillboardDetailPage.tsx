@@ -40,6 +40,8 @@ function calcBookingPrice(
   pricePerDay: number,
   daysCount: number,
   locationSurcharge: number,
+  spotPackage: string = "30x15",
+  premiumSurchargePerDay: number = 0,
 ) {
   const subtotalRaw = pricePerDay * daysCount;
   const subtotal = Math.round(subtotalRaw / 1000) * 1000;
@@ -47,7 +49,21 @@ function calcBookingPrice(
   const surcharge = Math.round(surchargeRaw / 1000) * 1000;
   const beforeFee = subtotal + surcharge;
   const serviceFee = Math.round((beforeFee * 0.05) / 1000) * 1000;
-  return { subtotal, surcharge, serviceFee, total: beforeFee + serviceFee, daysCount };
+
+  let premiumSurcharge = 0;
+  if (spotPackage === "15x20") {
+    const pSurchargeRaw = premiumSurchargePerDay * daysCount;
+    premiumSurcharge = Math.round(pSurchargeRaw / 1000) * 1000;
+  }
+
+  return { 
+    subtotal, 
+    surcharge, 
+    serviceFee, 
+    premiumSurcharge,
+    total: beforeFee + serviceFee + premiumSurcharge, 
+    daysCount 
+  };
 }
 
 const formatBrightness = (val: string | number | undefined | null) => {
@@ -414,6 +430,7 @@ export default function BillboardDetailPage() {
         startDate,
         endDate,
         note: fullNote || undefined,
+        spotPackage,
       });
 
       if (response.success) {
@@ -441,7 +458,13 @@ export default function BillboardDetailPage() {
     
     if (bookingMode === "day") {
       const daysCount = selectedEndDay != null ? (selectedEndDay - selectedStartDay + 1) : 1;
-      return calcBookingPrice(billboard.pricePerDay, daysCount, billboard.locationSurcharge || 0);
+      return calcBookingPrice(
+        billboard.pricePerDay, 
+        daysCount, 
+        billboard.locationSurcharge || 0,
+        spotPackage,
+        billboard.premiumSurcharge || 0
+      );
     } else {
       if (hasOverlapConflict) return null;
       const hourlyPrice = billboard.pricePerDay / 24;
@@ -453,16 +476,24 @@ export default function BillboardDetailPage() {
       
       const beforeFee = subtotal + surcharge;
       const serviceFee = Math.round((beforeFee * 0.05) / 1000) * 1000;
+
+      let premiumSurcharge = 0;
+      if (spotPackage === "15x20") {
+        const premiumSurchargeHourly = (billboard.premiumSurcharge || 0) / 24;
+        const premiumSurchargeRaw = premiumSurchargeHourly * selectedHoursCount;
+        premiumSurcharge = Math.round(premiumSurchargeRaw / 1000) * 1000;
+      }
       
       return {
         subtotal,
         surcharge,
         serviceFee,
-        total: beforeFee + serviceFee,
+        premiumSurcharge,
+        total: beforeFee + serviceFee + premiumSurcharge,
         hoursCount: selectedHoursCount
       };
     }
-  }, [billboard, selectedStartDay, selectedEndDay, selectedHoursCount, hasOverlapConflict, bookingMode]);
+  }, [billboard, selectedStartDay, selectedEndDay, selectedHoursCount, hasOverlapConflict, bookingMode, spotPackage]);
 
   // Reference priceBreakdown before early returns to prevent compiler/bundler reordering hook calls
   if (loading && priceBreakdown !== undefined) {
@@ -1057,7 +1088,18 @@ export default function BillboardDetailPage() {
                             <p className={`text-xs font-bold leading-snug ${ spotPackage === pkg.id ? "text-accent" : "text-foreground" }`}>
                               {pkg.label}
                             </p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">{pkg.desc}</p>
+                            <div className="flex justify-between items-center mt-0.5">
+                              <p className="text-[10px] text-muted-foreground">{pkg.desc}</p>
+                              {pkg.id === "15x20" ? (
+                                <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                                  {billboard.premiumSurcharge && billboard.premiumSurcharge > 0 
+                                    ? `+${(billboard.premiumSurcharge).toLocaleString("vi-VN")}₫/ngày` 
+                                    : "Miễn phí phụ thu"}
+                                </p>
+                              ) : (
+                                <p className="text-[10px] font-semibold text-green-600 dark:text-green-400">Miễn phí</p>
+                              )}
+                            </div>
                           </button>
                         ))}
                       </div>
@@ -1122,6 +1164,14 @@ export default function BillboardDetailPage() {
                         <span className="text-muted-foreground font-medium">Phụ phí vị trí</span>
                         <span className="text-foreground font-semibold">
                           +{priceBreakdown.surcharge.toLocaleString("vi-VN")}₫
+                        </span>
+                      </div>
+                    )}
+                    {priceBreakdown.premiumSurcharge > 0 && (
+                      <div className="flex justify-between text-xs md:text-sm text-amber-600 dark:text-amber-400">
+                        <span className="font-medium">Phụ thu gói Premium (100% về chủ)</span>
+                        <span className="font-semibold">
+                          +{priceBreakdown.premiumSurcharge.toLocaleString("vi-VN")}₫
                         </span>
                       </div>
                     )}

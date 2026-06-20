@@ -15,6 +15,8 @@ export interface BookingDto {
   finalAmount: number;
   status: BookingStatus;
   note?: string;
+  spotPackage?: string;
+  premiumSurcharge?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -24,4 +26,6 @@ export interface CreateBookingRequest {
   startDate: string;
   endDate: string;
   note?: string;
+  spotPackage?: string;
 }
+

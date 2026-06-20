@@ -22,4 +22,6 @@ public class CreateBookingRequest {
     private LocalDateTime endDate;
 
     private String note;
+    private String spotPackage;
+
 }

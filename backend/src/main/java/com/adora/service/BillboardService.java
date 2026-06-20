@@ -132,10 +132,12 @@ public class BillboardService {
                 .pricePerDay(request.getPricePerDay())
                 .pricePerMonth(request.getPricePerMonth())
                 .locationSurcharge(request.getLocationSurcharge() != null ? request.getLocationSurcharge() : java.math.BigDecimal.ZERO)
+                .premiumSurcharge(request.getPremiumSurcharge() != null ? request.getPremiumSurcharge() : java.math.BigDecimal.ZERO)
                 .status(BillboardStatus.PENDING)
                 .dailyViews(0)
                 .isFeatured(false)
                 .build();
+
 
         Billboard savedBillboard = billboardRepository.save(billboard);
 
@@ -189,6 +191,8 @@ public class BillboardService {
         billboard.setPricePerDay(request.getPricePerDay());
         billboard.setPricePerMonth(request.getPricePerMonth());
         billboard.setLocationSurcharge(request.getLocationSurcharge() != null ? request.getLocationSurcharge() : java.math.BigDecimal.ZERO);
+        billboard.setPremiumSurcharge(request.getPremiumSurcharge() != null ? request.getPremiumSurcharge() : java.math.BigDecimal.ZERO);
+
 
         // Update features
         featureRepository.deleteAll(billboard.getFeatures());
@@ -517,7 +521,9 @@ public class BillboardService {
                 .pricePerDay(entity.getPricePerDay())
                 .pricePerMonth(entity.getPricePerMonth())
                 .locationSurcharge(entity.getLocationSurcharge())
+                .premiumSurcharge(entity.getPremiumSurcharge())
                 .status(entity.getStatus())
+
                 .dailyViews(entity.getDailyViews())
                 .isFeatured(entity.getIsFeatured())
                 .createdAt(entity.getCreatedAt())
@@ -585,7 +591,9 @@ public class BillboardService {
                 .pricePerDay(entity.getPricePerDay())
                 .pricePerMonth(entity.getPricePerMonth())
                 .locationSurcharge(entity.getLocationSurcharge())
+                .premiumSurcharge(entity.getPremiumSurcharge())
                 .status(entity.getStatus())
+
                 .dailyViews(entity.getDailyViews())
                 .isFeatured(entity.getIsFeatured())
                 .createdAt(entity.getCreatedAt())

@@ -312,6 +312,17 @@ export function AdvertiserBookingsView({
                       Bắt đầu: {new Date(selectedBooking.startDate).toLocaleString("vi-VN")}<br/>
                       Kết thúc: {new Date(selectedBooking.endDate).toLocaleString("vi-VN")}
                     </p>
+                    {selectedBooking.spotPackage && (
+                      <div className="mt-2 text-xs text-foreground">
+                        Gói hiển thị: <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          selectedBooking.spotPackage === "15x20"
+                            ? "bg-amber-400/10 text-amber-600 border border-amber-400/30"
+                            : "bg-green-400/10 text-green-600 border border-green-400/30"
+                        }`}>
+                          {selectedBooking.spotPackage === "15x20" ? "Premium (15x/h - 20s)" : "Standard (30x/h - 15s)"}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="p-4 border border-border/40 rounded-2xl space-y-2">
                     <h5 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Ghi chú từ khách hàng</h5>
@@ -346,6 +357,12 @@ export function AdvertiserBookingsView({
                       <div className="flex justify-between items-center text-muted-foreground">
                         <span>Phụ phí vị trí</span>
                         <span className="font-semibold text-foreground">{selectedBooking.locationSurcharge.toLocaleString("vi-VN")}₫</span>
+                      </div>
+                    )}
+                    {selectedBooking.premiumSurcharge !== undefined && selectedBooking.premiumSurcharge > 0 && (
+                      <div className="flex justify-between items-center text-muted-foreground text-amber-600 dark:text-amber-400">
+                        <span>Phụ thu gói Premium (100% về chủ)</span>
+                        <span className="font-semibold">+{selectedBooking.premiumSurcharge.toLocaleString("vi-VN")}₫</span>
                       </div>
                     )}
                     <div className="h-px bg-border my-2" />

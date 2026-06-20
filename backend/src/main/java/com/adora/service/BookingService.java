@@ -110,8 +110,20 @@ public class BookingService {
         BigDecimal serviceFee = beforeFee.multiply(BigDecimal.valueOf(0.05))
                 .divide(BigDecimal.valueOf(1000), 0, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(1000));
+
+        // Calculate Premium Surcharge (only for 15x20 package)
+        String packageChoice = request.getSpotPackage() != null ? request.getSpotPackage() : "30x15";
+        BigDecimal premiumSurcharge = BigDecimal.ZERO;
+        if ("15x20".equalsIgnoreCase(packageChoice)) {
+            BigDecimal premiumSurchargePerDayRaw = billboard.getPremiumSurcharge() != null ? 
+                    billboard.getPremiumSurcharge() : BigDecimal.ZERO;
+            BigDecimal premiumSurchargeHourly = premiumSurchargePerDayRaw.divide(BigDecimal.valueOf(24), 10, RoundingMode.HALF_UP);
+            BigDecimal premiumSurchargeRaw = premiumSurchargeHourly.multiply(BigDecimal.valueOf(hoursCount));
+            premiumSurcharge = premiumSurchargeRaw.divide(BigDecimal.valueOf(1000), 0, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(1000));
+        }
         
-        BigDecimal finalAmount = beforeFee.add(serviceFee);
+        BigDecimal finalAmount = beforeFee.add(serviceFee).add(premiumSurcharge);
 
         Booking booking = Booking.builder()
                 .renter(renter)
@@ -121,6 +133,8 @@ public class BookingService {
                 .totalPrice(totalPrice)
                 .serviceFee(serviceFee)
                 .locationSurcharge(surcharge)
+                .spotPackage(packageChoice)
+                .premiumSurcharge(premiumSurcharge)
                 .finalAmount(finalAmount)
                 .status(BookingStatus.PENDING)
                 .note(request.getNote())
@@ -315,6 +329,8 @@ public class BookingService {
                 .finalAmount(entity.getFinalAmount())
                 .status(entity.getStatus())
                 .note(entity.getNote())
+                .spotPackage(entity.getSpotPackage())
+                .premiumSurcharge(entity.getPremiumSurcharge())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

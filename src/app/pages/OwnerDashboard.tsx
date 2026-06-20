@@ -63,6 +63,7 @@ const mockBillboards: BillboardDto[] = [
     pricePerDay: 3000000,
     pricePerMonth: 85000000,
     locationSurcharge: 0,
+    premiumSurcharge: 500000,
     status: "APPROVED",
     dailyViews: 150000,
     isFeatured: true,
@@ -88,6 +89,7 @@ const mockBillboards: BillboardDto[] = [
     pricePerDay: 2000000,
     pricePerMonth: 55000000,
     locationSurcharge: 0,
+    premiumSurcharge: 300000,
     status: "APPROVED",
     dailyViews: 100000,
     isFeatured: false,
@@ -302,6 +304,7 @@ export default function OwnerDashboard() {
   const [formPricePerDay, setFormPricePerDay] = useState(2000000);
   const [formPricePerMonth, setFormPricePerMonth] = useState(55000000);
   const [formLocationSurcharge, setFormLocationSurcharge] = useState(0);
+  const [formPremiumSurcharge, setFormPremiumSurcharge] = useState(0);
   const [formImages, setFormImages] = useState<Array<{ id?: number; imageUrl: string; isThumbnail: boolean }>>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [formFeatures, setFormFeatures] = useState("UHD, HDR, weatherproof");
@@ -554,6 +557,7 @@ export default function OwnerDashboard() {
     setFormPricePerDay(5000000);
     setFormPricePerMonth(120000000);
     setFormLocationSurcharge(500000);
+    setFormPremiumSurcharge(200000);
     setFormImages([]);
     setDeletedImageIds([]);
     setFormFeatures("UHD, HDR, weatherproof");
@@ -583,6 +587,7 @@ export default function OwnerDashboard() {
     setFormPricePerDay(bb.pricePerDay);
     setFormPricePerMonth(bb.pricePerMonth);
     setFormLocationSurcharge(bb.locationSurcharge);
+    setFormPremiumSurcharge(bb.premiumSurcharge || 0);
     const initialImages = bb.images?.map(img => ({
       id: img.id,
       imageUrl: img.imageUrl,
@@ -678,6 +683,7 @@ export default function OwnerDashboard() {
       pricePerDay: Number(formPricePerDay),
       pricePerMonth: Number(formPricePerMonth),
       locationSurcharge: Number(formLocationSurcharge),
+      premiumSurcharge: Number(formPremiumSurcharge),
       categoryId: 1,
       features: featureList
     };
@@ -2116,7 +2122,27 @@ export default function OwnerDashboard() {
                                   </div>
                                 );
                               })()}
-                              <p className="text-[10px] text-muted-foreground font-semibold mt-1">Giá trị thuê: <span className="text-foreground">{b.finalAmount?.toLocaleString("vi-VN")}₫</span></p>
+                              {b.spotPackage && (
+                                <div className="mt-1 flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground">
+                                  <span>Gói:</span>
+                                  <span className={`inline-block px-1.5 py-0.2 rounded-full text-[8px] font-bold border ${
+                                    b.spotPackage === "15x20"
+                                      ? "bg-amber-400/10 text-amber-600 border-amber-400/30 dark:text-amber-400"
+                                      : "bg-green-400/10 text-green-600 border-green-400/30 dark:text-green-400"
+                                  }`}>
+                                    {b.spotPackage === "15x20" ? "Premium (15x/h - 20s)" : "Standard (30x/h - 15s)"}
+                                  </span>
+                                  {b.spotPackage === "15x20" && b.premiumSurcharge !== undefined && b.premiumSurcharge > 0 && (
+                                    <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                                      (+{b.premiumSurcharge.toLocaleString("vi-VN")}₫ phụ thu - 100% về chủ)
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              <p className="text-[10px] text-muted-foreground font-semibold mt-1">
+                                Thu nhập thực nhận (Net): <span className="text-emerald-600 dark:text-emerald-400 font-bold">{((b.finalAmount || 0) - (b.serviceFee || 0)).toLocaleString("vi-VN")}₫</span>
+                                <span className="text-[9px] font-normal text-muted-foreground ml-1.5">(Khách thanh toán: {b.finalAmount?.toLocaleString("vi-VN")}₫)</span>
+                              </p>
                             </div>
                             <div className="flex items-center gap-2 self-end sm:self-center">
                               {(() => {
@@ -2388,7 +2414,7 @@ export default function OwnerDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium text-[#6B7A8D] mb-1">Giá thuê / ngày *</label>
                   <input
@@ -2409,12 +2435,25 @@ export default function OwnerDashboard() {
                     className="w-full border border-[#E3E8EF] rounded-lg p-2 focus:outline-none focus:border-[#1D4ED8]"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium text-[#6B7A8D] mb-1">Phụ phí vị trí (nếu có)</label>
                   <input
                     type="number"
                     value={formLocationSurcharge}
                     onChange={e => setFormLocationSurcharge(Number(e.target.value))}
+                    className="w-full border border-[#E3E8EF] rounded-lg p-2 focus:outline-none focus:border-[#1D4ED8]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-[#6B7A8D] mb-1">Phụ thu gói Premium (15x20) (VNĐ/ngày)</label>
+                  <input
+                    type="number"
+                    value={formPremiumSurcharge}
+                    onChange={e => setFormPremiumSurcharge(Number(e.target.value))}
+                    placeholder="VD: 500000"
                     className="w-full border border-[#E3E8EF] rounded-lg p-2 focus:outline-none focus:border-[#1D4ED8]"
                   />
                 </div>
@@ -2663,14 +2702,37 @@ export default function OwnerDashboard() {
                         <span className="font-semibold text-foreground">+{selectedBookingDetail.locationSurcharge?.toLocaleString("vi-VN")}₫</span>
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Phí dịch vụ sàn (5%):</span>
+                    {selectedBookingDetail.spotPackage && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Gói hiển thị:</span>
+                        <span className={`font-bold ${
+                          selectedBookingDetail.spotPackage === "15x20" ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"
+                        }`}>
+                          {selectedBookingDetail.spotPackage === "15x20" ? "Premium (15x/h - 20s)" : "Standard (30x/h - 15s)"}
+                        </span>
+                      </div>
+                    )}
+                    {selectedBookingDetail.premiumSurcharge !== undefined && selectedBookingDetail.premiumSurcharge > 0 && (
+                      <div className="flex justify-between text-amber-600 dark:text-amber-400">
+                        <span className="text-muted-foreground">Phụ thu gói Premium (100% về chủ):</span>
+                        <span className="font-semibold">+{selectedBookingDetail.premiumSurcharge?.toLocaleString("vi-VN")}₫</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-border/20 pt-2 text-muted-foreground">
+                      <span>Tổng tiền khách thanh toán (Gross):</span>
+                      <span className="font-semibold text-foreground">{(selectedBookingDetail.finalAmount || 0).toLocaleString("vi-VN")}₫</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Phí dịch vụ nền tảng (5%):</span>
                       <span className="font-semibold text-red-500">-{selectedBookingDetail.serviceFee?.toLocaleString("vi-VN")}₫</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-border/30 items-end">
-                      <span className="font-bold text-sm">Thu nhập thực nhận (Net):</span>
+                      <div>
+                        <span className="font-bold text-sm">Thu nhập thực nhận (Net):</span>
+                        <span className="block text-[9px] text-muted-foreground">100% phụ thu Premium về chủ · admin không thu phí trên khoản này</span>
+                      </div>
                       <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">
-                        {selectedBookingDetail.finalAmount?.toLocaleString("vi-VN")}₫
+                        {((selectedBookingDetail.finalAmount || 0) - (selectedBookingDetail.serviceFee || 0)).toLocaleString("vi-VN")}₫
                       </span>
                     </div>
                   </div>

@@ -37,7 +37,9 @@ public class BillboardDto {
     private BigDecimal pricePerDay;
     private BigDecimal pricePerMonth;
     private BigDecimal locationSurcharge;
+    private BigDecimal premiumSurcharge;
     private BillboardStatus status;
+
     private Integer dailyViews;
     private Boolean isFeatured;
     private LocalDateTime createdAt;

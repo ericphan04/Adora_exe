@@ -25,9 +25,11 @@ export interface CreateBillboardRequest {
   pricePerDay: number;
   pricePerMonth: number;
   locationSurcharge: number;
+  premiumSurcharge?: number;
   categoryId: number;
   features: string[];
 }
+
 
 const ownerApi = {
   getDashboardData: (): Promise<ApiResponse<OwnerDashboardDto>> => {

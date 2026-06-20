@@ -24,6 +24,9 @@ public class BookingDto {
     private BigDecimal finalAmount;
     private BookingStatus status;
     private String note;
+    private String spotPackage;
+    private BigDecimal premiumSurcharge;
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 }

@@ -66,6 +66,7 @@ public class CreateBillboardRequest {
 
     private BigDecimal pricePerMonth;
     private BigDecimal locationSurcharge;
+    private BigDecimal premiumSurcharge;
 
     private List<String> features;
 }

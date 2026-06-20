@@ -55,6 +55,13 @@ public class Booking {
     @Column(columnDefinition = "TEXT")
     private String note;
 
+    @Column(name = "spot_package")
+    private String spotPackage;
+
+    @Column(name = "premium_surcharge")
+    private BigDecimal premiumSurcharge;
+
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

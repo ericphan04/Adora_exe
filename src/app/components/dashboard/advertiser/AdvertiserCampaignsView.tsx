@@ -1368,6 +1368,18 @@ export function AdvertiserCampaignsView({
                                       <span className={`self-start px-2 py-0.5 rounded-full text-[8px] font-bold border mt-0.5 ${timeInfo.modeColor}`}>
                                         {timeInfo.modeLabel}
                                       </span>
+                                      {b.spotPackage && (
+                                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                          <span>Gói:</span>
+                                          <span className={`inline-block px-1.5 py-0.2 rounded-full text-[8px] font-bold border ${
+                                            b.spotPackage === "15x20"
+                                              ? "bg-amber-400/10 text-amber-600 border-amber-400/30 dark:text-amber-400"
+                                              : "bg-green-400/10 text-green-600 border-green-400/30 dark:text-green-400"
+                                          }`}>
+                                            {b.spotPackage === "15x20" ? "Premium (15x/h - 20s)" : "Standard (30x/h - 15s)"}
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
                                   );
                                 })()}
@@ -1375,6 +1387,11 @@ export function AdvertiserCampaignsView({
                               <div className="space-y-1 text-left sm:text-right">
                                 <div>Kích thước: <strong className="text-foreground">{b.billboard?.width}m × {b.billboard?.height}m</strong></div>
                                 <div>Thực thanh toán: <strong className="text-primary">{(b.finalAmount || b.totalPrice || 0).toLocaleString("vi-VN")}₫</strong></div>
+                                {b.premiumSurcharge !== undefined && b.premiumSurcharge > 0 && (
+                                  <div className="text-amber-600 dark:text-amber-400 font-semibold text-[9px]">
+                                    (Gồm {b.premiumSurcharge.toLocaleString("vi-VN")}₫ phụ thu Premium - 100% về chủ)
+                                  </div>
+                                )}
                               </div>
                             </div>
 
