@@ -223,6 +223,32 @@ export default function HomePage() {
   const [billboards, setBillboards] = useState<BillboardDto[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Landing page configurations
+  const [config, setConfig] = useState({
+    heroTitle: "Thống trị bầu trời với\nQuảng cáo LED Kỹ thuật số",
+    heroSubtitle: "Nền tảng DOOH hàng đầu giúp doanh nghiệp tiếp cận hàng triệu khách hàng mục tiêu thông qua mạng lưới màn hình LED cao cấp trên toàn quốc.",
+    statReach: "12.500.000+",
+    statPanels: "450+",
+    statCampaigns: "128+",
+    promoText: "Được tin tưởng bởi hơn 5.000 nhà quảng cáo trên cả nước",
+    visualProofTitle: "Vị trí đắc địa, Tầm nhìn vô hạn",
+    visualProofDesc: "Chúng tôi không chỉ cung cấp không gian quảng cáo; chúng tôi kiến tạo những điểm chạm thị giác đẳng cấp giúp thương hiệu của bạn tỏa sáng giữa không gian đô thị nhộn nhịp.",
+    visualProofImage: "https://images.unsplash.com/photo-1585504303098-9785dc784742?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMRUQlMjBiaWxsYm9hcmQlMjBkaWdpdGFsJTIwY2l0eSUyMG5pZ2h0fGVufDF8fHx8MTc3MjU0NjU5M3ww&ixlib=rb-4.1.0&q=80&w=1080"
+  });
+
+  // Fetch configuration on load
+  useEffect(() => {
+    billboardApi.getLandingPageConfig()
+      .then(res => {
+        if (res.success && res.data) {
+          setConfig(res.data);
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to fetch landing page config, using defaults:", err);
+      });
+  }, []);
+
   // Smart search bar states
   const [searchCity, setSearchCity] = useState("");
   const [searchDate, setSearchDate] = useState("");
@@ -243,9 +269,17 @@ export default function HomePage() {
   }, []);
 
   // Counters animators
-  const trafficCount = useCountUp(12500000, 1800);
-  const panelsCount = useCountUp(450, 1800);
-  const campaignsCount = useCountUp(128, 1800);
+  const targetReach = parseInt(config.statReach.replace(/[^0-9]/g, ""), 10) || 12500000;
+  const targetPanels = parseInt(config.statPanels.replace(/[^0-9]/g, ""), 10) || 450;
+  const targetCampaigns = parseInt(config.statCampaigns.replace(/[^0-9]/g, ""), 10) || 128;
+
+  const trafficCount = useCountUp(targetReach, 1800);
+  const panelsCount = useCountUp(targetPanels, 1800);
+  const campaignsCount = useCountUp(targetCampaigns, 1800);
+
+  const suffixReach = config.statReach.includes("+") ? "+" : "";
+  const suffixPanels = config.statPanels.includes("+") ? "+" : "";
+  const suffixCampaigns = config.statCampaigns.includes("+") ? "+" : "";
 
   useEffect(() => {
     let active = true;
@@ -253,14 +287,25 @@ export default function HomePage() {
       try {
         const response = await billboardApi.getFeatured();
         if (active) {
-          if (response.success && response.data) {
+          if (response.success && response.data && response.data.length > 0) {
             setBillboards(response.data);
           } else {
-            throw new Error(response.message || "Failed to load featured billboards");
+            // Fallback to load any approved billboards
+            const allResponse = await billboardApi.getAll();
+            if (allResponse.success && allResponse.data && allResponse.data.length > 0) {
+              const approvedOnly = allResponse.data.filter(b => b.status === "APPROVED");
+              if (approvedOnly.length > 0) {
+                setBillboards(approvedOnly.slice(0, 6));
+              } else {
+                throw new Error("No approved billboards");
+              }
+            } else {
+              throw new Error("No billboards at all");
+            }
           }
         }
       } catch (err) {
-        console.warn("Backend API not running, using fallback mock data:", err);
+        console.warn("Backend API returned no billboards or error, using fallback mock data:", err);
         if (active) {
           setBillboards(fallbackBillboards.map(b => ({
             ...b,
@@ -310,15 +355,15 @@ export default function HomePage() {
           <div className="z-10 text-center max-w-4xl mx-auto space-y-6">
             <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4.5 py-1.5 text-xs text-primary font-semibold mb-2">
               <Zap className="w-3.5 h-3.5 text-accent animate-pulse" />
-              <span>Được tin tưởng bởi hơn 5.000 nhà quảng cáo trên cả nước</span>
+              <span>{config.promoText}</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold led-gradient-text animate-pulse leading-tight">
-              Thống trị bầu trời với<br />Quảng cáo LED Kỹ thuật số
+            <h1 className="text-4xl md:text-6xl font-extrabold led-gradient-text animate-pulse leading-tight whitespace-pre-line">
+              {config.heroTitle}
             </h1>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto pt-2 leading-relaxed">
-              Nền tảng DOOH hàng đầu giúp doanh nghiệp tiếp cận hàng triệu khách hàng mục tiêu thông qua mạng lưới màn hình LED cao cấp trên toàn quốc.
+              {config.heroSubtitle}
             </p>
-
+            
             {/* Smart Search Bar */}
             <form 
               onSubmit={handleSearchSubmit} 
@@ -389,7 +434,7 @@ export default function HomePage() {
                 <Users className="text-accent text-3xl w-7 h-7" />
               </div>
               <div className="text-4xl font-extrabold text-accent">
-                {trafficCount.toLocaleString()}+
+                {trafficCount.toLocaleString()}{suffixReach}
               </div>
               <div className="text-lg text-foreground font-bold uppercase tracking-wider">Lưu lượng tiếp cận</div>
               <p className="text-sm text-muted-foreground pt-2">Lượt hiển thị trung bình hàng tháng trên toàn hệ thống.</p>
@@ -401,7 +446,7 @@ export default function HomePage() {
                 <Building2 className="text-accent text-3xl w-7 h-7" />
               </div>
               <div className="text-4xl font-extrabold text-accent">
-                {panelsCount}+
+                {panelsCount}{suffixPanels}
               </div>
               <div className="text-lg text-foreground font-bold uppercase tracking-wider">Số lượng bảng</div>
               <p className="text-sm text-muted-foreground pt-2">Vị trí màn hình LED đắc địa tại các nút giao thông trọng yếu.</p>
@@ -413,7 +458,7 @@ export default function HomePage() {
                 <Zap className="text-accent text-3xl w-7 h-7" />
               </div>
               <div className="text-4xl font-extrabold text-accent">
-                {campaignsCount}+
+                {campaignsCount}{suffixCampaigns}
               </div>
               <div className="text-lg text-foreground font-bold uppercase tracking-wider">Chiến dịch đang chạy</div>
               <p className="text-sm text-muted-foreground pt-2">Thương hiệu đang tin tưởng sử dụng giải pháp của ADORA.</p>
@@ -425,11 +470,11 @@ export default function HomePage() {
         <section className="py-24 px-4 md:px-10 max-w-7xl mx-auto overflow-hidden">
           <div className="flex flex-col lg:flex-row gap-12 items-center">
             <div className="w-full lg:w-1/2 space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-                Vị trí đắc địa, <span className="text-accent">Tầm nhìn vô hạn</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground whitespace-pre-line">
+                {config.visualProofTitle}
               </h2>
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-                Chúng tôi không chỉ cung cấp không gian quảng cáo; chúng tôi kiến tạo những điểm chạm thị giác đẳng cấp giúp thương hiệu của bạn tỏa sáng giữa không gian đô thị nhộn nhịp.
+                {config.visualProofDesc}
               </p>
               <ul className="space-y-4">
                 <li className="flex items-center gap-3">
@@ -458,7 +503,7 @@ export default function HomePage() {
                 <ImageWithFallback 
                   alt="Urban LED Display" 
                   className="w-full h-auto object-cover" 
-                  src="https://images.unsplash.com/photo-1585504303098-9785dc784742?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxMRUQlMjBiaWxsYm9hcmQlMjBkaWdpdGFsJTIwY2l0eSUyMG5pZ2h0fGVufDF8fHx8MTc3MjU0NjU5M3ww&ixlib=rb-4.1.0&q=80&w=1080" 
+                  src={config.visualProofImage} 
                 />
               </div>
               <div className="absolute -bottom-6 -left-6 glass-card p-6 rounded-2xl border border-accent/30 hidden md:block shadow-xl">

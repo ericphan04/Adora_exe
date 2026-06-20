@@ -4,7 +4,7 @@ import {
   LayoutDashboard, BookOpen, Heart, Megaphone, FileText, MessageSquare,
   Settings, LogOut, ChevronLeft, ChevronRight, Monitor, Calendar,
   DollarSign, Users, CheckSquare, AlertTriangle, BarChart3, Cog, Eye,
-  Plus, Map
+  Plus, Map, Layers
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -48,6 +48,7 @@ const navItems: Record<string, NavItem[]> = {
     { icon: <AlertTriangle className="w-5 h-5" />, label: "Khiếu Nại", path: "/admin/disputes" },
     { icon: <Eye className="w-5 h-5" />, label: "Báo Cáo", path: "/admin/reports" },
     { icon: <MessageSquare className="w-5 h-5" />, label: "Tin Nhắn", path: "/admin/messages" },
+    { icon: <Layers className="w-5 h-5" />, label: "Cấu Hình Landing Page", path: "/admin/landing-page" },
     { icon: <Cog className="w-5 h-5" />, label: "Cài Đặt Hệ Thống", path: "/admin/settings" },
   ],
 };

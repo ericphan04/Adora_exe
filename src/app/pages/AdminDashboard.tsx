@@ -20,6 +20,7 @@ import { ReportDto, ReportStatus } from "../../types/report";
 import { AdminRevenueView } from "../components/dashboard/AdminRevenueView";
 import { AdminDisputesView } from "../components/dashboard/AdminDisputesView";
 import { AdminSettingsView } from "../components/dashboard/AdminSettingsView";
+import { AdminLandingPageView } from "../components/dashboard/AdminLandingPageView";
 import { MessagesView } from "../components/messages/MessagesView";
 import { useConfirm } from "../context/ConfirmContext";
 import { notify, apiErrorMessage } from "../utils/notify";
@@ -233,6 +234,7 @@ export default function AdminDashboard() {
     if (path.startsWith("/admin/reports")) return "reports";
     if (path.startsWith("/admin/settings")) return "settings";
     if (path.startsWith("/admin/messages")) return "messages";
+    if (path.startsWith("/admin/landing-page")) return "landing-page";
     return "dashboard";
   }, [location.pathname]);
 
@@ -857,6 +859,8 @@ export default function AdminDashboard() {
                 ? "Cài Đặt Hệ Thống"
                 : view === "messages"
                 ? "Tin Nhắn Nền Tảng"
+                : view === "landing-page"
+                ? "Cấu Hình Landing Page"
                 : "Bảng Điều Khiển Quản Trị"}
             </h1>
 
@@ -1255,6 +1259,8 @@ export default function AdminDashboard() {
         {view === "messages" && <MessagesView role="ADMIN" />}
 
         {view === "settings" && <AdminSettingsView />}
+
+        {view === "landing-page" && <AdminLandingPageView />}
 
         {/* 8. REPORTS MANAGEMENT VIEW */}
         {view === "reports" && (

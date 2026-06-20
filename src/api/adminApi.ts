@@ -61,6 +61,9 @@ const adminApi = {
   getPayments: (): Promise<ApiResponse<PaymentDto[]>> => {
     return axiosClient.get('/api/admin/payments');
   },
+  updateLandingPageConfig: (data: any): Promise<ApiResponse<any>> => {
+    return axiosClient.put('/api/admin/landing-page/config', data);
+  },
 };
 
 export default adminApi;

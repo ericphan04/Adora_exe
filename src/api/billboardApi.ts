@@ -30,6 +30,9 @@ const billboardApi = {
   getBookedSlots: (id: number, date: string): Promise<ApiResponse<{ startHour: number; endHour: number }[]>> => {
     return axiosClient.get(`/api/billboards/${id}/booked-slots`, { params: { date } });
   },
+  getLandingPageConfig: (): Promise<ApiResponse<any>> => {
+    return axiosClient.get('/api/landing-page/config');
+  },
 };
 
 export default billboardApi;
