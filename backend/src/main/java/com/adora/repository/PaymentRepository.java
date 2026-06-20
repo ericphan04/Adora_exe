@@ -27,4 +27,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT COALESCE(SUM(p.ownerRevenue), 0) FROM Payment p WHERE p.booking.billboard.owner.id = :ownerId AND p.paymentStatus = 'SUCCESS'")
     BigDecimal sumRevenueByOwnerId(@Param("ownerId") Long ownerId);
+    List<Payment> findByBookingIdIn(List<Long> bookingIds);
 }

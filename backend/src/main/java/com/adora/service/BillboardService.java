@@ -27,6 +27,8 @@ public class BillboardService {
     private final BookingRepository bookingRepository;
     private final ReviewRepository reviewRepository;
     private final ConversationRepository conversationRepository;
+    private final PaymentRepository paymentRepository;
+    private final NotificationRepository notificationRepository;
 
     public BillboardService(BillboardRepository billboardRepository,
                             BillboardCategoryRepository categoryRepository,
@@ -36,7 +38,9 @@ public class BillboardService {
                             BillboardFeatureRepository featureRepository,
                             BookingRepository bookingRepository,
                             ReviewRepository reviewRepository,
-                            ConversationRepository conversationRepository) {
+                            ConversationRepository conversationRepository,
+                            PaymentRepository paymentRepository,
+                            NotificationRepository notificationRepository) {
         this.billboardRepository = billboardRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
@@ -46,6 +50,8 @@ public class BillboardService {
         this.bookingRepository = bookingRepository;
         this.reviewRepository = reviewRepository;
         this.conversationRepository = conversationRepository;
+        this.paymentRepository = paymentRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     public List<BillboardDto> getAllPublicBillboards(
@@ -210,19 +216,40 @@ public class BillboardService {
             throw new BadRequestException("You can only delete your own billboard");
         }
 
-        // 1. Xóa reviews (tham chiếu booking_id + billboard_id)
+        // 1. Tìm tất cả bookings liên quan đến billboard
+        List<Booking> bookings = bookingRepository.findByBillboardId(id);
+        List<Long> bookingIds = bookings.stream().map(Booking::getId).collect(Collectors.toList());
+
+        if (!bookingIds.isEmpty()) {
+            // 2. Tìm tất cả payments liên quan đến các bookings này
+            List<Payment> payments = paymentRepository.findByBookingIdIn(bookingIds);
+            List<Long> paymentIds = payments.stream().map(Payment::getId).collect(Collectors.toList());
+
+            // 3. Xóa các notifications tham chiếu tới bookings hoặc payments này
+            List<Notification> notifications = new ArrayList<>();
+            notifications.addAll(notificationRepository.findByBookingIdIn(bookingIds));
+            if (!paymentIds.isEmpty()) {
+                notifications.addAll(notificationRepository.findByPaymentIdIn(paymentIds));
+            }
+            List<Notification> uniqueNotifications = notifications.stream().distinct().collect(Collectors.toList());
+            notificationRepository.deleteAll(uniqueNotifications);
+
+            // 4. Xóa các payments
+            paymentRepository.deleteAll(payments);
+        }
+
+        // 5. Xóa reviews (tham chiếu booking_id + billboard_id)
         List<com.adora.entity.Review> reviews = reviewRepository.findByBillboardId(id);
         reviewRepository.deleteAll(reviews);
 
-        // 2. Xóa conversations (cascade tự xóa messages bên trong)
+        // 6. Xóa conversations (cascade tự xóa messages bên trong)
         List<com.adora.entity.Conversation> conversations = conversationRepository.findByBillboardId(id);
         conversationRepository.deleteAll(conversations);
 
-        // 3. Xóa bookings
-        List<Booking> bookings = bookingRepository.findByBillboardId(id);
+        // 7. Xóa bookings
         bookingRepository.deleteAll(bookings);
 
-        // 4. Xóa billboard (cascade xóa images, features, availabilities)
+        // 8. Xóa billboard (cascade xóa images, features, availabilities)
         billboardRepository.delete(billboard);
     }
 
