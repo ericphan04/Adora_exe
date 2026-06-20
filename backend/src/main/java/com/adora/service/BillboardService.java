@@ -26,6 +26,7 @@ public class BillboardService {
     private final BillboardFeatureRepository featureRepository;
     private final BookingRepository bookingRepository;
     private final ReviewRepository reviewRepository;
+    private final ConversationRepository conversationRepository;
 
     public BillboardService(BillboardRepository billboardRepository,
                             BillboardCategoryRepository categoryRepository,
@@ -34,7 +35,8 @@ public class BillboardService {
                             BillboardAvailabilityRepository availabilityRepository,
                             BillboardFeatureRepository featureRepository,
                             BookingRepository bookingRepository,
-                            ReviewRepository reviewRepository) {
+                            ReviewRepository reviewRepository,
+                            ConversationRepository conversationRepository) {
         this.billboardRepository = billboardRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
@@ -43,6 +45,7 @@ public class BillboardService {
         this.featureRepository = featureRepository;
         this.bookingRepository = bookingRepository;
         this.reviewRepository = reviewRepository;
+        this.conversationRepository = conversationRepository;
     }
 
     public List<BillboardDto> getAllPublicBillboards(
@@ -207,15 +210,19 @@ public class BillboardService {
             throw new BadRequestException("You can only delete your own billboard");
         }
 
-        // 1. Xóa reviews trước (tham chiếu booking_id + billboard_id)
+        // 1. Xóa reviews (tham chiếu booking_id + billboard_id)
         List<com.adora.entity.Review> reviews = reviewRepository.findByBillboardId(id);
         reviewRepository.deleteAll(reviews);
 
-        // 2. Xóa tất cả bookings của billboard này
+        // 2. Xóa conversations (cascade tự xóa messages bên trong)
+        List<com.adora.entity.Conversation> conversations = conversationRepository.findByBillboardId(id);
+        conversationRepository.deleteAll(conversations);
+
+        // 3. Xóa bookings
         List<Booking> bookings = bookingRepository.findByBillboardId(id);
         bookingRepository.deleteAll(bookings);
 
-        // 3. Xóa billboard (cascade xóa images, features, availabilities)
+        // 4. Xóa billboard (cascade xóa images, features, availabilities)
         billboardRepository.delete(billboard);
     }
 

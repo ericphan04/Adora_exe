@@ -16,6 +16,8 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     @Query("SELECT c FROM Conversation c ORDER BY COALESCE(c.lastMessageAt, c.createdAt) DESC")
     List<Conversation> findAllForAdmin();
 
+    List<Conversation> findByBillboardId(Long billboardId);
+
     Optional<Conversation> findByRenterIdAndOwnerIdAndBookingId(Long renterId, Long ownerId, Long bookingId);
 
     Optional<Conversation> findByRenterIdAndOwnerIdAndBookingIsNullAndBillboardId(Long renterId, Long ownerId, Long billboardId);
